@@ -598,24 +598,34 @@ window.CASES.push({
   /*   t.countOf(cat) сколько действий этой категории                  */
   /* ---------------------------------------------------------------- */
   algorithm: [
+    /* `when` — предпосылка правила: возникла ли вообще ситуация, к которой
+       правило применимо. Правило без `when` в игре всегда.
+       Оценка алгоритма считается только по правилам в игре — иначе врач,
+       не сделавший ничего, получал бы высокий балл за то, что ему просто
+       нечего было нарушить. */
+
     { id: 'a.dx-no-ask',
       text: 'Диагноз поставлен без расспроса пациента.',
       why: 'Вся тяжесть этого случая вскрывается только в анамнезе. Без вопросов диагноз — угадывание.',
+      when: function (t) { return t.did('__dx'); },
       test: function (t) { return t.did('__dx') && t.countOf('ask') === 0; } },
 
     { id: 'a.dx-before-ausc',
       text: 'Диагноз поставлен до аускультации лёгких.',
       why: 'Аускультация — решающий физикальный приём. Ставить диагноз при болезни лёгких, не послушав их, нельзя.',
+      when: function (t) { return t.did('__dx'); },
       test: function (t) { return t.did('__dx') && (!t.did('e.ausc') || t.at('e.ausc') > t.at('__dx')); } },
 
     { id: 'a.order-first',
       text: 'Приём начат с назначения обследований, а не с разговора и осмотра.',
       why: 'Обследование без гипотезы — стрельба по площадям. Сначала анамнез и физикальный осмотр, они и определяют список.',
+      when: function (t) { return t.countOf('order') > 0; },
       test: function (t) { return t.firstOf('order') === 0; } },
 
     { id: 'a.order-before-exam',
       text: 'Обследования назначены раньше физикального осмотра.',
       why: 'Перкуссия, аускультация и осмотр пальцев ничего не стоят и сразу сужают круг. Назначать до них — терять информацию и деньги пациента.',
+      when: function (t) { return t.countOf('order') > 0; },
       test: function (t) {
         var o = t.firstOf('order'), e = t.firstOf('exam');
         return o >= 0 && (e < 0 || o < e);
@@ -624,35 +634,44 @@ window.CASES.push({
     { id: 'a.ct-no-xray',
       text: 'КТ назначена без обзорной рентгенографии.',
       why: 'Рентген дешевле, доступнее и в этом случае уже показывает «трамвайные рельсы». КТ — уточняющий шаг, а не первый.',
+      when: function (t) { return t.did('o.ct'); },
       test: function (t) { return t.did('o.ct') && (!t.did('o.xray') || t.at('o.xray') > t.at('o.ct')); } },
 
     { id: 'a.ausc-no-deep',
       text: 'Аускультация проведена без просьбы дышать глубоко через рот.',
       why: 'При спокойном носовом дыхании слабые побочные шумы не выслушиваются. Это самая частая техническая ошибка.',
+      when: function (t) { return t.did('e.ausc'); },
       test: function (t) { return t.did('e.ausc') && (!t.did('e.deep') || t.at('e.deep') > t.at('e.ausc')); } },
 
     { id: 'a.abx-no-culture',
       text: 'Антибиотик назначен без посева мокроты.',
       why: 'У пациента уже были неэффективные курсы. Назначать вслепую ещё один — воспроизводить ту же ошибку.',
+      when: function (t) { return t.did('t.antibiotic'); },
       test: function (t) { return t.did('t.antibiotic') && (!t.did('o.sput_culture') || t.at('o.sput_culture') > t.at('t.antibiotic')); } },
 
     { id: 'a.abx-no-allergy',
       text: 'Антибиотик назначен без вопроса об аллергиях.',
       why: 'Элементарная безопасность.',
+      when: function (t) { return t.did('t.antibiotic'); },
       test: function (t) { return t.did('t.antibiotic') && !t.did('p.allergy'); } },
 
     { id: 'a.blood-no-afb',
       text: 'Кровохарканье выяснено, но мокрота на КУБ не назначена.',
       why: 'Хронический кашель плюс кровохарканье, потеря веса и ночная потливость — туберкулёз исключается лабораторно, а не рассуждением.',
+      when: function (t) { return t.did('q.blood'); },
       test: function (t) { return t.did('q.blood') && !t.did('o.afb'); } },
 
     { id: 'a.treat-before-dx',
       text: 'Лечение назначено раньше диагноза.',
       why: 'Лечится диагноз, а не симптом. Порядок обратный — признак симптоматического мышления.',
+      when: function (t) { return t.countOf('treat') > 0; },
       test: function (t) {
         var tr = t.firstOf('treat');
         return tr >= 0 && (!t.did('__dx') || tr < t.at('__dx'));
       } },
+
+    /* Ниже — правила без `when`: собрать паспортную часть и оставить
+       пациенту план лечения обязан любой приём, чем бы он ни был занят. */
 
     { id: 'a.no-passport',
       text: 'Паспортные и социальные данные не собраны совсем.',
@@ -662,6 +681,7 @@ window.CASES.push({
     { id: 'a.no-vitals',
       text: 'Диагноз поставлен без единого измеренного показателя.',
       why: 'Температура, сатурация и ИМТ здесь все три отклонены. Не измерить их — потерять объективную опору.',
+      when: function (t) { return t.did('__dx'); },
       test: function (t) { return t.did('__dx') && t.countOf('measure') === 0; } },
 
     { id: 'a.no-finish-plan',

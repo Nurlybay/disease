@@ -89,7 +89,7 @@
       bind();
     }
 
-    $('patientChip').textContent = CASE.patient.short + ' · ' + CASE.patient.reason;
+    renderChip();
     $('vol').value = 80;
     lung.volume = 0.8;
 
@@ -364,6 +364,7 @@
     }
 
     logRow(row);
+    renderChip();
     updateCounters();
   }
 
@@ -402,6 +403,9 @@
     if (item.id === 'e.cough' && state.currentPoint) {
       var f = CASE.auscultation.findings[state.currentPoint.finding];
       if (f.abnormal) {
+        /* Заголовок правится вместе с текстом: иначе панель показывала бы
+           «Точка не выбрана» над описанием пробы с кашлем. */
+        $('readoutTitle').textContent = state.currentPoint.label + ' — проба с кашлем';
         $('readoutDesc').textContent =
           'После покашливания хрипы изменили звучание и частично исчезли, затем вернулись ' +
           'при следующем вдохе. Это подвижный секрет в просвете бронхов, а не фиброз.';
@@ -482,6 +486,23 @@
   /* =========================================================
      Левая колонка: паспорт, показатели, карта осмотра
      ========================================================= */
+
+  /* Чип в топбаре не смеет знать больше врача: пол, возраст и характер
+     жалобы появляются в нём только после соответствующего вопроса.
+     Иначе «М., 34 г. · длительный кашель» выдало бы ловушку случая —
+     пациент вслух называет свой кашель небольшим. */
+  function renderChip() {
+    var who = state.done['p.name'] ? BYID['p.name'].value
+            : state.done['p.age'] ? 'Пациент, ' + BYID['p.age'].value
+            : 'Пациент';
+    if (state.done['p.name'] && state.done['p.age']) {
+      who += ', ' + BYID['p.age'].value;
+    }
+    var why = state.done['q.duration'] ? CASE.patient.reason
+            : state.done['q.cough'] ? 'Кашель, длительность не уточнена'
+            : 'Жалоба не уточнена';
+    $('patientChip').textContent = who + ' · ' + why;
+  }
 
   function renderPassport() {
     var box = $('passport');
@@ -612,25 +633,37 @@
     });
   }
 
+  /* Вынесено из pickPoint, потому что демо-прогон заполняет точки
+     напрямую и тоже обязан оставить панель в согласованном виде. */
+  /* Раскраска точек вынесена вместе с showReadout: демо-прогон тоже обязан
+     оставить схему в согласованном виде, иначе после ?demo=1 все шесть полей
+     выглядят непрослушанными. */
+  function markPoints(cur) {
+    Array.prototype.forEach.call(document.querySelectorAll('.pt'), function (n) {
+      var id = n.dataset.id, f = state.heard[id];
+      n.classList.toggle('is-current', !!cur && id === cur.id);
+      n.classList.toggle('is-heard', !!f);
+      n.classList.toggle('is-abn', !!f && CASE.auscultation.findings[f].abnormal);
+    });
+  }
+
+  function showReadout(p) {
+    var f = CASE.auscultation.findings[p.finding];
+    var ro = document.querySelector('.stetho-readout');
+    ro.classList.toggle('is-abn', f.abnormal);
+    ro.classList.toggle('is-ok', !f.abnormal);
+    $('readoutTitle').textContent = p.label + ' — ' + f.title;
+    $('readoutDesc').textContent = f.desc;
+  }
+
   function pickPoint(p) {
     var f = CASE.auscultation.findings[p.finding];
     var first = !state.heard[p.id];
     state.heard[p.id] = p.finding;
     state.currentPoint = p;
 
-    Array.prototype.forEach.call(document.querySelectorAll('.pt'), function (n) {
-      var id = n.dataset.id;
-      n.classList.toggle('is-current', id === p.id);
-      n.classList.toggle('is-heard', !!state.heard[id]);
-      n.classList.toggle('is-abn',
-        !!state.heard[id] && CASE.auscultation.findings[state.heard[id]].abnormal);
-    });
-
-    var ro = document.querySelector('.stetho-readout');
-    ro.classList.toggle('is-abn', f.abnormal);
-    ro.classList.toggle('is-ok', !f.abnormal);
-    $('readoutTitle').textContent = p.label + ' — ' + f.title;
-    $('readoutDesc').textContent = f.desc;
+    markPoints(p);
+    showReadout(p);
 
     $('stethoToggle').disabled = false;
     $('scopeIdle').hidden = true;
@@ -835,7 +868,7 @@
       tile('Обследование', pctS(s.order), 'вес 15 %', band(s.order * 100)) +
       tile('Лечение', pctS(s.treat), 'вес 10 %', band(s.treat * 100)) +
       tile('Диагноз', s.dx ? 'верно' : 'нет', 'вес 10 %', s.dx ? 'is-good' : 'is-bad') +
-      tile('Алгоритм', pctS(s.algo), 'вес 5 %', band(s.algo * 100)) +
+      tile('Алгоритм', pctS(s.algo), 'вес 5 % · правил в игре ' + s.rules, band(s.algo * 100)) +
       '</div>';
 
     /* --- Хронология --- */
@@ -1003,14 +1036,31 @@
     return h + '</ul></div>';
   }
 
+  /* Правило участвует в оценке только если его предпосылка возникла:
+     «КТ без рентгена» ничего не говорит о враче, который КТ не назначал.
+     Без этого фильтра бездействие получало бы высокий балл за алгоритм —
+     просто потому, что нарушать было нечего. Правило без `when` в игре
+     всегда. */
+  function applies(r, t) {
+    if (!r.when) return true;
+    try { return !!r.when(t); } catch (e) { return false; }
+  }
+
   function violations(t) {
     var out = [];
     CASE.algorithm.forEach(function (r) {
+      if (!applies(r, t)) return;
       var bad = false;
       try { bad = !!r.test(t); } catch (e) { bad = false; }
       if (bad) out.push(r);
     });
     return out;
+  }
+
+  function rulesInPlay(t) {
+    var n = 0;
+    CASE.algorithm.forEach(function (r) { if (applies(r, t)) n++; });
+    return n;
   }
 
   /* =========================================================
@@ -1051,8 +1101,11 @@
     s.treat = roleScore(CASE.treatment, 'harm', 0.20);
     s.dx = state.dx === CASE.diagnosis.correct;
 
-    var v = violations(t).length;
-    s.algo = Math.max(0, 1 - v * 0.15);
+    /* Доля соблюдённых правил среди тех, что были в игре, а не вычитание
+       фиксированного штрафа: иначе балл зависел бы от того, сколько правил
+       вообще есть в файле случая. */
+    s.rules = rulesInPlay(t);
+    s.algo = s.rules ? Math.max(0, 1 - violations(t).length / s.rules) : 0;
 
     s.total = Math.round(100 * (
       0.25 * s.ask + 0.05 * s.pass + 0.10 * s.vit + 0.20 * s.exam +
@@ -1139,6 +1192,10 @@
     CASE.auscultation.points.forEach(function (p) {
       state.heard[p.id] = p.finding;
       state.currentPoint = p;
+      markPoints(p);
+      showReadout(p);
+      $('stethoToggle').disabled = false;
+      $('scopeIdle').hidden = true;
       logRow({
         kind: 'exam', cat: 'exam', id: 'ausc:' + p.id,
         act: 'Выслушано: ' + p.label,
