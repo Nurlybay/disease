@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Регрессия сопоставителя — nlu.js</title>
+<style>
+  body { margin: 0; padding: 24px; background: #0e1319; color: #e6edf5;
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .sub { color: #6b7a8d; font-size: 13px; margin-bottom: 18px; }
+  .sum { display: inline-flex; gap: 18px; align-items: baseline;
+         padding: 12px 18px; border-radius: 10px; margin-bottom: 18px;
+         background: #1a222d; border: 1px solid #2b3644; }
+  .sum b { font-size: 24px; font-variant-numeric: tabular-nums; }
+  .sum .pass b { color: #4bb98a; }
+  .sum .fail b { color: #e0664f; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid #232d3a; vertical-align: top; }
+  th { color: #6b7a8d; font-weight: 600; font-size: 11px; text-transform: uppercase;
+       letter-spacing: .05em; position: sticky; top: 0; background: #0e1319; }
+  tr.ok  td:first-child { color: #4bb98a; }
+  tr.bad { background: rgba(224,102,79,.09); }
+  tr.bad td:first-child { color: #e0664f; }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12.5px; }
+  .in { color: #e6edf5; }
+  .exp { color: #97a5b8; }
+  .got { color: #d9a33f; }
+  tr.ok .got { color: #6b7a8d; }
+  .note { color: #6b7a8d; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<h1>Регрессия сопоставителя свободного текста</h1>
+<p class="sub">Каждая строка — «что напечатал врач» → «какое намерение обязано получиться».
+   Прогонять при каждом изменении <code>nlu.js</code> или триггеров в файле случая.
+   Открывается напрямую через <code>file://</code>.</p>
+
+<div id="summary"></div>
+<table>
+  <thead><tr><th>—</th><th>Ввод</th><th>Ожидалось</th><th>Получилось</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<script src="../site/nlu.js"></script>
+<script src="../site/cases/bronchiectasis.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var CASE = window.CASES[0];
+
+  /* Каталог намерений собирается ровно так же, как в app.js. */
+  var INTENTS = [], LABEL = {};
+  function add(list) {
+    list.forEach(function (it) {
+      INTENTS.push({ id: it.id, cat: it.cat, w: it.w || 0, need: it.need, no: it.no });
+      LABEL[it.id] = it.label;
+    });
+  }
+  add(CASE.passport);
+  add(CASE.questions);
+  add(CASE.vitals);
+  add(CASE.exams);
+  add(CASE.orders);
+  add(CASE.treatment);
+  add(CASE.diagnosis.options);
+
+  /* Формы ожидания:
+       id: 'v.temp'          — принято именно это намерение
+       clarify: [id, id]     — уточнение ровно с этим набором вариантов
+       unknown: true         — пациент не понял
+       refused: true         — отказ от действия (отрицание при глаголе)
+       cat: 'ask'            — имитирует нажатую кнопку категории
+       fix: true             — ожидается исправленная опечатка */
+  var T = [
+    // --- категория выводится из глагола -------------------------------
+    { in: 'измерить температуру',            id: 'v.temp' },
+    { in: 'измерить сатурацию',              id: 'v.spo2' },
+    { in: 'взвесить пациента',               id: 'v.bmi' },
+    { in: 'проверить пульс',                 id: 'v.hr' },
+    { in: 'послушать лёгкие',                id: 'e.ausc' },
+    { in: 'аускультация лёгких',             id: 'e.ausc' },
+    { in: 'послушать сердце',                id: 'e.heart' },
+    { in: 'осмотреть пальцы',                id: 'e.fingers' },
+    { in: 'осмотреть зев',                   id: 'e.throat' },
+    { in: 'назначить кт',                    id: 'o.ct' },
+    { in: 'назначить антибиотик',            id: 't.antibiotic' },
+    { in: 'назначить преднизолон',           id: 't.steroids' },
+    { in: 'назначить гормоны',               id: 't.steroids' },
+    { in: 'назначить вакцинацию',            id: 't.vaccine' },
+    { in: 'спросить про антибиотики',        id: 'q.antibiotic' },
+    { in: 'спросить про кровохарканье',      id: 'q.blood' },
+    { in: 'диагноз бронхоэктатическая болезнь', id: 'bronchiectasis' },
+    { in: 'ставлю диагноз хронический бронхит', id: 'chronic-bronchitis' },
+    { in: 'диагноз орви',                    id: 'ari' },
+
+    // --- без глагола: решает специфичность ----------------------------
+    { in: 'посев мокроты',                   id: 'o.sput_culture' },
+    { in: 'мокрота на куб',                  id: 'o.afb' },
+    { in: 'кт грудной клетки',               id: 'o.ct' },
+    { in: 'мрт головного мозга',             id: 'o.mri_head' },
+    { in: 'узи брюшной полости',             id: 'o.uzi_abd' },
+    { in: 'рентген',                         id: 'o.xray' },
+    { in: 'флюорография',                    id: 'q.flu' },
+    { in: 'спирометрия',                     id: 'o.spiro' },
+    { in: 'потовый тест',                    id: 'o.sweat' },
+    { in: 'иммуноглобулины',                 id: 'o.ig' },
+    { in: 'бронхоскопия',                    id: 'o.bronchoscopy' },
+    { in: 'фгдс',                            id: 'o.fgds' },
+    { in: 'ттг',                             id: 'o.thyroid' },
+    { in: 'срб',                             id: 'o.crp' },
+    { in: 'оак',                             id: 'o.oak' },
+    { in: 'экг',                             id: 'o.ecg' },
+    { in: 'имт',                             id: 'v.bmi' },
+    { in: 'чдд',                             id: 'v.rr' },
+    { in: 'давление',                        id: 'v.bp' },
+    { in: 'сатурация',                       id: 'v.spo2' },
+    { in: 'перкуссия',                       id: 'e.percussion' },
+    { in: 'голосовое дрожание',              id: 'e.fremitus' },
+    { in: 'лимфоузлы',                       id: 'e.lymph' },
+    { in: 'живот',                           id: 'e.abdomen' },
+    { in: 'форма грудной клетки',            id: 'e.chestshape' },
+    { in: 'пальцы гиппократа',               id: 'e.fingers' },
+    { in: 'дышите глубоко',                  id: 'e.deep' },
+    { in: 'покашляйте',                      id: 'e.cough' },
+    { in: 'постуральный дренаж',             id: 't.drainage' },
+    { in: 'лфк',                             id: 't.rehab' },
+    { in: 'противокашлевое',                 id: 't.antitussive' },
+
+    // --- вопросы своими словами ---------------------------------------
+    { in: 'как вас зовут',                   id: 'p.name' },
+    { in: 'сколько вам лет',                 id: 'p.age' },
+    { in: 'кем работаете',                   id: 'p.job' },
+    { in: 'где вы живете',                   id: 'p.living' },
+    { in: 'аллергии есть',                   id: 'p.allergy' },
+    { in: 'давно кашляете',                  id: 'q.duration' },
+    { in: 'курите',                          id: 'q.smoking' },
+    { in: 'не курите',                       id: 'q.smoking',
+      note: 'отрицание в вопросе игнорируется — ответ пациента тот же' },
+    { in: 'ночная потливость',               id: 'q.sweat',
+      note: 'разводится с q.night по специфичности внутри категории' },
+    { in: 'вы прививались',                  id: 'q.vaccine',
+      note: 'признак вопроса даёт расспросу перевес над назначением' },
+    { in: 'боль в грудной клетке',           id: 'q.chestpain' },
+
+    // --- уточнение: разные категории, одинаковый вес -------------------
+    { in: 'температура',                     clarify: ['q.fever', 'v.temp'] },
+    { in: 'кровь',                           clarify: ['o.oak', 'q.blood'] },
+    { in: 'антибиотик',                      clarify: ['q.antibiotic', 't.antibiotic'] },
+    { in: 'вакцинация',                      clarify: ['q.vaccine', 't.vaccine'] },
+    { in: 'снимок',                          clarify: ['o.xray', 'q.flu'] },
+
+    // --- кнопка категории снимает неоднозначность ---------------------
+    { in: 'температура', cat: 'ask',         id: 'q.fever' },
+    { in: 'температура', cat: 'measure',     id: 'v.temp' },
+    { in: 'кровь',       cat: 'order',       id: 'o.oak' },
+    { in: 'кровь',       cat: 'ask',         id: 'q.blood' },
+
+    // --- отказ и непонятое -------------------------------------------
+    { in: 'не надо назначать кт',            refused: true },
+    { in: 'не назначать стероиды',           refused: true },
+    { in: 'что вы думаете о погоде',         unknown: true },
+    { in: 'здравствуйте',                    unknown: true },
+    { in: '',                                unknown: true },
+
+    // --- опечатка: аварийная ступень ---------------------------------
+    { in: 'измерить температру',             id: 'v.temp', fix: true }
+  ];
+
+  function fmt(r) {
+    if (r.ok) return 'ok · ' + r.id + (r.corrected ? ' · «' + r.corrected + '»' : '');
+    if (r.kind === 'clarify') {
+      return 'clarify · ' + r.options.map(function (o) { return o.id; }).sort().join(', ');
+    }
+    return r.kind;
+  }
+
+  function expected(t) {
+    if (t.clarify) return 'clarify · ' + t.clarify.slice().sort().join(', ');
+    if (t.unknown) return 'unknown';
+    if (t.refused) return 'refused';
+    return 'ok · ' + t.id + (t.fix ? ' · с исправлением' : '');
+  }
+
+  function check(t, r) {
+    if (t.clarify) {
+      if (r.ok || r.kind !== 'clarify') return false;
+      var got = r.options.map(function (o) { return o.id; }).sort().join(',');
+      return got === t.clarify.slice().sort().join(',');
+    }
+    if (t.unknown) return !r.ok && r.kind === 'unknown';
+    if (t.refused) return !r.ok && r.kind === 'refused';
+    if (!r.ok || r.id !== t.id) return false;
+    if (t.fix && !r.corrected) return false;
+    return true;
+  }
+
+  var rows = document.getElementById('rows'), pass = 0, fail = 0;
+
+  T.forEach(function (t) {
+    var r = NLU.match(t.in, INTENTS, { cat: t.cat, label: function (id) { return LABEL[id]; } });
+    var good = check(t, r);
+    if (good) pass++; else fail++;
+
+    var tr = document.createElement('tr');
+    tr.className = good ? 'ok' : 'bad';
+    tr.innerHTML =
+      '<td>' + (good ? '✓' : '✕') + '</td>' +
+      '<td class="in"><code>' + (t.in ? esc(t.in) : '<пустая строка>') + '</code>' +
+        (t.cat ? ' <span class="note">кнопка: ' + t.cat + '</span>' : '') +
+        (t.note ? '<div class="note">' + esc(t.note) + '</div>' : '') + '</td>' +
+      '<td class="exp"><code>' + esc(expected(t)) + '</code></td>' +
+      '<td class="got"><code>' + esc(fmt(r)) + '</code></td>';
+    rows.appendChild(tr);
+  });
+
+  document.getElementById('summary').innerHTML =
+    '<div class="sum"><span class="pass"><b>' + pass + '</b> пройдено</span>' +
+    '<span class="fail"><b>' + fail + '</b> провалено</span>' +
+    '<span class="note">намерений в каталоге: ' + INTENTS.length + '</span></div>';
+
+  document.title = (fail ? '✕ ' + fail + ' провалено' : '✓ всё зелёное') + ' — nlu.js';
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+})();
+</script>
+</body>
+</html>

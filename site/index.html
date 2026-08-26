@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Виртуальный приём — тренажёр клинического осмотра</title>
+<title>Свободный приём — тренажёр клинического мышления</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,31 +12,41 @@
   <div class="brand">
     <span class="brand-mark" aria-hidden="true"></span>
     <div>
-      <div class="brand-name">Виртуальный приём</div>
-      <div class="brand-sub">Тренажёр клинического осмотра</div>
+      <div class="brand-name">Свободный приём</div>
+      <div class="brand-sub">Врач ведёт приём сам — этапов нет</div>
     </div>
   </div>
 
-  <nav class="stepper" id="stepper" aria-label="Этапы приёма"></nav>
+  <div class="topbar-mid">
+    <div class="chrono">
+      <span class="chrono-label">Действий</span>
+      <span class="chrono-val" id="stepCount">0</span>
+    </div>
+    <div class="chrono">
+      <span class="chrono-label">Время приёма</span>
+      <span class="chrono-val" id="clock">00:00</span>
+    </div>
+  </div>
 
   <div class="topbar-right">
     <div class="patient-chip">
       <span class="dot" aria-hidden="true"></span>
       <span id="patientChip">—</span>
     </div>
-    <button class="btn btn-ghost btn-sm" id="restartBtn" type="button">Начать заново</button>
+    <button class="btn btn-primary btn-sm" id="finishBtn" type="button">Завершить приём</button>
+    <button class="btn btn-ghost btn-sm" id="restartBtn" type="button">Заново</button>
   </div>
 </header>
 
 <main class="layout">
 
-  <!-- ЛЕВАЯ КОЛОНКА: пациент -->
+  <!-- ЛЕВАЯ КОЛОНКА: пациент. Всё пусто, пока врач не добудет. -->
   <section class="col-patient" aria-label="Пациент">
     <div class="video-frame">
       <video id="videoIdle"   class="patient-video is-active" muted loop playsinline preload="auto"></video>
       <video id="videoThroat" class="patient-video" muted playsinline preload="auto"></video>
 
-      <div class="video-badge" id="videoBadge">Кабинет · осмотр</div>
+      <div class="video-badge" id="videoBadge">Кабинет</div>
 
       <div class="speaking" id="speakingIndicator" hidden>
         <span class="bar"></span><span class="bar"></span><span class="bar"></span>
@@ -47,7 +57,21 @@
       <div class="subtitle" id="subtitle" hidden></div>
     </div>
 
-    <div class="vitals" id="vitals" aria-label="Показатели"></div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Паспортная часть</h3>
+        <span class="counter" id="passportCounter">0 / 0</span>
+      </div>
+      <dl class="passport" id="passport"></dl>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Показатели</h3>
+        <span class="counter" id="vitalsCounter">0 / 0</span>
+      </div>
+      <div class="vitals" id="vitals"></div>
+    </div>
 
     <div class="notepad">
       <div class="notepad-head">
@@ -55,71 +79,30 @@
         <span class="counter" id="notesCounter">0</span>
       </div>
       <ul class="notes" id="notes">
-        <li class="notes-empty">Записи появятся по ходу приёма.</li>
+        <li class="notes-empty">Пусто. Ни один факт не получен.</li>
       </ul>
     </div>
   </section>
 
-  <!-- ПРАВАЯ КОЛОНКА: действия врача -->
+  <!-- ПРАВАЯ КОЛОНКА: протокол приёма и консоль действий -->
   <section class="col-work">
 
-    <!-- 1. ЖАЛОБЫ -->
-    <article class="stage" data-stage="intake">
-      <header class="stage-head">
-        <h2>Пациент вошёл в кабинет</h2>
-        <p>Выслушайте, с чем пришёл человек. Обратите внимание на формулировку жалобы — она не всегда отражает тяжесть.</p>
-      </header>
-
-      <div class="intake-card">
-        <button class="btn btn-primary btn-lg" id="playGreeting" type="button">
-          <span class="ico-play" aria-hidden="true"></span>
-          Выслушать жалобу
-        </button>
-        <p class="intake-hint" id="intakeHint">Включите звук — вся диагностическая информация в этом тренажёре звуковая.</p>
+    <div class="proto">
+      <div class="proto-head">
+        <h2>Протокол приёма</h2>
+        <span class="proto-hint">Порядок ваших действий фиксируется и разбирается в конце</span>
       </div>
+      <ul class="log" id="log">
+        <li class="log-empty">Пациент вошёл и ждёт. Ничего не произойдёт, пока вы не начнёте.</li>
+      </ul>
+    </div>
 
-      <div class="dialogue" id="dialogue" hidden>
-        <div class="dialogue-head">Разговор</div>
-        <ul id="dialogueLog"></ul>
+    <!-- Рабочая панель: аускультация. Открывается по действию врача. -->
+    <div class="panel" id="auscPanel" hidden>
+      <div class="panel-head">
+        <h3>Аускультация лёгких</h3>
+        <button class="btn btn-ghost btn-sm" type="button" data-close="auscPanel">Свернуть</button>
       </div>
-
-      <footer class="stage-foot">
-        <button class="btn btn-next" id="toHistory" type="button" disabled>Собрать анамнез →</button>
-      </footer>
-    </article>
-
-    <!-- 2. АНАМНЕЗ -->
-    <article class="stage" data-stage="history" hidden>
-      <header class="stage-head">
-        <h2>Сбор анамнеза</h2>
-        <p>Задайте вопросы. Каждый ответ пациент произносит голосом — слушайте, а не читайте.</p>
-      </header>
-
-      <div class="progress-row">
-        <div class="progress-label">Полнота анамнеза</div>
-        <div class="progress-track"><div class="progress-fill" id="histFill"></div></div>
-        <div class="progress-pct" id="histPct">0 %</div>
-      </div>
-
-      <div class="qgrid" id="qgrid"></div>
-
-      <div class="dialogue" id="dialogue2">
-        <div class="dialogue-head">Разговор</div>
-        <ul id="dialogueLog2"></ul>
-      </div>
-
-      <footer class="stage-foot">
-        <button class="btn btn-ghost" data-goto="intake" type="button">← Назад</button>
-        <button class="btn btn-next" id="toExam" type="button">К осмотру →</button>
-      </footer>
-    </article>
-
-    <!-- 3. АУСКУЛЬТАЦИЯ -->
-    <article class="stage" data-stage="auscult" hidden>
-      <header class="stage-head">
-        <h2>Аускультация лёгких</h2>
-        <p id="auscultNote"></p>
-      </header>
 
       <div class="auscult">
         <div class="chest-wrap">
@@ -193,7 +176,7 @@
 
           <div class="stetho-readout">
             <div class="readout-title" id="readoutTitle">Точка не выбрана</div>
-            <div class="readout-desc" id="readoutDesc">Прослушайте все шесть полей. Сравнивайте зоны между собой — патология выявляется контрастом.</div>
+            <div class="readout-desc" id="readoutDesc">Сколько полей прослушать и в каком порядке — решаете вы. Патология выявляется контрастом между зонами.</div>
           </div>
 
           <div class="stetho-controls">
@@ -204,7 +187,6 @@
               <span>Громкость</span>
               <input type="range" id="vol" min="0" max="100" value="80">
             </label>
-            <button class="btn btn-ghost btn-sm" id="coughBtn" type="button" disabled title="Хрипы, меняющиеся после кашля, говорят о секрете в бронхах">Попросить покашлять</button>
           </div>
 
           <p class="stetho-tip">Наденьте наушники. Дыхательные шумы лежат в диапазоне 100–1000 Гц — динамики ноутбука срезают половину.</p>
@@ -212,80 +194,40 @@
       </div>
 
       <div class="coverage" id="coverage"></div>
+    </div>
 
-      <footer class="stage-foot">
-        <button class="btn btn-ghost" data-goto="history" type="button">← Назад</button>
-        <button class="btn btn-next" id="toThroat" type="button">Осмотреть зев →</button>
-      </footer>
-    </article>
+    <!-- Консоль действий -->
+    <div class="console">
+      <div class="cats" id="cats" role="group" aria-label="Тип действия"></div>
 
-    <!-- 4. ЗЕВ -->
-    <article class="stage" data-stage="throat" hidden>
-      <header class="stage-head">
-        <h2>Осмотр зева</h2>
-        <p id="throatNote"></p>
-      </header>
+      <form class="console-row" id="actForm" autocomplete="off">
+        <input class="console-input" id="actInput" type="text" spellcheck="false"
+               placeholder="Что вы делаете? Напишите своими словами…"
+               aria-label="Действие врача">
+        <button class="btn btn-primary" id="actGo" type="submit">Выполнить</button>
+      </form>
 
-      <div class="throat-card">
-        <button class="btn btn-primary btn-lg" id="throatPlay" type="button">
-          <span class="ico-play" aria-hidden="true"></span> Попросить открыть рот
-        </button>
-        <p class="intake-hint">Видео пациента слева переключится на осмотр зева.</p>
-      </div>
+      <div class="clarify" id="clarify" hidden></div>
 
-      <div class="finding" id="throatFinding" hidden>
-        <div class="finding-badge" id="throatBadge">Норма</div>
-        <div class="finding-title" id="throatTitle"></div>
-        <div class="finding-desc" id="throatDesc"></div>
-      </div>
-
-      <footer class="stage-foot">
-        <button class="btn btn-ghost" data-goto="auscult" type="button">← Назад</button>
-        <button class="btn btn-next" id="toWorkup" type="button">Назначить исследования →</button>
-      </footer>
-    </article>
-
-    <!-- 5. ИССЛЕДОВАНИЯ -->
-    <article class="stage" data-stage="workup" hidden>
-      <header class="stage-head">
-        <h2>Дополнительные исследования</h2>
-        <p>Назначайте осознанно: в разборе будет учтено, что вы заказали и зачем.</p>
-      </header>
-      <div class="workup" id="workup"></div>
-      <footer class="stage-foot">
-        <button class="btn btn-ghost" data-goto="throat" type="button">← Назад</button>
-        <button class="btn btn-next" id="toDx" type="button">Поставить диагноз →</button>
-      </footer>
-    </article>
-
-    <!-- 6. ДИАГНОЗ -->
-    <article class="stage" data-stage="dx" hidden>
-      <header class="stage-head">
-        <h2>Диагноз</h2>
-        <p>Выберите один вариант. После ответа будет разбор по каждому пункту.</p>
-      </header>
-
-      <div class="warn" id="dxWarn" hidden></div>
-      <div class="dxlist" id="dxlist"></div>
-
-      <footer class="stage-foot">
-        <button class="btn btn-ghost" data-goto="workup" type="button">← Назад</button>
-        <button class="btn btn-primary" id="submitDx" type="button" disabled>Подтвердить диагноз</button>
-      </footer>
-    </article>
-
-    <!-- 7. РАЗБОР -->
-    <article class="stage" data-stage="debrief" hidden>
-      <div id="debrief"></div>
-      <footer class="stage-foot">
-        <button class="btn btn-primary" id="againBtn" type="button">Пройти случай заново</button>
-      </footer>
-    </article>
+      <p class="console-hint" id="consoleHint">Ничего не подсказывается. Спрашивайте, измеряйте, осматривайте, назначайте и формулируйте диагноз в том порядке, который считаете правильным.</p>
+    </div>
 
   </section>
 </main>
 
+<!-- РАЗБОР: перекрывает экран целиком -->
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-inner">
+    <div id="debrief"></div>
+    <footer class="sheet-foot">
+      <button class="btn btn-primary" id="againBtn" type="button">Пройти случай заново</button>
+      <button class="btn btn-ghost" id="closeSheet" type="button">Вернуться к протоколу</button>
+    </footer>
+  </div>
+</div>
+
 <script src="media/waveforms.js"></script>
+<script src="nlu.js"></script>
 <script src="cases/bronchiectasis.js"></script>
 <script src="app.js"></script>
 </body>

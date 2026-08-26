@@ -1,4 +1,4 @@
-/* Виртуальный приём — тренажёр клинического осмотра */
+/* Свободный приём — тренажёр клинического мышления */
 
 :root {
   --bg:        #0e1319;
@@ -35,9 +35,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h2, h3 { margin: 0; font-weight: 600; letter-spacing: -.01em; }
+h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -.01em; }
 p { margin: 0; }
-ul { margin: 0; padding: 0; list-style: none; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
 
 /* ---------- Верхняя панель ---------- */
 
@@ -66,32 +66,17 @@ ul { margin: 0; padding: 0; list-style: none; }
 .brand-name { font-weight: 650; font-size: 14.5px; letter-spacing: -.01em; }
 .brand-sub  { font-size: 11.5px; color: var(--text-mute); }
 
-.stepper { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
-.step {
-  display: flex; align-items: center; gap: 7px;
-  padding: 6px 11px 6px 8px;
-  border-radius: 20px;
-  font-size: 12.5px; color: var(--text-mute);
-  background: transparent; border: 1px solid transparent;
-  cursor: pointer; transition: .16s;
-  font-family: inherit;
+.topbar-mid { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
+.chrono {
+  display: grid; gap: 1px;
+  padding: 5px 13px; border-radius: var(--radius-sm);
+  background: var(--panel); border: 1px solid var(--line);
 }
-.step:hover:not(:disabled) { color: var(--text-dim); background: var(--panel); }
-.step:disabled { cursor: not-allowed; opacity: .55; }
-.step-n {
-  width: 19px; height: 19px; border-radius: 50%; flex: none;
-  display: grid; place-items: center;
-  font-size: 10.5px; font-weight: 650; font-variant-numeric: tabular-nums;
-  background: var(--panel-2); color: var(--text-mute);
-  border: 1px solid var(--line);
+.chrono-label { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-mute); }
+.chrono-val {
+  font-size: 15px; font-weight: 650; font-family: var(--mono);
+  font-variant-numeric: tabular-nums; line-height: 1.15;
 }
-.step.is-done .step-n { background: var(--ok); border-color: var(--ok); color: #0b1a14; }
-.step.is-done { color: var(--text-dim); }
-.step.is-current {
-  color: var(--text); background: var(--panel);
-  border-color: var(--line-2);
-}
-.step.is-current .step-n { background: var(--accent); border-color: var(--accent); color: #04222c; }
 
 .topbar-right { display: flex; align-items: center; gap: 10px; }
 .patient-chip {
@@ -117,6 +102,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 .col-patient { display: grid; gap: 14px; position: sticky; top: 78px; }
+.col-work { display: grid; gap: 14px; min-width: 0; }
 
 /* ---------- Видео пациента ---------- */
 
@@ -173,13 +159,41 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
 
+/* ---------- Карточки левой колонки ---------- */
+
+.card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden;
+}
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 13px; border-bottom: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.card-head h3 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); }
+
+/* Паспортная часть: пусто, пока врач не спросил. */
+.passport {
+  margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr);
+}
+.passport dt {
+  padding: 7px 13px; border-bottom: 1px solid var(--line);
+  font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--text-mute); white-space: nowrap;
+}
+.passport dd {
+  margin: 0; padding: 7px 13px 7px 0; border-bottom: 1px solid var(--line);
+  font-size: 12.5px; text-align: right;
+}
+.passport dt:last-of-type, .passport dd:last-of-type { border-bottom: 0; }
+.passport dd.is-empty { color: var(--text-mute); font-style: italic; }
+.passport dd.is-got { color: var(--text); animation: rise .25s ease; }
+
 /* ---------- Показатели ---------- */
 
 .vitals {
   display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
   background: var(--line);
-  border: 1px solid var(--line); border-radius: var(--radius);
-  overflow: hidden;
 }
 .vital { background: var(--panel); padding: 9px 11px; min-width: 0; }
 .vital-label { font-size: 10.5px; color: var(--text-mute); text-transform: uppercase; letter-spacing: .05em; }
@@ -192,6 +206,8 @@ ul { margin: 0; padding: 0; list-style: none; }
 .vital-unit { font-size: 10.5px; font-weight: 400; color: var(--text-mute); white-space: nowrap; }
 .vital.is-warn  .vital-value { color: var(--warn); }
 .vital.is-alert .vital-value { color: var(--alert); }
+.vital.is-empty .vital-value { color: var(--text-mute); }
+.vital.is-empty .vital-unit { font-style: italic; }
 
 /* ---------- Карта осмотра ---------- */
 
@@ -223,27 +239,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .note-mark.is-abn { background: var(--alert); box-shadow: 0 0 0 3px rgba(224,102,79,.16); }
 .note-mark.is-ok  { background: var(--ok); }
 
-/* ---------- Этапы ---------- */
-
-.stage {
-  background: var(--panel); border: 1px solid var(--line);
-  border-radius: var(--radius); padding: 22px;
-  box-shadow: var(--shadow);
-  animation: fade .28s ease;
-}
-@keyframes fade { from { opacity: 0; transform: translateY(6px); } }
-
-.stage-head { margin-bottom: 18px; }
-.stage-head h2 { font-size: 20px; }
-.stage-head p { color: var(--text-dim); font-size: 13.5px; margin-top: 5px; max-width: 62ch; }
-
-.stage-foot {
-  display: flex; justify-content: space-between; gap: 10px;
-  margin-top: 22px; padding-top: 18px;
-  border-top: 1px solid var(--line);
-}
-.stage-foot .btn-next, .stage-foot .btn-primary { margin-left: auto; }
-
 /* ---------- Кнопки ---------- */
 
 .btn {
@@ -265,7 +260,6 @@ ul { margin: 0; padding: 0; list-style: none; }
 .btn-ghost { background: transparent; border-color: var(--line); color: var(--text-dim); }
 .btn-ghost:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
 
-.btn-next { background: var(--panel-2); }
 .btn-lg { padding: 12px 22px; font-size: 14.5px; }
 .btn-sm { padding: 6px 11px; font-size: 12px; }
 
@@ -280,66 +274,137 @@ ul { margin: 0; padding: 0; list-style: none; }
               linear-gradient(currentColor 0 0) right/3px 100% no-repeat;
 }
 
-/* ---------- Жалоба ---------- */
+/* ---------- Протокол приёма ---------- */
 
-.intake-card, .throat-card {
-  display: grid; gap: 10px; justify-items: start;
-  padding: 20px; border-radius: var(--radius);
-  background: var(--panel-2); border: 1px solid var(--line);
-}
-.intake-hint { font-size: 12.5px; color: var(--text-mute); }
-
-/* ---------- Диалог ---------- */
-
-.dialogue {
-  margin-top: 18px; border: 1px solid var(--line);
+.proto {
+  background: var(--panel); border: 1px solid var(--line);
   border-radius: var(--radius); overflow: hidden;
 }
-.dialogue-head {
-  padding: 8px 13px; background: var(--panel-2);
-  border-bottom: 1px solid var(--line);
-  font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-mute);
+.proto-head {
+  display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+  padding: 13px 16px; border-bottom: 1px solid var(--line);
+  background: var(--panel-2);
 }
-.dialogue ul { max-height: 300px; overflow-y: auto; padding: 13px; display: grid; gap: 11px; }
-.turn { display: grid; gap: 3px; animation: rise .28s ease; max-width: 88%; }
-.turn-who { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-mute); }
-.turn-text {
-  padding: 9px 13px; border-radius: 11px; font-size: 13.5px; line-height: 1.5;
-}
-.turn.is-doc { justify-self: end; text-align: right; }
-.turn.is-doc .turn-text { background: var(--accent); color: #04222c; border-bottom-right-radius: 4px; }
-.turn.is-pat .turn-text { background: var(--panel-2); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
-.turn.is-active .turn-text { box-shadow: 0 0 0 2px rgba(63,169,201,.4); }
+.proto-head h2 { font-size: 15px; }
+.proto-hint { font-size: 12px; color: var(--text-mute); }
 
-/* ---------- Полнота анамнеза ---------- */
-
-.progress-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.progress-label { font-size: 12px; color: var(--text-mute); white-space: nowrap; }
-.progress-track { flex: 1; height: 6px; border-radius: 3px; background: var(--panel-2); overflow: hidden; }
-.progress-fill {
-  height: 100%; width: 0; border-radius: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--ok));
-  transition: width .4s ease;
+.log { max-height: 46vh; min-height: 180px; overflow-y: auto; }
+.log-empty {
+  padding: 34px 18px; text-align: center;
+  color: var(--text-mute); font-style: italic; font-size: 13.5px;
 }
-.progress-pct { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 42px; text-align: right; }
-
-/* ---------- Вопросы ---------- */
-
-.qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
-.qbtn {
-  text-align: left; padding: 11px 13px; border-radius: var(--radius-sm);
-  background: var(--panel-2); border: 1px solid var(--line);
-  color: var(--text); font: inherit; font-size: 13px; line-height: 1.4;
-  cursor: pointer; transition: .16s; position: relative;
+.log-row {
+  display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 12px;
+  padding: 11px 16px; border-bottom: 1px solid var(--line);
+  animation: rise .25s ease;
 }
-.qbtn:hover:not(:disabled) { background: #283446; border-color: var(--accent); }
-.qbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.qbtn.is-asked { color: var(--text-mute); border-color: var(--line); background: var(--bg-2); }
-.qbtn.is-asked::after {
-  content: "✓"; position: absolute; top: 9px; right: 11px;
-  color: var(--ok); font-size: 12px; font-weight: 700;
+.log-row:last-child { border-bottom: 0; }
+
+.log-meta { display: grid; gap: 2px; justify-items: start; }
+.log-n {
+  min-width: 20px; height: 20px; padding: 0 5px; border-radius: 6px;
+  display: grid; place-items: center;
+  background: var(--line); color: var(--text-dim);
+  font-size: 11px; font-weight: 650; font-variant-numeric: tabular-nums;
 }
-.qbtn.is-asked { padding-right: 30px; }
+.log-time { font-family: var(--mono); font-size: 11px; color: var(--text-mute); }
+.log-cat { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-mute); }
+
+.log-body { min-width: 0; }
+.log-act { font-size: 13.5px; font-weight: 600; }
+.log-res { font-size: 13px; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+.log-res.is-ok   { color: var(--text-dim); }
+.log-res.is-abn  { color: #f0a596; }
+.log-res.is-warn { color: var(--warn); }
+.log-res.is-key  { color: var(--text); }
+.log-hint { font-size: 12.5px; color: var(--accent-2); margin-top: 5px; line-height: 1.5; }
+.log-fix { font-size: 11.5px; color: var(--text-mute); margin-top: 2px; font-style: italic; }
+
+/* Цветная левая метка по типу действия — видно алгоритм врача на глаз. */
+.log-row.is-ask     .log-n { background: rgba(63,169,201,.22);  color: var(--accent-2); }
+.log-row.is-measure .log-n { background: rgba(217,163,63,.2);   color: var(--warn); }
+.log-row.is-exam    .log-n { background: rgba(75,185,138,.2);    color: var(--ok); }
+.log-row.is-order   .log-n { background: rgba(150,170,195,.18);  color: var(--text-dim); }
+.log-row.is-treat   .log-n { background: rgba(87,199,230,.16);   color: var(--accent-2); }
+.log-row.is-dx      .log-n { background: var(--accent); color: #04222c; }
+.log-row.is-unknown { background: rgba(217,163,63,.05); }
+.log-row.is-unknown .log-act { color: var(--warn); font-weight: 500; }
+.log-row.is-repeat { opacity: .62; }
+
+/* ---------- Рабочая панель (аускультация) ---------- */
+
+.panel {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden;
+  animation: rise .3s ease;
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 11px 16px; border-bottom: 1px solid var(--line);
+  background: var(--panel-2);
+}
+.panel-head h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-dim); }
+.panel .auscult, .panel .coverage { padding: 0 16px; }
+.panel .auscult { padding-top: 16px; }
+.panel .coverage { padding-bottom: 16px; }
+
+/* ---------- Консоль действий ---------- */
+
+.console {
+  background: var(--panel); border: 1px solid var(--line-2);
+  border-radius: var(--radius); padding: 14px 16px 15px;
+  display: grid; gap: 11px;
+  box-shadow: var(--shadow);
+  position: sticky; bottom: 12px;
+}
+
+.cats { display: flex; gap: 6px; flex-wrap: wrap; }
+.cat-btn {
+  padding: 6px 13px; border-radius: 20px;
+  border: 1px solid var(--line); background: var(--bg-2);
+  color: var(--text-dim); font: inherit; font-size: 12.5px;
+  cursor: pointer; transition: .16s;
+}
+.cat-btn:hover { color: var(--text); border-color: var(--line-2); background: var(--panel-2); }
+.cat-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cat-btn.is-on {
+  background: var(--accent); border-color: var(--accent);
+  color: #04222c; font-weight: 600;
+}
+
+.console-row { display: flex; gap: 9px; }
+.console-input {
+  flex: 1; min-width: 0;
+  padding: 11px 14px; border-radius: var(--radius-sm);
+  background: var(--bg-2); border: 1px solid var(--line-2);
+  color: var(--text); font: inherit; font-size: 14px;
+}
+.console-input::placeholder { color: var(--text-mute); }
+.console-input:focus { outline: none; border-color: var(--accent); background: #101821; }
+.console-hint { font-size: 11.5px; color: var(--text-mute); line-height: 1.5; }
+
+/* ---------- Уточнение неоднозначного ввода ---------- */
+
+.clarify {
+  display: grid; gap: 6px;
+  padding: 12px 13px; border-radius: var(--radius-sm);
+  background: rgba(217,163,63,.07); border: 1px solid rgba(217,163,63,.3);
+  animation: rise .22s ease;
+}
+.clarify-head { font-size: 12.5px; color: var(--warn); margin-bottom: 2px; }
+.clarify-btn {
+  display: flex; align-items: baseline; gap: 10px; text-align: left;
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: var(--panel-2); border: 1px solid var(--line-2);
+  color: var(--text); font: inherit; font-size: 13px;
+  cursor: pointer; transition: .16s;
+}
+.clarify-btn:hover { border-color: var(--accent); background: #283446; }
+.clarify-btn.is-none { color: var(--text-mute); font-size: 12.5px; }
+.clarify-cat {
+  flex: none; font-size: 10px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--accent-2); min-width: 88px;
+}
 
 /* ---------- Аускультация ---------- */
 
@@ -412,85 +477,47 @@ ul { margin: 0; padding: 0; list-style: none; }
 .cov.is-heard { color: var(--text-dim); border-color: var(--line-2); }
 .cov.is-abn { color: var(--alert); border-color: rgba(224,102,79,.45); background: rgba(224,102,79,.08); }
 
-/* ---------- Находки ---------- */
+/* ---------- Разбор: перекрывающий лист ---------- */
 
-.finding {
-  margin-top: 16px; padding: 15px 17px; border-radius: var(--radius);
-  background: var(--panel-2); border: 1px solid var(--line);
-  border-left: 3px solid var(--warn);
+.sheet {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(6,10,14,.82); backdrop-filter: blur(6px);
+  overflow-y: auto; padding: 28px 18px 48px;
   animation: rise .3s ease;
 }
-.finding-badge {
-  display: inline-block; padding: 3px 9px; border-radius: 20px;
-  font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: .04em;
-  background: rgba(217,163,63,.16); color: var(--warn); margin-bottom: 8px;
+.sheet-inner {
+  max-width: 900px; margin: 0 auto;
+  background: var(--bg-2); border: 1px solid var(--line-2);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 22px;
 }
-.finding-title { font-size: 15px; font-weight: 600; }
-.finding-desc { font-size: 13.5px; color: var(--text-dim); margin-top: 5px; }
-
-/* ---------- Исследования ---------- */
-
-.workup { display: grid; gap: 9px; }
-.wu {
-  border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--panel-2); overflow: hidden;
-}
-.wu-head {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 12px 15px; cursor: pointer;
-  font-size: 13.5px; font-weight: 500;
-  background: none; border: 0; color: var(--text); font-family: inherit;
-  width: 100%; text-align: left;
-}
-.wu-head:hover { background: #283446; }
-.wu-order { font-size: 11.5px; color: var(--accent); white-space: nowrap; }
-.wu.is-open .wu-order { color: var(--text-mute); }
-.wu-body {
-  padding: 0 15px 14px; font-size: 13px; color: var(--text-dim);
-  border-top: 1px solid var(--line); padding-top: 12px;
-  animation: rise .25s ease;
-}
-.wu-hint { margin-top: 7px; font-size: 12.5px; color: var(--accent-2); }
-.wu-result { font-family: var(--mono); font-size: 12.5px; line-height: 1.6; color: var(--text); }
-
-/* ---------- Диагноз ---------- */
-
-.warn {
-  padding: 11px 14px; border-radius: var(--radius-sm); margin-bottom: 14px;
-  background: rgba(217,163,63,.1); border: 1px solid rgba(217,163,63,.34);
-  color: var(--warn); font-size: 13px;
+.sheet-foot {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  padding-top: 16px; border-top: 1px solid var(--line); margin-top: 4px;
 }
 
-.dxlist { display: grid; gap: 8px; }
-.dx {
-  display: flex; align-items: center; gap: 11px;
-  padding: 13px 15px; border-radius: var(--radius-sm);
+.result-head {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 18px;
+}
+.result-head h2 { font-size: 20px; }
+.result-head p { font-size: 13.5px; color: var(--text-dim); margin-top: 4px; }
+.result-total {
+  flex: none; min-width: 116px; padding: 14px 18px;
+  border-radius: var(--radius); text-align: center;
   background: var(--panel-2); border: 1px solid var(--line);
-  cursor: pointer; transition: .16s; font-size: 14px;
+  font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
 }
-.dx:hover { border-color: var(--accent); background: #283446; }
-.dx input { accent-color: var(--accent); width: 16px; height: 16px; flex: none; }
-.dx.is-sel { border-color: var(--accent); background: rgba(63,169,201,.09); }
+.result-total.is-good { color: var(--ok);    border-color: rgba(75,185,138,.4); }
+.result-total.is-mid  { color: var(--warn);  border-color: rgba(217,163,63,.4); }
+.result-total.is-bad  { color: var(--alert); border-color: rgba(224,102,79,.4); }
 
-/* ---------- Разбор ---------- */
-
-.result-hero {
-  padding: 22px; border-radius: var(--radius); margin-bottom: 18px;
-  border: 1px solid var(--line); background: var(--panel-2);
-  border-left: 4px solid var(--warn);
+.scores {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 1px;
+  background: var(--line); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 14px;
 }
-.result-hero.is-right { border-left-color: var(--ok); }
-.result-hero.is-wrong { border-left-color: var(--alert); }
-.result-verdict {
-  font-size: 12px; font-weight: 650; text-transform: uppercase; letter-spacing: .06em;
-  color: var(--warn);
-}
-.result-hero.is-right .result-verdict { color: var(--ok); }
-.result-hero.is-wrong .result-verdict { color: var(--alert); }
-.result-dx { font-size: 21px; font-weight: 650; margin: 6px 0 10px; letter-spacing: -.01em; }
-.result-why { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
-
-.score-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin-bottom: 18px; }
 .score { background: var(--panel-2); padding: 12px 14px; }
 .score-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-mute); }
 .score-value { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; margin-top: 2px; }
@@ -505,17 +532,65 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 .block h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-mute); margin-bottom: 10px; }
 .block p { font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
-.keylist { display: grid; gap: 7px; }
-.keylist li { display: flex; gap: 9px; font-size: 13.5px; color: var(--text-dim); }
-.keylist li::before { content: ""; flex: none; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin-top: 8px; }
-.keylist li.is-missed { color: var(--text-mute); }
-.keylist li.is-missed::before { background: var(--alert); }
-.keylist .miss-tag { color: var(--alert); font-size: 11.5px; }
+.block.is-trap { border-left: 3px solid var(--warn); }
+.block-note { font-size: 12px; color: var(--text-mute); margin-top: 10px; }
+.all-clear { color: var(--ok) !important; font-size: 13.5px; }
 
-.alt { border-top: 1px solid var(--line); padding-top: 11px; margin-top: 11px; }
-.alt:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
-.alt-name { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+/* Хронология — предъявленный алгоритм врача. */
+.timeline { display: grid; gap: 1px; background: var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+.tl {
+  display: grid; grid-template-columns: 52px 108px minmax(0, 1fr); gap: 10px;
+  background: var(--panel); padding: 7px 12px;
+  font-size: 12.5px; align-items: baseline;
+}
+.tl.is-void { background: rgba(217,163,63,.06); }
+.tl-time { font-family: var(--mono); font-size: 11px; color: var(--text-mute); }
+.tl-cat { font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--accent-2); }
+.tl.is-void .tl-cat { color: var(--warn); }
+.tl-act { color: var(--text-dim); }
+
+/* Группы ошибок. */
+.err-group { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.err-group:first-child { border-top: 0; padding-top: 0; margin-top: 0; }
+.err-group h4 {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; color: var(--alert); margin-bottom: 8px;
+}
+.err-n {
+  min-width: 19px; height: 19px; padding: 0 5px; border-radius: 10px;
+  display: grid; place-items: center;
+  background: rgba(224,102,79,.18); color: var(--alert);
+  font-size: 10.5px; font-weight: 650;
+}
+.err-group ul { display: grid; gap: 8px; }
+.err-group li { display: grid; gap: 2px; font-size: 13px; padding-left: 12px; position: relative; }
+.err-group li::before {
+  content: ""; position: absolute; left: 0; top: 7px;
+  width: 4px; height: 4px; border-radius: 50%; background: var(--alert);
+}
+.err-group li b { font-weight: 600; color: var(--text); }
+.err-group li span { color: var(--text-mute); font-size: 12.5px; line-height: 1.5; }
+
+.keylist { display: grid; gap: 7px; }
+.keylist li { display: grid; gap: 2px; font-size: 13.5px; color: var(--text-dim); padding-left: 14px; position: relative; }
+.keylist li::before {
+  content: ""; position: absolute; left: 0; top: 8px;
+  width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+}
+.keylist.is-bad li::before { background: var(--warn); }
+.keylist li b { color: var(--text); font-weight: 600; }
+.keylist li span { color: var(--text-mute); font-size: 12.5px; line-height: 1.5; }
+
+.alts { display: grid; }
+.alt { border-top: 1px solid var(--line); padding: 11px 0; }
+.alt:first-child { border-top: 0; padding-top: 0; }
+.alt.is-right { border-left: 3px solid var(--ok); padding-left: 12px; }
+.alt.is-mine  { background: rgba(63,169,201,.06); }
+.alt-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.alt-name { font-size: 13.5px; font-weight: 600; }
+.alt-name em { color: var(--accent-2); font-weight: 500; font-style: normal; font-size: 12px; }
 .alt-verdict { font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--line); color: var(--text-dim); font-weight: 500; }
+.alt.is-right .alt-verdict { background: rgba(75,185,138,.2); color: var(--ok); }
 .alt-why { font-size: 13px; color: var(--text-dim); margin-top: 4px; line-height: 1.55; }
 
 /* ---------- Адаптив ---------- */
@@ -526,12 +601,17 @@ ul { margin: 0; padding: 0; list-style: none; }
   .video-frame { max-width: 460px; }
   .auscult { grid-template-columns: 1fr; }
   .chest-wrap { max-width: 260px; }
+  .console { position: static; }
 }
 @media (max-width: 620px) {
   .topbar { gap: 12px; padding: 10px 14px; }
-  .stepper { order: 3; width: 100%; }
+  .topbar-mid { order: 3; width: 100%; }
   .layout { padding: 14px; gap: 14px; }
-  .stage { padding: 16px; }
   .vitals { grid-template-columns: repeat(2, 1fr); }
-  .qgrid { grid-template-columns: 1fr; }
+  .log-row { grid-template-columns: 1fr; gap: 6px; }
+  .log-meta { display: flex; align-items: center; gap: 9px; }
+  .tl { grid-template-columns: 1fr; gap: 2px; }
+  .sheet { padding: 12px 8px 32px; }
+  .sheet-inner { padding: 15px; }
+  .clarify-cat { min-width: 0; }
 }

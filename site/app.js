@@ -1,178 +1,166 @@
-/* Виртуальный приём — логика тренажёра.
-   Данные случая лежат в cases/*.js, пики волновых форм — в media/waveforms.js */
+/* Свободный приём. Ни одного этапа, ни одной готовой кнопки-вопроса:
+   всё, что происходит, происходит потому, что врач это написал.
+
+   Один IIFE, ES5-совместимо, без сборки и без сети — файл открывается
+   и через file://. */
 (function () {
   'use strict';
 
   var CASE = (window.CASES || [])[0];
   var WF = window.WAVEFORMS || {};
+  var $ = function (id) { return document.getElementById(id); };
 
-  if (!CASE) {
-    document.body.innerHTML = '<p style="padding:40px;color:#e0664f">' +
-      'Случай не загружен: проверьте, что cases/bronchiectasis.js подключён.</p>';
-    return;
+  /* Кнопки категорий. Подсказывают ТИП действия и сужают разбор строки,
+     но не перечисляют, что именно спрашивать или назначать. */
+  var CATS = [
+    { id: 'ask',     label: 'Спросить',  ph: 'О чём спросить пациента? Формулируйте своими словами' },
+    { id: 'measure', label: 'Измерить',  ph: 'Какой показатель измерить?' },
+    { id: 'exam',    label: 'Осмотреть', ph: 'Какой физикальный приём выполнить?' },
+    { id: 'order',   label: 'Назначить', ph: 'Какое исследование назначить?' },
+    { id: 'treat',   label: 'Лечение',   ph: 'Что назначить из лечения?' },
+    { id: 'dx',      label: 'Диагноз',   ph: 'Ваш диагноз?' }
+  ];
+  var CAT_NAME = { ask: 'Расспрос', measure: 'Измерение', exam: 'Осмотр',
+                   order: 'Обследование', treat: 'Лечение', dx: 'Диагноз' };
+
+  var FREE_PH = 'Что вы делаете? Напишите своими словами…';
+
+  var state, voice, lung, rafId, clockId;
+  var INTENTS = [], BYID = {};
+
+  /* =========================================================
+     Каталог намерений собирается из данных случая
+     ========================================================= */
+
+  function buildCatalog() {
+    INTENTS = [];
+    BYID = {};
+
+    function add(item, kind) {
+      var rec = {
+        id: item.id, cat: item.cat, w: item.w || 0,
+        need: item.need, no: item.no
+      };
+      INTENTS.push(rec);
+      item.__kind = kind;
+      BYID[item.id] = item;
+    }
+
+    CASE.passport.forEach(function (p) { add(p, 'passport'); });
+    CASE.questions.forEach(function (q) { add(q, 'question'); });
+    CASE.vitals.forEach(function (v) { add(v, 'vital'); });
+    CASE.exams.forEach(function (e) { add(e, 'exam'); });
+    CASE.orders.forEach(function (o) { add(o, 'order'); });
+    CASE.treatment.forEach(function (t) { add(t, 'treat'); });
+    CASE.diagnosis.options.forEach(function (d) { add(d, 'dx'); });
   }
 
-  var $ = function (id) { return document.getElementById(id); };
-  var STAGES = [
-    { id: 'intake',  label: 'Жалобы' },
-    { id: 'history', label: 'Анамнез' },
-    { id: 'auscult', label: 'Аускультация' },
-    { id: 'throat',  label: 'Зев' },
-    { id: 'workup',  label: 'Исследования' },
-    { id: 'dx',      label: 'Диагноз' }
-  ];
-
-  var state, voice, lung, rafId;
+  function labelOf(id) { return BYID[id] ? BYID[id].label : id; }
 
   /* =========================================================
      Инициализация
      ========================================================= */
 
   function init() {
+    buildCatalog();
+
     state = {
-      stage: 'intake',
-      greetingHeard: false,
-      asked: [],
-      heard: {},          // pointId -> 'normal' | 'crackles'
-      coughed: false,
-      throatDone: false,
-      ordered: [],
+      log: [],            // все строки протокола, включая непонятые
+      done: {},           // id намерения -> true
+      heard: {},          // точки аускультации: id -> finding
       currentPoint: null,
+      cat: null,          // активная кнопка категории
       dx: null,
-      dxWarned: false
+      finished: false,
+      unknowns: [],
+      clarifies: 0,
+      t0: Date.now()
     };
 
-    voice = new Audio();
-    voice.preload = 'auto';
-    lung = new Audio();
-    lung.preload = 'auto';
-    lung.loop = true;
-    lung.volume = 0.8;
-
-    voice.addEventListener('ended', onVoiceEnded);
-    lung.addEventListener('play', startScope);
-    lung.addEventListener('pause', stopScope);
-
-    $('videoIdle').src = CASE.patient.idleVideo;
-    $('videoThroat').src = CASE.patient.throatVideo;
-    $('videoThroat').poster = CASE.patient.throatPoster || '';
-    $('videoIdle').play().catch(function () {});
+    if (!voice) {
+      voice = new Audio();
+      lung = new Audio();
+      lung.loop = false;
+      voice.addEventListener('ended', onVoiceEnded);
+      lung.addEventListener('play', startScope);
+      lung.addEventListener('pause', stopScope);
+      lung.addEventListener('ended', stopScope);
+      lung.addEventListener('timeupdate', function () { if (!rafId) drawScope(); });
+      bind();
+    }
 
     $('patientChip').textContent = CASE.patient.short + ' · ' + CASE.patient.reason;
-    $('auscultNote').textContent = CASE.auscultation.note;
-    $('throatNote').textContent = CASE.throat.note;
+    $('vol').value = 80;
+    lung.volume = 0.8;
 
-    renderStepper();
+    var idle = $('videoIdle'), throat = $('videoThroat');
+    if (!idle.src) {
+      idle.src = CASE.patient.idleVideo;
+      throat.src = CASE.patient.throatVideo;
+      throat.poster = CASE.patient.throatPoster;
+    }
+    switchVideo('idle');
+    idle.play().catch(function () {});
+
+    renderCats();
+    renderPassport();
     renderVitals();
-    renderQuestions();
+    resetNotes();
+    resetLog();
     renderChest();
     renderCoverage();
-    renderWorkup();
-    renderDiagnosis();
-    resetNotes();
-    clearDialogue();
 
-    bind();
-    show('intake');
+    $('auscPanel').hidden = true;
+    $('sheet').hidden = true;
+    $('clarify').hidden = true;
+    $('actInput').value = '';
+    setCat(null);
+
+    if (clockId) clearInterval(clockId);
+    clockId = setInterval(tickClock, 1000);
+    tickClock();
+
+    /* Пациент вошёл и здоровается — единственное, что происходит само.
+       Дальше не произойдёт ничего, пока врач не напишет. */
+    logRow({
+      kind: 'patient', cat: null,
+      act: 'Пациент вошёл в кабинет',
+      res: CASE.patient.greeting.text,
+      resCls: ''
+    });
+    say(CASE.patient.greeting.audio, CASE.patient.greeting.text);
+
     applyUrlOverrides();
   }
 
-  /* Отладка при разработке случаев: ?demo=1 заполняет осмотр,
-     ?stage=auscult открывает нужный этап, ?dx=<id> сразу даёт разбор. */
   function applyUrlOverrides() {
-    var p = new URLSearchParams(location.search);
-    if (!p.has('demo') && !p.has('stage') && !p.has('dx')) return;
-
-    if (p.get('demo') === '1') {
-      state.greetingHeard = true;
-      $('dialogue').hidden = false;
-      $('toHistory').disabled = false;
-      addTurn('pat', 'Пациент', CASE.patient.greeting.text, false);
-      addNote('Жалоба: кашель, по словам пациента незначительный');
-
-      CASE.questions.forEach(function (q) {
-        state.asked.push(q.key);
-        var b = document.querySelector('.qbtn[data-key="' + q.key + '"]');
-        if (b) b.classList.add('is-asked');
-        addTurn('doc', 'Врач', q.q, false);
-        addTurn('pat', 'Пациент', q.a, false);
-        if (q.tag) addNote(q.tag, q.weight >= 2 ? 'abn' : null);
-      });
-      updateHistoryProgress();
-
-      CASE.auscultation.points.forEach(function (pt) {
-        state.heard[pt.id] = pt.finding;
-        var f = CASE.auscultation.findings[pt.finding];
-        addNote(pt.label + ': ' + f.title, f.abnormal ? 'abn' : 'ok');
-      });
-      state.coughed = true;
-      state.throatDone = true;
-      addNote(CASE.throat.title,'abn');
-      CASE.workup.forEach(function (w) { state.ordered.push(w.id); });
-
-      renderCoverage();
-      Array.prototype.forEach.call(document.querySelectorAll('.pt'), function (n) {
-        var id = n.dataset.id;
-        n.classList.add('is-heard');
-        if (CASE.auscultation.findings[state.heard[id]].abnormal) n.classList.add('is-abn');
-      });
-      Array.prototype.forEach.call(document.querySelectorAll('.step'), function (b) {
-        b.disabled = false;
-      });
-
-      // показать снимок аускультации без автозапуска звука
-      var demoPt = CASE.auscultation.points.filter(function (x) {
-        return CASE.auscultation.findings[x.finding].abnormal;
-      })[0];
-      if (demoPt) {
-        var df = CASE.auscultation.findings[demoPt.finding];
-        state.currentPoint = demoPt;
-        lung.src = df.audio;
-        lung._wf = 'lung-crackles';
-        lung._abn = true;
-        document.querySelector('.stetho-readout').classList.add('is-abn');
-        $('readoutTitle').textContent = demoPt.label + ' — ' + df.title;
-        $('readoutDesc').textContent = df.desc;
-        $('scopeIdle').hidden = true;
-        $('stethoToggle').disabled = false;
-        var node = document.querySelector('.pt[data-id="' + demoPt.id + '"]');
-        if (node) node.classList.add('is-current');
-      }
-
-      $('throatBadge').textContent = 'Лёгкие изменения';
-      $('throatTitle').textContent = CASE.throat.title;
-      $('throatDesc').textContent = CASE.throat.desc;
-      $('throatFinding').hidden = false;
+    var q = window.location.search;
+    if (/[?&]demo=1/.test(q)) runDemo();
+    var m = /[?&]dx=([a-z-]+)/.exec(q);
+    if (m) {
+      var opt = pick(CASE.diagnosis.options, m[1]);
+      if (opt) perform(opt.id, { silent: true });
     }
-
-    if (p.has('dx')) {
-      state.dx = p.get('dx');
-      renderDebrief();
-      show('debrief');
-      return;
-    }
-    if (p.has('stage')) show(p.get('stage'));
+    if (/[?&]finish=1/.test(q)) finish(true);
   }
 
   function bind() {
-    $('playGreeting').addEventListener('click', playGreeting);
-    $('toHistory').addEventListener('click', function () { show('history'); });
-    $('toExam').addEventListener('click', function () { show('auscult'); });
-    $('toThroat').addEventListener('click', function () { show('throat'); });
-    $('toWorkup').addEventListener('click', function () { show('workup'); });
-    $('toDx').addEventListener('click', function () { show('dx'); });
-
-    Array.prototype.forEach.call(document.querySelectorAll('[data-goto]'), function (b) {
-      b.addEventListener('click', function () { show(b.dataset.goto); });
+    $('actForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      submit($('actInput').value);
     });
-
-    $('stethoToggle').addEventListener('click', toggleLung);
-    $('coughBtn').addEventListener('click', askCough);
-    $('vol').addEventListener('input', function () { lung.volume = this.value / 100; });
-    $('throatPlay').addEventListener('click', examineThroat);
-    $('submitDx').addEventListener('click', submitDiagnosis);
+    $('actInput').addEventListener('input', function () {
+      $('clarify').hidden = true;
+    });
     $('restartBtn').addEventListener('click', restart);
     $('againBtn').addEventListener('click', restart);
+    $('finishBtn').addEventListener('click', function () { finish(false); });
+    $('closeSheet').addEventListener('click', function () { $('sheet').hidden = true; });
+    $('stethoToggle').addEventListener('click', toggleLung);
+    $('vol').addEventListener('input', function () { lung.volume = this.value / 100; });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function (b) {
+      b.addEventListener('click', function () { $(b.dataset.close).hidden = true; });
+    });
     window.addEventListener('resize', function () { drawScope(); });
   }
 
@@ -188,89 +176,345 @@
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   }
 
+  function tickClock() {
+    $('clock').textContent = mmss((Date.now() - state.t0) / 1000);
+  }
+
+  function mmss(sec) {
+    var s = Math.max(0, Math.floor(sec));
+    var m = Math.floor(s / 60);
+    return (m < 10 ? '0' : '') + m + ':' + (s % 60 < 10 ? '0' : '') + (s % 60);
+  }
+
   /* =========================================================
-     Навигация по этапам
+     Консоль действий
      ========================================================= */
 
-  function renderStepper() {
-    var box = $('stepper');
+  function renderCats() {
+    var box = $('cats');
     box.innerHTML = '';
-    STAGES.forEach(function (s, i) {
+    CATS.forEach(function (c) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'step';
-      b.dataset.step = s.id;
-      b.innerHTML = '<span class="step-n">' + (i + 1) + '</span>' + s.label;
-      b.addEventListener('click', function () { show(s.id); });
+      b.className = 'cat-btn';
+      b.dataset.cat = c.id;
+      b.textContent = c.label;
+      b.addEventListener('click', function () {
+        setCat(state.cat === c.id ? null : c.id);
+        $('actInput').focus();
+      });
       box.appendChild(b);
     });
   }
 
-  function stageIndex(id) {
-    for (var i = 0; i < STAGES.length; i++) if (STAGES[i].id === id) return i;
-    return -1;
+  function setCat(id) {
+    state.cat = id;
+    var c = null, i;
+    for (i = 0; i < CATS.length; i++) if (CATS[i].id === id) c = CATS[i];
+    $('actInput').placeholder = c ? c.ph : FREE_PH;
+    Array.prototype.forEach.call(document.querySelectorAll('.cat-btn'), function (b) {
+      b.classList.toggle('is-on', b.dataset.cat === id);
+    });
   }
 
-  function show(id) {
-    if (id === 'history' && !state.greetingHeard) return;
+  function submit(raw) {
+    raw = String(raw || '').replace(/^\s+|\s+$/g, '');
+    if (!raw) return;
+    $('actInput').value = '';
+    $('clarify').hidden = true;
 
-    state.stage = id;
-    voice.pause();
-    lung.pause();
-    hideSpeaking();
+    var r = NLU.match(raw, INTENTS, { cat: state.cat, label: labelOf });
 
-    Array.prototype.forEach.call(document.querySelectorAll('.stage'), function (el) {
-      el.hidden = el.dataset.stage !== id;
+    if (r.ok) {
+      perform(r.id, { raw: raw, corrected: r.corrected });
+      return;
+    }
+
+    if (r.kind === 'clarify') {
+      askClarify(raw, r.options);
+      return;
+    }
+
+    if (r.kind === 'refused') {
+      logRow({
+        kind: 'refused', cat: null,
+        act: '«' + raw + '»',
+        res: 'Отказ от действия зафиксирован. Ничего не выполнено.',
+        resCls: ''
+      });
+      return;
+    }
+
+    /* Не понял. Это не ошибка тренажёра — это отсутствие формулировки. */
+    state.unknowns.push(raw);
+    var u = CASE.system.unknown;
+    logRow({
+      kind: 'unknown', cat: null,
+      act: '«' + raw + '»',
+      res: u.text,
+      resCls: 'is-warn'
     });
-
-    switchVideo(id === 'throat' && state.throatDone ? 'throat' : 'idle');
-    $('videoBadge').textContent = id === 'throat' ? 'Осмотр зева' : 'Кабинет · осмотр';
-
-    var cur = stageIndex(id);
-    Array.prototype.forEach.call(document.querySelectorAll('.step'), function (b) {
-      var i = stageIndex(b.dataset.step);
-      b.classList.toggle('is-current', b.dataset.step === id);
-      b.classList.toggle('is-done', cur === -1 ? true : i < cur);
-      b.disabled = b.dataset.step !== 'intake' && !state.greetingHeard;
-    });
-
-    if (id === 'auscult') requestAnimationFrame(drawScope);
-    if (id === 'dx') checkDxReadiness();
+    say(u.audio, u.text);
   }
 
-  function switchVideo(which) {
-    var idle = $('videoIdle'), throat = $('videoThroat');
-    if (which === 'throat') {
-      throat.classList.add('is-active');
-      idle.classList.remove('is-active');
-    } else {
-      idle.classList.add('is-active');
-      throat.classList.remove('is-active');
-      throat.pause();
-      idle.play().catch(function () {});
+  function askClarify(raw, options) {
+    var box = $('clarify');
+    box.innerHTML = '';
+    var head = document.createElement('div');
+    head.className = 'clarify-head';
+    head.textContent = '«' + raw + '» можно понять по-разному. Что именно вы делаете?';
+    box.appendChild(head);
+
+    options.forEach(function (o) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'clarify-btn';
+      b.innerHTML = '<span class="clarify-cat">' + esc(CAT_NAME[o.cat] || o.cat) + '</span>' +
+                    '<span>' + esc(o.label) + '</span>';
+      b.addEventListener('click', function () {
+        box.hidden = true;
+        perform(o.id, { raw: raw });
+      });
+      box.appendChild(b);
+    });
+
+    var no = document.createElement('button');
+    no.type = 'button';
+    no.className = 'clarify-btn is-none';
+    no.textContent = 'Ни то, ни другое';
+    no.addEventListener('click', function () {
+      box.hidden = true;
+      state.unknowns.push(raw);
+      logRow({ kind: 'unknown', cat: null, act: '«' + raw + '»',
+               res: 'Действие не распознано и не выполнено.', resCls: 'is-warn' });
+    });
+    box.appendChild(no);
+
+    state.clarifies++;
+    box.hidden = false;
+  }
+
+  /* =========================================================
+     Исполнение действия
+     ========================================================= */
+
+  function perform(id, opts) {
+    opts = opts || {};
+    var item = BYID[id];
+    if (!item) return;
+
+    var repeat = !!state.done[id];
+    var kind = item.__kind;
+
+    if (repeat && kind !== 'exam') {
+      /* Повтор ничего не добавляет к оценке, но пациент отвечает снова. */
+      logRow({ kind: kind, cat: item.cat, id: null, act: item.label,
+               res: 'Уже выполнено ранее — повторно.', resCls: '', repeat: true });
+      if (!opts.silent && item.audio) say(item.audio, item.text);
+      return;
+    }
+
+    state.done[id] = true;
+    var row = { kind: kind, cat: item.cat, id: id, act: item.label,
+                corrected: opts.corrected || null };
+
+    if (kind === 'passport') {
+      row.res = item.text;
+      row.resCls = item.important ? 'is-key' : '';
+      renderPassport();
+      addNote(item.field + ': ' + item.value, item.important ? 'abn' : '');
+      if (!opts.silent) say(item.audio, item.text);
+
+    } else if (kind === 'question') {
+      row.res = item.text;
+      row.resCls = item.important ? 'is-key' : '';
+      addNote(item.tag, item.important ? 'abn' : '');
+      if (!opts.silent) say(item.audio, item.text);
+
+    } else if (kind === 'vital') {
+      row.res = item.field + ' — ' + item.value + ' ' + (item.unit || '') +
+                '. Техника: ' + item.tech;
+      row.resCls = item.abnormal ? 'is-abn' : 'is-ok';
+      renderVitals();
+      addNote(item.note, item.abnormal ? 'abn' : 'ok');
+
+    } else if (kind === 'exam') {
+      performExam(item, row, opts);
+
+    } else if (kind === 'order') {
+      row.res = item.result;
+      row.hint = item.hint;
+      row.resCls = item.role === 'waste' ? 'is-warn' : 'is-ok';
+      addNote(item.label + ': ' + item.result, item.role === 'waste' ? 'abn' : 'ok');
+
+    } else if (kind === 'treat') {
+      row.res = item.hint;
+      row.resCls = item.role === 'harm' ? 'is-abn' : 'is-ok';
+      addNote('Назначено: ' + item.label, item.role === 'harm' ? 'abn' : 'ok');
+
+    } else if (kind === 'dx') {
+      state.dx = id;
+      state.done['__dx'] = true;
+      row.id = '__dx';
+      row.dxId = id;
+      row.act = 'Диагноз: ' + item.label;
+      row.res = 'Диагноз зафиксирован. Приём можно продолжать — назначения ещё не сделаны.';
+      row.resCls = '';
+      addNote('Выставлен диагноз: ' + item.label, 'abn');
+    }
+
+    logRow(row);
+    updateCounters();
+  }
+
+  function performExam(item, row, opts) {
+    if (item.kind === 'auscult') {
+      $('auscPanel').hidden = false;
+      row.res = item.note;
+      row.resCls = '';
+      requestAnimationFrame(drawScope);
+      $('auscPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+
+    if (item.kind === 'throat') {
+      switchVideo('throat');
+      $('videoBadge').textContent = 'Осмотр зева';
+      var v = $('videoThroat');
+      v.currentTime = 0;
+      v.play().catch(function () {});
+      if (!opts.silent) say(CASE.system[item.voice].audio, CASE.system[item.voice].text);
+      row.res = item.result;
+      row.resCls = 'is-abn';
+      addNote(item.title, 'abn');
+      return;
+    }
+
+    row.res = item.result;
+    row.resCls = item.findAbnormal ? 'is-abn' : 'is-ok';
+    addNote(item.title || item.label, item.findAbnormal ? 'abn' : 'ok');
+
+    if (item.voice && CASE.system[item.voice] && !opts.silent) {
+      say(CASE.system[item.voice].audio, CASE.system[item.voice].text);
+    }
+
+    /* Проба с кашлем меняет трактовку уже услышанного. */
+    if (item.id === 'e.cough' && state.currentPoint) {
+      var f = CASE.auscultation.findings[state.currentPoint.finding];
+      if (f.abnormal) {
+        $('readoutDesc').textContent =
+          'После покашливания хрипы изменили звучание и частично исчезли, затем вернулись ' +
+          'при следующем вдохе. Это подвижный секрет в просвете бронхов, а не фиброз.';
+      }
     }
   }
 
   /* =========================================================
-     Показатели и карта осмотра
+     Протокол
      ========================================================= */
+
+  function resetLog() {
+    $('log').innerHTML =
+      '<li class="log-empty">Пациент вошёл и ждёт. Ничего не произойдёт, пока вы не начнёте.</li>';
+    updateCounters();
+  }
+
+  function logRow(row) {
+    var ul = $('log');
+    var empty = ul.querySelector('.log-empty');
+    if (empty) empty.remove();
+
+    row.ts = (Date.now() - state.t0) / 1000;
+    state.log.push(row);
+
+    var n = 0, i;
+    for (i = 0; i < state.log.length; i++) if (state.log[i].id) n++;
+
+    var li = document.createElement('li');
+    li.className = 'log-row' + (row.cat ? ' is-' + row.cat : '') +
+                   (row.kind === 'unknown' ? ' is-unknown' : '') +
+                   (row.repeat ? ' is-repeat' : '');
+
+    var h = '<div class="log-meta">' +
+      '<span class="log-n">' + (row.id ? n : '·') + '</span>' +
+      '<span class="log-time">' + mmss(row.ts) + '</span>' +
+      '<span class="log-cat">' + esc(row.cat ? CAT_NAME[row.cat] : catNameOf(row.kind)) + '</span>' +
+      '</div><div class="log-body">' +
+      '<div class="log-act">' + esc(row.act) + '</div>';
+
+    if (row.corrected) {
+      h += '<div class="log-fix">понято как «' + esc(row.corrected) + '»</div>';
+    }
+    if (row.res) {
+      h += '<div class="log-res ' + (row.resCls || '') + '">' + esc(row.res) + '</div>';
+    }
+    if (row.hint) {
+      h += '<div class="log-hint">' + esc(row.hint) + '</div>';
+    }
+    h += '</div>';
+
+    li.innerHTML = h;
+    ul.appendChild(li);
+    ul.scrollTop = ul.scrollHeight;
+    updateCounters();
+  }
+
+  function catNameOf(kind) {
+    return kind === 'patient' ? 'Пациент' :
+           kind === 'unknown' ? 'Не понято' :
+           kind === 'refused' ? 'Отказ' : '—';
+  }
+
+  function updateCounters() {
+    var n = 0, i;
+    for (i = 0; i < state.log.length; i++) if (state.log[i].id) n++;
+    $('stepCount').textContent = n;
+
+    var pTot = 0, pGot = 0;
+    CASE.passport.forEach(function (p) { pTot++; if (state.done[p.id]) pGot++; });
+    $('passportCounter').textContent = pGot + ' / ' + pTot;
+
+    var vTot = 0, vGot = 0;
+    CASE.vitals.forEach(function (v) { vTot++; if (state.done[v.id]) vGot++; });
+    $('vitalsCounter').textContent = vGot + ' / ' + vTot;
+  }
+
+  /* =========================================================
+     Левая колонка: паспорт, показатели, карта осмотра
+     ========================================================= */
+
+  function renderPassport() {
+    var box = $('passport');
+    box.innerHTML = '';
+    CASE.passport.forEach(function (p) {
+      var got = !!state.done[p.id];
+      var dt = document.createElement('dt');
+      dt.textContent = p.field;
+      var dd = document.createElement('dd');
+      dd.className = got ? 'is-got' : 'is-empty';
+      dd.textContent = got ? p.value : 'не спрошено';
+      box.appendChild(dt);
+      box.appendChild(dd);
+    });
+  }
 
   function renderVitals() {
     var box = $('vitals');
     box.innerHTML = '';
     CASE.vitals.forEach(function (v) {
+      var got = !!state.done[v.id];
       var d = document.createElement('div');
-      d.className = 'vital' + (v.flag && v.flag !== 'ok' ? ' is-' + v.flag : '') +
-        (String(v.value).length > 4 ? ' is-wide' : '');
-      d.innerHTML = '<div class="vital-label">' + v.label + '</div>' +
-        '<div class="vital-value">' + v.value +
-        '<span class="vital-unit">' + (v.unit || '') + '</span></div>';
+      d.className = 'vital' + (got ? (v.flag && v.flag !== 'ok' ? ' is-' + v.flag : '') : ' is-empty') +
+        (got && String(v.value).length > 4 ? ' is-wide' : '');
+      d.innerHTML = '<div class="vital-label">' + esc(v.field) + '</div>' +
+        '<div class="vital-value">' + (got ? esc(v.value) : '—') +
+        '<span class="vital-unit">' + (got ? esc(v.unit || '') : 'не измерено') + '</span></div>';
       box.appendChild(d);
     });
   }
 
   function resetNotes() {
-    $('notes').innerHTML = '<li class="notes-empty">Записи появятся по ходу приёма.</li>';
+    $('notes').innerHTML = '<li class="notes-empty">Пусто. Ни один факт не получен.</li>';
     $('notesCounter').textContent = '0';
   }
 
@@ -282,7 +526,7 @@
     var li = document.createElement('li');
     li.innerHTML = '<span class="note-mark' +
       (kind === 'abn' ? ' is-abn' : kind === 'ok' ? ' is-ok' : '') + '"></span>' +
-      '<span>' + text + '</span>';
+      '<span>' + esc(text) + '</span>';
     ul.appendChild(li);
     ul.scrollTop = ul.scrollHeight;
     $('notesCounter').textContent = ul.children.length;
@@ -315,109 +559,27 @@
 
   function onVoiceEnded() {
     hideSpeaking();
-    Array.prototype.forEach.call(document.querySelectorAll('.turn.is-active'), function (t) {
-      t.classList.remove('is-active');
-    });
     setTimeout(function () {
       if (voice.paused) $('subtitle').hidden = true;
     }, 2600);
     if (voice._onEnd) { var f = voice._onEnd; voice._onEnd = null; f(); }
   }
 
-  /* =========================================================
-     Этап 1 — жалоба
-     ========================================================= */
-
-  function playGreeting() {
-    var g = CASE.patient.greeting;
-    say(g.audio, g.text);
-
-    if (!state.greetingHeard) {
-      state.greetingHeard = true;
-      addTurn('pat', 'Пациент', g.text, true);
-      $('dialogue').hidden = false;
-      $('toHistory').disabled = false;
-      $('intakeHint').textContent =
-        'Жалоба звучит легко — «чуть кашель». Не принимайте формулировку пациента за оценку тяжести: расспросите подробно.';
-      addNote('Жалоба: кашель, по словам пациента незначительный');
-      Array.prototype.forEach.call(document.querySelectorAll('.step'), function (b) {
-        b.disabled = false;
-      });
-    }
-  }
-
-  function clearDialogue() {
-    $('dialogueLog').innerHTML = '';
-    $('dialogueLog2').innerHTML = '';
-    $('dialogue').hidden = true;
-    $('subtitle').hidden = true;
-  }
-
-  function addTurn(who, label, text, active) {
-    ['dialogueLog', 'dialogueLog2'].forEach(function (id) {
-      var ul = $(id);
-      var li = document.createElement('li');
-      li.className = 'turn is-' + who + (active ? ' is-active' : '');
-      li.innerHTML = '<div class="turn-who">' + label + '</div>' +
-        '<div class="turn-text">' + text + '</div>';
-      ul.appendChild(li);
-      ul.scrollTop = ul.scrollHeight;
-    });
-  }
-
-  /* =========================================================
-     Этап 2 — анамнез
-     ========================================================= */
-
-  function renderQuestions() {
-    var box = $('qgrid');
-    box.innerHTML = '';
-    CASE.questions.forEach(function (q) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'qbtn';
-      b.dataset.key = q.key;
-      b.textContent = q.q;
-      b.addEventListener('click', function () { ask(q, b); });
-      box.appendChild(b);
-    });
-    updateHistoryProgress();
-  }
-
-  function ask(q, btn) {
-    var first = state.asked.indexOf(q.key) === -1;
-    if (first) {
-      state.asked.push(q.key);
-      btn.classList.add('is-asked');
-      addTurn('doc', 'Врач', q.q, false);
-      addTurn('pat', 'Пациент', q.a, true);
-      if (q.tag) addNote(q.tag, q.weight >= 2 ? 'abn' : null);
-      updateHistoryProgress();
+  function switchVideo(which) {
+    var idle = $('videoIdle'), throat = $('videoThroat');
+    if (which === 'throat') {
+      throat.classList.add('is-active');
+      idle.classList.remove('is-active');
     } else {
-      Array.prototype.forEach.call(document.querySelectorAll('.turn'), function (t) {
-        t.classList.remove('is-active');
-      });
+      idle.classList.add('is-active');
+      throat.classList.remove('is-active');
+      throat.pause();
+      idle.play().catch(function () {});
     }
-    say(q.audio, q.a);
-  }
-
-  function historyScore() {
-    var total = 0, got = 0;
-    CASE.questions.forEach(function (q) {
-      total += q.weight;
-      if (state.asked.indexOf(q.key) !== -1) got += q.weight;
-    });
-    return total ? got / total : 0;
-  }
-
-  function updateHistoryProgress() {
-    var pct = Math.round(historyScore() * 100);
-    $('histFill').style.width = pct + '%';
-    $('histPct').textContent = pct + ' %';
   }
 
   /* =========================================================
-     Этап 3 — аускультация
+     Аускультация
      ========================================================= */
 
   function renderChest() {
@@ -471,12 +633,17 @@
     $('readoutDesc').textContent = f.desc;
 
     $('stethoToggle').disabled = false;
-    $('coughBtn').disabled = !f.abnormal;
     $('scopeIdle').hidden = true;
 
     if (first) {
       addNote(p.label + ': ' + f.title, f.abnormal ? 'abn' : 'ok');
       renderCoverage();
+      logRow({
+        kind: 'exam', cat: 'exam', id: 'ausc:' + p.id,
+        act: 'Выслушано: ' + p.label,
+        res: f.title + '. ' + f.desc,
+        resCls: f.abnormal ? 'is-abn' : 'is-ok'
+      });
     }
 
     voice.pause();
@@ -499,20 +666,6 @@
     var playing = !lung.paused;
     $('stethoLabel').textContent = playing ? 'Пауза' : 'Слушать';
     $('stethoToggle').classList.toggle('is-playing', playing);
-  }
-
-  function askCough() {
-    if (!state.currentPoint) return;
-    var p = state.currentPoint;
-    state.coughed = true;
-    $('readoutDesc').textContent =
-      'Заключение после покашливания: хрипы изменили звучание и частично исчезли, ' +
-      'затем вернулись при следующем вдохе. Это подвижный секрет в просвете бронхов, ' +
-      'а не фиброз и не крепитация альвеол.';
-    addNote('Проба с кашлем (' + p.label + '): хрипы изменчивы — секрет в бронхах', 'abn');
-    $('coughBtn').disabled = true;
-    lung.currentTime = 0;
-    lung.play().then(setLungLabel).catch(setLungLabel);
   }
 
   function renderCoverage() {
@@ -599,223 +752,200 @@
   }
 
   /* =========================================================
-     Этап 4 — зев
+     Хронология для правил на порядок действий
      ========================================================= */
 
-  function examineThroat() {
-    var v = $('videoThroat');
-    switchVideo('throat');
-    v.currentTime = 0;
-    v.play().catch(function () {});
+  function makeTimeline() {
+    var acts = [], i;
+    for (i = 0; i < state.log.length; i++) if (state.log[i].id) acts.push(state.log[i]);
 
-    if (!state.throatDone) {
-      state.throatDone = true;
-      addNote(CASE.throat.title,CASE.throat.abnormal ? 'abn' : 'ok');
+    var idx = {};
+    for (i = 0; i < acts.length; i++) {
+      if (!(acts[i].id in idx)) idx[acts[i].id] = i;
     }
 
-    $('throatBadge').textContent =
-      CASE.throat.abnormal === 'mild' ? 'Лёгкие изменения' :
-      CASE.throat.abnormal ? 'Патология' : 'Норма';
-    $('throatTitle').textContent = CASE.throat.title;
-    $('throatDesc').textContent = CASE.throat.desc;
-    $('throatFinding').hidden = false;
-  }
-
-  /* =========================================================
-     Этап 5 — исследования
-     ========================================================= */
-
-  function renderWorkup() {
-    var box = $('workup');
-    box.innerHTML = '';
-    CASE.workup.forEach(function (w) {
-      var card = document.createElement('div');
-      card.className = 'wu';
-
-      var head = document.createElement('button');
-      head.type = 'button';
-      head.className = 'wu-head';
-      head.innerHTML = '<span>' + w.name + '</span>' +
-        '<span class="wu-order">Назначить</span>';
-
-      var body = document.createElement('div');
-      body.className = 'wu-body';
-      body.hidden = true;
-      body.innerHTML = '<div class="wu-result">' + w.result + '</div>' +
-        (w.hint ? '<div class="wu-hint">' + w.hint + '</div>' : '');
-
-      head.addEventListener('click', function () {
-        var open = card.classList.toggle('is-open');
-        body.hidden = !open;
-        head.querySelector('.wu-order').textContent = open ? 'Результат получен' : 'Назначить';
-        if (open && state.ordered.indexOf(w.id) === -1) {
-          state.ordered.push(w.id);
-          addNote(w.name + ' — выполнено');
+    return {
+      at: function (id) { return (id in idx) ? idx[id] : -1; },
+      did: function (id) { return (id in idx); },
+      firstOf: function (c) {
+        for (var k = 0; k < acts.length; k++) {
+          if (acts[k].cat === c || acts[k].kind === c) return k;
         }
-      });
-
-      card.appendChild(head);
-      card.appendChild(body);
-      box.appendChild(card);
-    });
-  }
-
-  /* =========================================================
-     Этап 6 — диагноз
-     ========================================================= */
-
-  function renderDiagnosis() {
-    var box = $('dxlist');
-    box.innerHTML = '';
-    CASE.diagnosis.options.forEach(function (o) {
-      var lab = document.createElement('label');
-      lab.className = 'dx';
-      lab.innerHTML = '<input type="radio" name="dx" value="' + o.id + '"><span>' + o.name + '</span>';
-      lab.querySelector('input').addEventListener('change', function () {
-        state.dx = o.id;
-        Array.prototype.forEach.call(document.querySelectorAll('.dx'), function (d) {
-          d.classList.remove('is-sel');
-        });
-        lab.classList.add('is-sel');
-        $('submitDx').disabled = false;
-      });
-      box.appendChild(lab);
-    });
-    $('submitDx').disabled = true;
-  }
-
-  function checkDxReadiness() {
-    var gaps = [];
-    var heardCount = Object.keys(state.heard).length;
-    if (historyScore() < 0.6) gaps.push('анамнез собран неполно');
-    if (heardCount < CASE.auscultation.points.length)
-      gaps.push('прослушано полей: ' + heardCount + ' из ' + CASE.auscultation.points.length);
-    if (!state.throatDone) gaps.push('зев не осмотрен');
-
-    var w = $('dxWarn');
-    if (gaps.length) {
-      w.hidden = false;
-      w.textContent = 'Осмотр не завершён: ' + gaps.join('; ') +
-        '. Диагноз поставить можно, но это будет отражено в разборе.';
-    } else {
-      w.hidden = true;
-    }
-  }
-
-  function submitDiagnosis() {
-    if (!state.dx) return;
-    stopAll();
-    renderDebrief();
-    show('debrief');
-    Array.prototype.forEach.call(document.querySelectorAll('.step'), function (b) {
-      b.classList.add('is-done');
-      b.classList.remove('is-current');
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+        return -1;
+      },
+      countOf: function (c) {
+        var n = 0;
+        for (var k = 0; k < acts.length; k++) {
+          if (acts[k].cat === c || acts[k].kind === c) n++;
+        }
+        return n;
+      }
+    };
   }
 
   /* =========================================================
      Разбор
      ========================================================= */
 
+  function finish(silent) {
+    if (!state.finished && !state.dx && !silent) {
+      /* Диагноз — часть задания, но принудить к нему нельзя: врач вправе
+         закончить приём и без него, и разбор это покажет. */
+      var box = $('clarify');
+      box.innerHTML = '<div class="clarify-head">Диагноз не сформулирован. Завершить приём без диагноза?</div>';
+      var yes = document.createElement('button');
+      yes.type = 'button';
+      yes.className = 'clarify-btn';
+      yes.textContent = 'Да, завершить и показать разбор';
+      yes.addEventListener('click', function () { box.hidden = true; finish(true); });
+      var no = document.createElement('button');
+      no.type = 'button';
+      no.className = 'clarify-btn is-none';
+      no.textContent = 'Нет, продолжу приём';
+      no.addEventListener('click', function () { box.hidden = true; });
+      box.appendChild(yes);
+      box.appendChild(no);
+      box.hidden = false;
+      return;
+    }
+
+    state.finished = true;
+    stopAll();
+    if (clockId) { clearInterval(clockId); clockId = null; }
+    renderDebrief();
+    $('sheet').hidden = false;
+    $('sheet').scrollTop = 0;
+  }
+
   function renderDebrief() {
-    var correctId = CASE.diagnosis.correct;
-    var chosen = pick(CASE.diagnosis.options, state.dx);
-    var right = state.dx === correctId;
-
-    var hist = historyScore();
-    var pts = CASE.auscultation.points;
-    var abnPts = pts.filter(function (p) {
-      return CASE.auscultation.findings[p.finding].abnormal;
-    });
-    var heardIds = Object.keys(state.heard);
-    var abnFound = abnPts.filter(function (p) { return !!state.heard[p.id]; });
-    var ausc = pts.length ? heardIds.length / pts.length : 0;
-    var abnRate = abnPts.length ? abnFound.length / abnPts.length : 1;
-
-    var wu = CASE.workup.length ? state.ordered.length / CASE.workup.length : 0;
-    var ctDone = state.ordered.indexOf('ct') !== -1;
-
-    var total = Math.round(100 * (
-      0.32 * hist +
-      0.18 * ausc +
-      0.14 * abnRate +
-      0.04 * (state.throatDone ? 1 : 0) +
-      0.04 * (state.coughed ? 1 : 0) +
-      0.08 * wu +
-      0.20 * (right ? 1 : 0)
-    ));
-
-    var missedQ = CASE.questions.filter(function (q) {
-      return q.weight >= 2 && state.asked.indexOf(q.key) === -1;
-    });
-    var missedPts = abnPts.filter(function (p) { return !state.heard[p.id]; });
-
+    var t = makeTimeline();
+    var s = computeScore(t);
     var h = '';
 
-    h += '<div class="result-hero ' + (right ? 'is-right' : 'is-wrong') + '">' +
-      '<div class="result-verdict">' + esc(chosen.verdict) + '</div>' +
-      '<div class="result-dx">' + esc(chosen.name) + '</div>' +
-      '<div class="result-why">' + esc(chosen.why) + '</div>';
-    if (!right) {
-      var c = pick(CASE.diagnosis.options, correctId);
-      h += '<div class="result-why" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line)">' +
-        '<strong>Правильный ответ: ' + esc(c.name) + '.</strong> ' + esc(c.why) + '</div>';
+    /* --- Итог --- */
+    h += '<div class="result-head">' +
+      '<div class="result-total ' + band(s.total) + '">' + s.total + ' %</div>' +
+      '<div><h2>Разбор приёма</h2><p>' + esc(grade(s.total)) + '</p></div></div>';
+
+    h += '<div class="scores">' +
+      tile('Расспрос', pctS(s.ask), 'вес 25 %', band(s.ask * 100)) +
+      tile('Паспортная часть', pctS(s.pass), 'вес 5 %', band(s.pass * 100)) +
+      tile('Показатели', pctS(s.vit), 'вес 10 %', band(s.vit * 100)) +
+      tile('Физикальный осмотр', pctS(s.exam), 'вес 20 %', band(s.exam * 100)) +
+      tile('Обследование', pctS(s.order), 'вес 15 %', band(s.order * 100)) +
+      tile('Лечение', pctS(s.treat), 'вес 10 %', band(s.treat * 100)) +
+      tile('Диагноз', s.dx ? 'верно' : 'нет', 'вес 10 %', s.dx ? 'is-good' : 'is-bad') +
+      tile('Алгоритм', pctS(s.algo), 'вес 5 %', band(s.algo * 100)) +
+      '</div>';
+
+    /* --- Хронология --- */
+    h += '<div class="block"><h3>Хронология приёма — ваш алгоритм</h3>';
+    var acts = 0, i;
+    h += '<ol class="timeline">';
+    for (i = 0; i < state.log.length; i++) {
+      var e = state.log[i];
+      if (!e.id && e.kind !== 'unknown' && e.kind !== 'refused' && e.kind !== 'patient') continue;
+      if (e.id) acts++;
+      h += '<li class="tl' + (e.id ? '' : ' is-void') + '">' +
+        '<span class="tl-time">' + mmss(e.ts) + '</span>' +
+        '<span class="tl-cat">' + esc(e.cat ? CAT_NAME[e.cat] : catNameOf(e.kind)) + '</span>' +
+        '<span class="tl-act">' + esc(e.act) + '</span></li>';
+    }
+    h += '</ol><p class="block-note">Результативных действий: ' + acts +
+      ' · длительность приёма ' + mmss(state.log.length ? state.log[state.log.length - 1].ts : 0) +
+      '</p></div>';
+
+    /* --- Ошибки и пропуски --- */
+    var errs = '';
+
+    errs += errGroupHtml('Не собраны паспортные данные',
+      CASE.passport.filter(notDone).map(function (p) {
+        return { label: p.field + ' — ' + p.label.toLowerCase(), why: p.why };
+      }));
+
+    errs += errGroupHtml('Не измерено',
+      CASE.vitals.filter(notDone).map(function (v) {
+        return {
+          label: v.field,
+          why: v.abnormal
+            ? 'Показатель был отклонён от нормы (' + v.value + ' ' + (v.unit || '') +
+              ') — отклонение осталось незамеченным.'
+            : null
+        };
+      }));
+
+    errs += errGroupHtml('Не заданы важные вопросы',
+      CASE.questions.filter(notDone).filter(function (q) { return q.important; })
+        .map(function (q) { return { label: q.label, why: q.why }; }));
+
+    errs += errGroupHtml('Не заданы прочие вопросы',
+      CASE.questions.filter(notDone).filter(function (q) { return !q.important; })
+        .map(function (q) { return { label: q.label, why: null }; }));
+
+    errs += errGroupHtml('Не выявленные патологии', missedPathology());
+
+    errs += errGroupHtml('Не назначено — обследование',
+      CASE.orders.filter(notDone).filter(function (o) { return o.role === 'need'; })
+        .map(function (o) { return { label: o.label, why: o.hint }; }));
+
+    errs += errGroupHtml('Стоило рассмотреть — обследование',
+      CASE.orders.filter(notDone).filter(function (o) { return o.role === 'useful'; })
+        .map(function (o) { return { label: o.label, why: o.hint }; }));
+
+    errs += errGroupHtml('Не назначено — лечение',
+      CASE.treatment.filter(notDone).filter(function (x) { return x.role === 'need'; })
+        .map(function (x) { return { label: x.label, why: x.hint }; }));
+
+    errs += errGroupHtml('Назначено зря',
+      CASE.orders.filter(isDone).filter(function (o) { return o.role === 'waste'; })
+        .map(function (o) { return { label: o.label, why: o.hint }; }));
+
+    errs += errGroupHtml('Назначено ошибочно',
+      CASE.treatment.filter(isDone).filter(function (x) { return x.role === 'harm'; })
+        .map(function (x) { return { label: x.label, why: x.hint }; }));
+
+    errs += errGroupHtml('Пациент не понял вопрос',
+      state.unknowns.map(function (u) { return { label: '«' + u + '»', why: null }; }));
+
+    h += '<div class="block"><h3>Ошибки и пропуски</h3>' +
+      (errs || '<p class="all-clear">Пропусков нет: собрано всё, что можно было собрать, ' +
+               'и ничего лишнего не назначено.</p>') +
+      '</div>';
+
+    /* --- Алгоритм --- */
+    var viol = violations(t);
+    h += '<div class="block"><h3>Замечания по алгоритму</h3>';
+    if (!viol.length) {
+      h += '<p class="all-clear">Последовательность действий выдержана правильно.</p>';
+    } else {
+      h += '<ul class="keylist is-bad">';
+      viol.forEach(function (r) {
+        h += '<li><b>' + esc(r.text) + '</b><span>' + esc(r.why) + '</span></li>';
+      });
+      h += '</ul>';
     }
     h += '</div>';
 
-    h += '<div class="score-row">' +
-      tile('Итог', total + ' %', grade(total), band(total)) +
-      tile('Анамнез', Math.round(hist * 100) + ' %',
-        state.asked.length + ' из ' + CASE.questions.length + ' вопросов', band(hist * 100)) +
-      tile('Аускультация', heardIds.length + '/' + pts.length,
-        'патология найдена: ' + abnFound.length + ' из ' + abnPts.length, band(abnRate * 100)) +
-      tile('Исследования', state.ordered.length + '/' + CASE.workup.length,
-        ctDone ? 'КТ назначена' : 'КТ не назначена', band(ctDone ? 100 : 45)) +
-      '</div>';
-
-    h += '<div class="block"><h3>Ключевые признаки случая</h3><ul class="keylist">';
-    CASE.debrief.keyFindings.forEach(function (k) {
-      h += '<li>' + esc(k) + '</li>';
-    });
+    /* --- Ключевые находки случая --- */
+    h += '<div class="block"><h3>Что было в этом случае</h3><ul class="keylist">';
+    CASE.debrief.keyFindings.forEach(function (k) { h += '<li>' + esc(k) + '</li>'; });
     h += '</ul></div>';
 
-    if (missedQ.length || missedPts.length || !state.throatDone || !ctDone) {
-      h += '<div class="block"><h3>Что вы упустили</h3><ul class="keylist">';
-      missedQ.forEach(function (q) {
-        h += '<li class="is-missed">Не спросили: «' + esc(q.q) + '» ' +
-          '<span class="miss-tag">— ' + esc(q.tag) + '</span></li>';
-      });
-      missedPts.forEach(function (p) {
-        h += '<li class="is-missed">Не прослушали ' + esc(p.label) +
-          ' <span class="miss-tag">— там были хрипы</span></li>';
-      });
-      if (!state.throatDone)
-        h += '<li class="is-missed">Не осмотрели зев</li>';
-      if (!state.coughed)
-        h += '<li class="is-missed">Не выполнили пробу с кашлем ' +
-          '<span class="miss-tag">— она отличает секрет в бронхах от фиброза</span></li>';
-      if (!ctDone)
-        h += '<li class="is-missed">Не назначили КТ ' +
-          '<span class="miss-tag">— золотой стандарт при подозрении на бронхоэктазы</span></li>';
-      h += '</ul></div>';
-    } else {
-      h += '<div class="block"><h3>Полнота осмотра</h3>' +
-        '<p>Осмотр проведён полностью: анамнез собран, все поля прослушаны, ' +
-        'патология найдена во всех зонах, зев осмотрен, КТ назначена.</p></div>';
-    }
-
-    h += '<div class="block"><h3>Ловушка этого случая</h3><p>' +
+    h += '<div class="block is-trap"><h3>Ловушка случая</h3><p>' +
       esc(CASE.debrief.trap) + '</p></div>';
 
-    h += '<div class="block"><h3>Разбор остальных вариантов</h3>';
+    /* --- Разбор диагнозов --- */
+    h += '<div class="block"><h3>Разбор вариантов диагноза</h3><div class="alts">';
     CASE.diagnosis.options.forEach(function (o) {
-      if (o.id === state.dx) return;
-      h += '<div class="alt"><div class="alt-name">' + esc(o.name) +
+      var mine = state.dx === o.id;
+      var right = o.id === CASE.diagnosis.correct;
+      h += '<div class="alt' + (right ? ' is-right' : '') + (mine ? ' is-mine' : '') + '">' +
+        '<div class="alt-head"><span class="alt-name">' + esc(o.label) +
+        (mine ? ' <em>— ваш ответ</em>' : '') + '</span>' +
         '<span class="alt-verdict">' + esc(o.verdict) + '</span></div>' +
         '<div class="alt-why">' + esc(o.why) + '</div></div>';
     });
-    h += '</div>';
+    h += '</div></div>';
 
     h += '<div class="block"><h3>Дальнейшая тактика</h3><p>' +
       esc(CASE.debrief.nextSteps) + '</p></div>';
@@ -823,31 +953,219 @@
     $('debrief').innerHTML = h;
   }
 
+  function notDone(x) { return !state.done[x.id]; }
+  function isDone(x) { return !!state.done[x.id]; }
+
+  function missedPathology() {
+    var out = [];
+
+    /* Не выслушанные поля с патологией. */
+    CASE.auscultation.points.forEach(function (p) {
+      var f = CASE.auscultation.findings[p.finding];
+      if (f.abnormal && !state.heard[p.id]) {
+        out.push({
+          label: p.label + ' — ' + f.title,
+          why: 'Поле не выслушано. Именно здесь была слышна патология.'
+        });
+      }
+    });
+    if (!state.done['e.ausc']) {
+      out.push({ label: 'Аускультация лёгких не проводилась совсем',
+                 why: pick(CASE.exams, 'e.ausc').why });
+    }
+
+    /* Не выполненные приёмы, которые дали бы патологию. */
+    CASE.exams.forEach(function (e) {
+      if (e.findAbnormal && e.kind !== 'auscult' && !state.done[e.id]) {
+        out.push({ label: e.title || e.label, why: e.why });
+      }
+    });
+
+    /* Не найденные патологии в показателях. */
+    CASE.vitals.forEach(function (v) {
+      if (v.abnormal && !state.done[v.id]) {
+        out.push({ label: v.field + ' ' + v.value + ' ' + (v.unit || ''),
+                   why: 'Отклонение осталось неизмеренным.' });
+      }
+    });
+
+    return out;
+  }
+
+  function errGroupHtml(title, items) {
+    if (!items || !items.length) return '';
+    var h = '<div class="err-group"><h4>' + esc(title) +
+      ' <span class="err-n">' + items.length + '</span></h4><ul>';
+    items.forEach(function (it) {
+      h += '<li><b>' + esc(it.label) + '</b>' +
+        (it.why ? '<span>' + esc(it.why) + '</span>' : '') + '</li>';
+    });
+    return h + '</ul></div>';
+  }
+
+  function violations(t) {
+    var out = [];
+    CASE.algorithm.forEach(function (r) {
+      var bad = false;
+      try { bad = !!r.test(t); } catch (e) { bad = false; }
+      if (bad) out.push(r);
+    });
+    return out;
+  }
+
+  /* =========================================================
+     Оценка
+     ========================================================= */
+
+  function computeScore(t) {
+    var s = {};
+
+    s.ask = ratio(CASE.questions, function (q) { return q.weight || 1; });
+    s.pass = ratio(CASE.passport, function (p) { return p.important ? 2 : 1; });
+    s.vit = ratio(CASE.vitals, function (v) { return v.weight || 1; });
+
+    /* Физикальный осмотр: аускультация считается отдельно — важно не то,
+       что врач её начал, а сколько полей прослушал и нашёл ли патологию. */
+    var eTot = 0, eGot = 0;
+    CASE.exams.forEach(function (e) {
+      var w = e.weight || 0;
+      if (!w) return;
+      eTot += w;
+      if (e.kind === 'auscult') {
+        var heard = 0, abn = 0, abnTot = 0;
+        CASE.auscultation.points.forEach(function (p) {
+          var f = CASE.auscultation.findings[p.finding];
+          if (f.abnormal) abnTot++;
+          if (state.heard[p.id]) { heard++; if (f.abnormal) abn++; }
+        });
+        var cov = heard / CASE.auscultation.points.length;
+        var found = abnTot ? abn / abnTot : 1;
+        eGot += w * (0.4 * cov + 0.6 * found);
+      } else if (state.done[e.id]) {
+        eGot += w;
+      }
+    });
+    s.exam = eTot ? eGot / eTot : 0;
+
+    s.order = roleScore(CASE.orders, 'waste', 0.10);
+    s.treat = roleScore(CASE.treatment, 'harm', 0.20);
+    s.dx = state.dx === CASE.diagnosis.correct;
+
+    var v = violations(t).length;
+    s.algo = Math.max(0, 1 - v * 0.15);
+
+    s.total = Math.round(100 * (
+      0.25 * s.ask + 0.05 * s.pass + 0.10 * s.vit + 0.20 * s.exam +
+      0.15 * s.order + 0.10 * s.treat + 0.10 * (s.dx ? 1 : 0) + 0.05 * s.algo
+    ));
+    return s;
+  }
+
+  function ratio(list, wOf) {
+    var tot = 0, got = 0;
+    list.forEach(function (x) {
+      var w = wOf(x);
+      tot += w;
+      if (state.done[x.id]) got += w;
+    });
+    return tot ? got / tot : 0;
+  }
+
+  /* Полезное набирает, вредное и бессмысленное вычитает. */
+  function roleScore(list, badRole, penalty) {
+    var tot = 0, got = 0, bad = 0;
+    list.forEach(function (x) {
+      if (x.role === badRole) {
+        if (state.done[x.id]) bad++;
+        return;
+      }
+      if (x.role === 'waste') {
+        if (state.done[x.id]) bad++;
+        return;
+      }
+      var w = x.weight || 1;
+      tot += w;
+      if (state.done[x.id]) got += w;
+    });
+    var base = tot ? got / tot : 0;
+    return Math.max(0, base - bad * penalty);
+  }
+
+  function pctS(x) { return Math.round(x * 100) + ' %'; }
+
   function tile(label, value, note, cls) {
     return '<div class="score ' + cls + '">' +
-      '<div class="score-label">' + label + '</div>' +
-      '<div class="score-value">' + value + '</div>' +
-      '<div class="score-note">' + note + '</div></div>';
+      '<div class="score-label">' + esc(label) + '</div>' +
+      '<div class="score-value">' + esc(value) + '</div>' +
+      '<div class="score-note">' + esc(note) + '</div></div>';
   }
 
   function band(pct) { return pct >= 80 ? 'is-good' : pct >= 50 ? 'is-mid' : 'is-bad'; }
 
   function grade(t) {
-    return t >= 85 ? 'осмотр проведён образцово' :
+    return t >= 85 ? 'приём проведён образцово' :
            t >= 70 ? 'хорошо, но есть пробелы' :
-           t >= 50 ? 'осмотр поверхностный' :
+           t >= 50 ? 'приём поверхностный' :
                      'ключевые данные не собраны';
   }
 
   function pick(arr, id) {
     for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i];
-    return arr[0];
+    return null;
   }
 
   function esc(s) {
-    return String(s).replace(/[&<>"]/g, function (c) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
     });
+  }
+
+  /* =========================================================
+     Демо-прогон: правильный приём в правильном порядке.
+     Нужен для проверки разбора, а не для обучения.
+     ========================================================= */
+
+  function runDemo() {
+    var order = [];
+    CASE.passport.forEach(function (p) { order.push(p.id); });
+    CASE.questions.forEach(function (q) { order.push(q.id); });
+    CASE.vitals.forEach(function (v) { order.push(v.id); });
+
+    order.push('e.chestshape', 'e.skin', 'e.fingers', 'e.lymph', 'e.percussion',
+               'e.fremitus', 'e.deep', 'e.ausc');
+
+    order.forEach(function (id) { perform(id, { silent: true }); });
+
+    CASE.auscultation.points.forEach(function (p) {
+      state.heard[p.id] = p.finding;
+      state.currentPoint = p;
+      logRow({
+        kind: 'exam', cat: 'exam', id: 'ausc:' + p.id,
+        act: 'Выслушано: ' + p.label,
+        res: CASE.auscultation.findings[p.finding].title,
+        resCls: CASE.auscultation.findings[p.finding].abnormal ? 'is-abn' : 'is-ok'
+      });
+    });
+    renderCoverage();
+
+    ['e.cough', 'e.throat', 'e.heart', 'e.abdomen'].forEach(function (id) {
+      perform(id, { silent: true });
+    });
+
+    CASE.orders.forEach(function (o) {
+      if (o.role !== 'waste') perform(o.id, { silent: true });
+    });
+
+    perform(CASE.diagnosis.correct, { silent: true });
+
+    CASE.treatment.forEach(function (x) {
+      if (x.role !== 'harm') perform(x.id, { silent: true });
+    });
+
+    switchVideo('idle');
+    voice.pause();
+    hideSpeaking();
+    $('subtitle').hidden = true;
   }
 
   init();
