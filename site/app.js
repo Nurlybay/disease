@@ -12,11 +12,30 @@
 
   /* Кнопки категорий. Подсказывают ТИП действия и сужают разбор строки,
      но не перечисляют, что именно спрашивать или назначать. */
+  /* Подгруппы (`sub`) — второй ряд кнопок под выбранной категорией.
+     Два вида: `run` сразу выполняет каноническую фразу через обычный
+     конвейер (submit → NLU), `ph` лишь сужает подсказку в строке ввода.
+     Показатели названы прямо — их шесть плиток и так видно на экране
+     с самого старта, кнопки не выдают ничего нового. Назначения нигде
+     не перечислены, поэтому их подгруппы остаются родовыми: что именно
+     назначить, врач по-прежнему пишет сам. */
   var CATS = [
     { id: 'ask',     label: 'Спросить',  ph: 'О чём спросить пациента? Формулируйте своими словами' },
-    { id: 'measure', label: 'Измерить',  ph: 'Какой показатель измерить?' },
+    { id: 'measure', label: 'Измерить',  ph: 'Какой показатель измерить?',
+      sub: [
+        { label: 'Температура', run: 'измерить температуру' },
+        { label: 'Пульс',       run: 'измерить пульс' },
+        { label: 'ЧДД',         run: 'посчитать чдд' },
+        { label: 'АД',          run: 'измерить давление' },
+        { label: 'SpO₂',        run: 'измерить сатурацию' },
+        { label: 'Рост и вес',  run: 'взвесить пациента' }
+      ] },
     { id: 'exam',    label: 'Осмотреть', ph: 'Какой физикальный приём выполнить?' },
-    { id: 'order',   label: 'Назначить', ph: 'Какое исследование назначить?' },
+    { id: 'order',   label: 'Назначить', ph: 'Какое исследование назначить?',
+      sub: [
+        { label: 'Анализы',           ph: 'Какой анализ назначить? Напишите название' },
+        { label: 'Инструментальные',  ph: 'Какое инструментальное исследование назначить?' }
+      ] },
     { id: 'treat',   label: 'Лечение',   ph: 'Что назначить из лечения?' },
     { id: 'dx',      label: 'Диагноз',   ph: 'Ваш диагноз?' }
   ];
@@ -214,6 +233,31 @@
     $('actInput').placeholder = c ? c.ph : FREE_PH;
     Array.prototype.forEach.call(document.querySelectorAll('.cat-btn'), function (b) {
       b.classList.toggle('is-on', b.dataset.cat === id);
+    });
+    renderSubcats(c);
+  }
+
+  function renderSubcats(c) {
+    var box = $('subcats');
+    box.innerHTML = '';
+    box.hidden = !c || !c.sub;
+    if (box.hidden) return;
+    c.sub.forEach(function (sc) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'subcat-btn';
+      b.textContent = sc.label;
+      b.addEventListener('click', function () {
+        if (sc.run) { submit(sc.run); }
+        else {
+          $('actInput').placeholder = sc.ph;
+          Array.prototype.forEach.call(box.children, function (x) {
+            x.classList.toggle('is-on', x === b);
+          });
+        }
+        $('actInput').focus();
+      });
+      box.appendChild(b);
     });
   }
 

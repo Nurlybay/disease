@@ -2,3 +2,4 @@
 *.log
 disease-standalone.html
 /tmp/
+.worktrees/
