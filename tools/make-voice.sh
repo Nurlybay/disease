@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
-# Генерация реплик пациента: macOS `say` (голос Milena) + понижение тона до мужского.
-# Требует: macOS с русским голосом Milena, ffmpeg.
+# Генерация реплик пациента: edge-tts, нейронный голос ru-RU-DmitryNeural.
+# Требует: python3 c пакетом edge-tts (pip install edge-tts), ffmpeg,
+# и сеть — но только на время генерации: сайт в рантайме остаётся офлайн,
+# mp3 лежат в репозитории. Сервис Microsoft бесплатный, ключей не нужно.
+#
+# Раньше здесь был macOS `say` с единственным русским голосом — женской
+# Milena, сдвинутой в мужской диапазон (asetrate*0.84 + atempo). Дмитрий —
+# настоящий мужской голос, поэтому сдвиг тона убран; полосовая фильтрация,
+# паузы и loudnorm оставлены, чтобы громкость реплик не разъехалась с
+# аудио аускультации.
 #
 # Идемпотентно: перезапуск просто перезаписывает mp3 теми же настройками.
 # Имена файлов должны совпадать с полями `audio` в site/cases/*.js —
@@ -10,16 +18,20 @@ cd "$(dirname "$0")/.."
 OUT=site/media/voice
 mkdir -p "$OUT"
 
-VOICE=Milena
-RATE=168
-PITCH=0.84            # множитель частоты дискретизации -> понижение тона (~3 полутона)
-TEMPO=1.190476        # 1/PITCH, возвращает исходную длительность
+VOICE=ru-RU-DmitryNeural
+RATE="-6%"            # чуть медленнее нейтрального: пациент не диктор
+
+python3 -m edge_tts --list-voices >/dev/null 2>&1 || {
+  echo "edge-tts не найден. Установите: python3 -m pip install --user edge-tts" >&2
+  exit 1
+}
 
 say_line() {
   local name="$1" text="$2"
-  say -v "$VOICE" -r "$RATE" -o "/tmp/_v.aiff" "$text"
-  ffmpeg -y -v error -i /tmp/_v.aiff -af \
-    "aresample=44100,asetrate=44100*${PITCH},aresample=44100,atempo=${TEMPO},highpass=f=85,lowpass=f=8200,adelay=250|250,apad=pad_dur=0.5,loudnorm=I=-16:TP=-1.5:LRA=11" \
+  python3 -m edge_tts --voice "$VOICE" --rate="$RATE" \
+    --text "$text" --write-media /tmp/_v.mp3 >/dev/null
+  ffmpeg -y -v error -i /tmp/_v.mp3 -af \
+    "highpass=f=85,lowpass=f=8200,adelay=250|250,apad=pad_dur=0.5,loudnorm=I=-16:TP=-1.5:LRA=11" \
     -ar 44100 -ac 1 -b:a 128k "$OUT/$name.mp3"
   printf '  %-14s %5.2fs  %s\n' "$name" \
     "$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$OUT/$name.mp3")" "$text"

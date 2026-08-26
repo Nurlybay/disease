@@ -289,16 +289,59 @@
       return;
     }
 
-    /* Не понял. Это не ошибка тренажёра — это отсутствие формулировки. */
-    state.unknowns.push(raw);
-    var u = CASE.system.unknown;
-    logRow({
-      kind: 'unknown', cat: null,
-      act: '«' + raw + '»',
-      res: u.text,
-      resCls: 'is-warn'
+    /* Не понял. Прежде чем сдаться, спрашиваем локальный ЛЛМ-прокси
+       (tools/nlu-proxy.py): если он запущен и уверенно выбрал намерение
+       из каталога, действие идёт обычным конвейером — озвученный заранее
+       ответ, детерминированный разбор. Без прокси XHR на 127.0.0.1 падает
+       мгновенно, и приём работает как раньше. */
+    askLLM(raw, function (id) {
+      if (id && BYID[id]) {
+        perform(id, { raw: raw, corrected: labelOf(id) });
+        return;
+      }
+      state.unknowns.push(raw);
+      var u = CASE.system.unknown;
+      logRow({
+        kind: 'unknown', cat: null,
+        act: '«' + raw + '»',
+        res: u.text,
+        resCls: 'is-warn'
+      });
+      say(u.audio, u.text);
     });
-    say(u.audio, u.text);
+  }
+
+  /* ЛЛМ-фолбэк понимания. Прокси не отвечает за пациента и не ставит
+     оценок — он лишь выбирает id из каталога, который мы сами и прислали.
+     Ключ API живёт в переменной окружения прокси, страница его не видит.
+     Любая ошибка — сеть, таймаут, кривой ответ — эквивалентна «не понял». */
+  var LLM_URL = 'http://127.0.0.1:8790/match';
+
+  function askLLM(raw, done) {
+    var x, fin = false;
+    function finish(id) { if (!fin) { fin = true; done(id); } }
+    try {
+      x = new XMLHttpRequest();
+      x.open('POST', LLM_URL, true);
+      x.timeout = 8000;
+      x.setRequestHeader('Content-Type', 'application/json');
+      x.onreadystatechange = function () {
+        if (x.readyState !== 4) return;
+        if (x.status !== 200) { finish(null); return; }
+        var id = null;
+        try { id = JSON.parse(x.responseText).id || null; } catch (e) {}
+        finish(id);
+      };
+      x.ontimeout = function () { finish(null); };
+      x.onerror = function () { finish(null); };
+      x.send(JSON.stringify({
+        text: raw,
+        cat: state.cat || null,
+        intents: INTENTS.map(function (it) {
+          return { id: it.id, cat: it.cat, label: labelOf(it.id) };
+        })
+      }));
+    } catch (e) { finish(null); }
   }
 
   function askClarify(raw, options) {
