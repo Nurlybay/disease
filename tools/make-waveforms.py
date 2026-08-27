@@ -16,9 +16,11 @@ SR = 8000              # частоты выше для огибающей не 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MEDIA = ROOT / "site" / "media"
 
+# Ключ волновой формы = имя файла без расширения; на него ссылается поле
+# `wf` находки в файле персонажа. Библиотека сканируется целиком, поэтому
+# новый звук достаточно положить в site/media/lungs/ и перезапустить скрипт.
 TARGETS = {
-    "lung-crackles": MEDIA / "lung-crackles.mp3",
-    "lung-normal": MEDIA / "lung-normal.mp3",
+    p.stem: p for p in sorted((MEDIA / "lungs").glob("*.mp3"))
 }
 
 

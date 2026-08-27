@@ -14,7 +14,7 @@ function load(rel) {
 }
 sandbox.window.CASES = [];
 load('site/nlu.js');
-load('site/cases/bronchiectasis.js');
+load('site/characters/bronchiectasis-abenov.js');
 
 var NLU = sandbox.NLU || sandbox.window.NLU;
 var CASE = sandbox.window.CASES[0];

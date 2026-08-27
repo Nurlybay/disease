@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Свободный приём — тренажёр клинического мышления</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <div>
+      <div class="brand-name">Свободный приём</div>
+      <div class="brand-sub">Врач ведёт приём сам — этапов нет</div>
+    </div>
+  </div>
+
+  <div class="topbar-mid">
+    <div class="chrono">
+      <span class="chrono-label">Действий</span>
+      <span class="chrono-val" id="stepCount">0</span>
+    </div>
+    <div class="chrono">
+      <span class="chrono-label">Время приёма</span>
+      <span class="chrono-val" id="clock">00:00</span>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <div class="patient-chip">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="patientChip">—</span>
+    </div>
+    <button class="btn btn-primary btn-sm" id="finishBtn" type="button">Завершить приём</button>
+    <button class="btn btn-ghost btn-sm" id="restartBtn" type="button">Заново</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ЛЕВАЯ КОЛОНКА: пациент. Всё пусто, пока врач не добудет. -->
+  <section class="col-patient" aria-label="Пациент">
+    <div class="video-frame">
+      <video id="videoIdle"   class="patient-video is-active" muted loop playsinline preload="auto"></video>
+      <video id="videoThroat" class="patient-video" muted playsinline preload="auto"></video>
+
+      <div class="video-badge" id="videoBadge">Кабинет</div>
+
+      <div class="speaking" id="speakingIndicator" hidden>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span>
+        <span class="speaking-label">пациент говорит</span>
+      </div>
+
+      <div class="subtitle" id="subtitle" hidden></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Паспортная часть</h3>
+        <span class="counter" id="passportCounter">0 / 0</span>
+      </div>
+      <dl class="passport" id="passport"></dl>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h3>Показатели</h3>
+        <span class="counter" id="vitalsCounter">0 / 0</span>
+      </div>
+      <div class="vitals" id="vitals"></div>
+    </div>
+
+    <div class="notepad">
+      <div class="notepad-head">
+        <h3>Карта осмотра</h3>
+        <span class="counter" id="notesCounter">0</span>
+      </div>
+      <ul class="notes" id="notes">
+        <li class="notes-empty">Пусто. Ни один факт не получен.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ПРАВАЯ КОЛОНКА: протокол приёма и консоль действий -->
+  <section class="col-work">
+
+    <div class="proto">
+      <div class="proto-head">
+        <h2>Протокол приёма</h2>
+        <span class="proto-hint">Порядок ваших действий фиксируется и разбирается в конце</span>
+      </div>
+      <ul class="log" id="log">
+        <li class="log-empty">Пациент вошёл и ждёт. Ничего не произойдёт, пока вы не начнёте.</li>
+      </ul>
+    </div>
+
+    <!-- Рабочая панель: аускультация. Открывается по действию врача. -->
+    <div class="panel" id="auscPanel" hidden>
+      <div class="panel-head">
+        <h3>Аускультация лёгких</h3>
+        <button class="btn btn-ghost btn-sm" type="button" data-close="auscPanel">Свернуть</button>
+      </div>
+
+      <div class="auscult">
+        <div class="chest-wrap">
+          <svg class="chest" viewBox="0 0 300 380" role="group" aria-label="Схема грудной клетки, вид со спины">
+            <defs>
+              <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"  stop-color="#3a4658"/>
+                <stop offset="100%" stop-color="#2a3342"/>
+              </linearGradient>
+            </defs>
+            <!-- руки, опущены вдоль тела; рисуются под торсом -->
+            <g fill="#2b3441" stroke="#44526580" stroke-width="1.2">
+              <ellipse cx="58"  cy="164" rx="16" ry="52" transform="rotate(7 58 164)"/>
+              <ellipse cx="242" cy="164" rx="16" ry="52" transform="rotate(-7 242 164)"/>
+            </g>
+            <!-- голова и шея -->
+            <path d="M135 46 h30 v24 h-30 z" fill="#333e4d"/>
+            <circle cx="150" cy="32" r="25" fill="url(#skin)" stroke="#4d5b70" stroke-width="1.5"/>
+            <!-- торс, вид со спины: плечи шире, талия уже -->
+            <path d="M150 62
+                     C136 62 128 66 118 73
+                     C104 82 84 90 74 102
+                     C66 112 66 126 70 142
+                     C76 170 82 202 86 240
+                     C89 272 90 306 92 330
+                     L208 330
+                     C210 306 211 272 214 240
+                     C218 202 224 170 230 142
+                     C234 126 234 112 226 102
+                     C216 90 196 82 182 73
+                     C172 66 164 62 150 62 Z"
+                  fill="url(#skin)" stroke="#4d5b70" stroke-width="1.6"/>
+            <!-- линия плеч -->
+            <path d="M84 96 q66 16 132 0" fill="none" stroke="#5a6a80" stroke-width="1.2" opacity=".5"/>
+            <!-- проекция лёгочных полей -->
+            <g fill="rgba(120,170,200,.14)" stroke="rgba(150,195,220,.36)" stroke-width="1.2">
+              <path d="M142 102 C124 102 110 112 104 132
+                       C98 154 98 202 102 238
+                       C105 266 116 284 130 286
+                       C139 287 142 280 142 262 Z"/>
+              <path d="M158 102 C176 102 190 112 196 132
+                       C202 154 202 202 198 238
+                       C195 266 184 284 170 286
+                       C161 287 158 280 158 262 Z"/>
+            </g>
+            <!-- позвоночник -->
+            <path d="M150 72 L150 326" stroke="#5a6a80" stroke-width="2" stroke-dasharray="5 6" opacity=".85"/>
+            <!-- лопатки -->
+            <g fill="none" stroke="#65768e" stroke-width="1.3" opacity=".5">
+              <path d="M101 114 L136 124 L114 164 Z"/>
+              <path d="M199 114 L164 124 L186 164 Z"/>
+            </g>
+            <!-- рёберные ориентиры -->
+            <g stroke="#5a6a80" stroke-width="1" opacity=".28" fill="none">
+              <path d="M104 176 q46 12 92 0"/>
+              <path d="M100 226 q50 12 100 0"/>
+              <path d="M104 276 q46 10 92 0"/>
+            </g>
+            <text x="150" y="352" class="chest-caption" text-anchor="middle">вид со спины</text>
+            <text x="112" y="90" class="chest-side" text-anchor="middle">R</text>
+            <text x="188" y="90" class="chest-side" text-anchor="middle">L</text>
+            <g id="chestPoints"></g>
+          </svg>
+        </div>
+
+        <div class="stetho">
+          <div class="stetho-screen">
+            <canvas id="scope" width="520" height="130" aria-hidden="true"></canvas>
+            <div class="stetho-idle" id="scopeIdle">Выберите точку на схеме</div>
+          </div>
+
+          <div class="stetho-readout">
+            <div class="readout-title" id="readoutTitle">Точка не выбрана</div>
+            <div class="readout-desc" id="readoutDesc">Сколько полей прослушать и в каком порядке — решаете вы. Патология выявляется контрастом между зонами.</div>
+          </div>
+
+          <div class="stetho-controls">
+            <button class="btn btn-primary" id="stethoToggle" type="button" disabled>
+              <span class="ico-play" aria-hidden="true"></span><span id="stethoLabel">Слушать</span>
+            </button>
+            <label class="vol">
+              <span>Громкость</span>
+              <input type="range" id="vol" min="0" max="100" value="80">
+            </label>
+          </div>
+
+          <p class="stetho-tip">Наденьте наушники. Дыхательные шумы лежат в диапазоне 100–1000 Гц — динамики ноутбука срезают половину.</p>
+        </div>
+      </div>
+
+      <div class="coverage" id="coverage"></div>
+    </div>
+
+    <!-- Консоль действий -->
+    <div class="console">
+      <div class="cats" id="cats" role="group" aria-label="Тип действия"></div>
+      <div class="subcats" id="subcats" role="group" aria-label="Подгруппа" hidden></div>
+
+      <form class="console-row" id="actForm" autocomplete="off">
+        <input class="console-input" id="actInput" type="text" spellcheck="false"
+               placeholder="Что вы делаете? Напишите своими словами…"
+               aria-label="Действие врача">
+        <button class="btn btn-primary" id="actGo" type="submit">Выполнить</button>
+      </form>
+
+      <div class="clarify" id="clarify" hidden></div>
+
+      <p class="console-hint" id="consoleHint">Ничего не подсказывается. Спрашивайте, измеряйте, осматривайте, назначайте и формулируйте диагноз в том порядке, который считаете правильным.</p>
+    </div>
+
+  </section>
+</main>
+
+<!-- РАЗБОР: перекрывает экран целиком -->
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-inner">
+    <div id="debrief"></div>
+    <footer class="sheet-foot">
+      <button class="btn btn-primary" id="againBtn" type="button">Пройти случай заново</button>
+      <button class="btn btn-ghost" id="exportBtn" type="button">Отправить результат преподавателю</button>
+      <button class="btn btn-ghost" id="closeSheet" type="button">Вернуться к протоколу</button>
+    </footer>
+  </div>
+</div>
+
+<!-- Экспорт результата: студент вводит ФИО и группу, получает код
+     (или файл), пересылает его преподавателю любым способом. -->
+<div class="export" id="exportBox" hidden>
+  <div class="export-card" role="dialog" aria-label="Отправить результат преподавателю">
+    <h3>Отправить результат преподавателю</h3>
+    <p class="export-note">Код содержит весь протокол вашего приёма. Готового балла
+       в нём нет — преподаватель пересчитает оценку у себя. Перешлите код или файл
+       любым удобным способом.</p>
+
+    <label class="export-field">ФИО
+      <input type="text" id="exportName" placeholder="Иванов Иван" autocomplete="name">
+    </label>
+    <label class="export-field">Группа
+      <input type="text" id="exportGroup" placeholder="например, 302 ЛД" autocomplete="off">
+    </label>
+
+    <textarea class="export-code" id="exportCode" readonly
+              placeholder="Код появится после ввода ФИО"></textarea>
+
+    <div class="export-actions">
+      <button class="btn btn-primary" id="exportCopy" type="button" disabled>Скопировать код</button>
+      <button class="btn btn-ghost" id="exportFile" type="button" disabled>Скачать файл</button>
+      <button class="btn btn-ghost" id="exportClose" type="button">Закрыть</button>
+    </div>
+    <p class="export-hint" id="exportHint" aria-live="polite"></p>
+  </div>
+</div>
+
+<script src="media/waveforms.js"></script>
+<script src="nlu.js"></script>
+<script src="score.js"></script>
+<!-- Персонаж выбирается случайно: loader.js подключает один файл из
+     characters/ и лишь затем app.js (отладка: ?char=имя-файла-без-.js). -->
+<script src="characters/manifest.js"></script>
+<script src="characters/loader.js"></script>
+</body>
+</html>

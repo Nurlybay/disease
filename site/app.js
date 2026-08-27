@@ -2,7 +2,8 @@
    всё, что происходит, происходит потому, что врач это написал.
 
    Один IIFE, ES5-совместимо, без сборки и без сети — файл открывается
-   и через file://. */
+   и через file://. Подсчёт оценки, пропуски и код результата вынесены
+   в score.js: их же использует страница преподавателя. */
 (function () {
   'use strict';
 
@@ -131,6 +132,11 @@
 
     $('auscPanel').hidden = true;
     $('sheet').hidden = true;
+    $('exportBox').hidden = true;
+    $('exportName').value = '';
+    $('exportGroup').value = '';
+    $('exportCode').value = '';
+    setExportHint('');
     $('clarify').hidden = true;
     $('actInput').value = '';
     setCat(null);
@@ -175,6 +181,12 @@
     $('againBtn').addEventListener('click', restart);
     $('finishBtn').addEventListener('click', function () { finish(false); });
     $('closeSheet').addEventListener('click', function () { $('sheet').hidden = true; });
+    $('exportBtn').addEventListener('click', openExport);
+    $('exportClose').addEventListener('click', function () { $('exportBox').hidden = true; });
+    $('exportName').addEventListener('input', refreshExport);
+    $('exportGroup').addEventListener('input', refreshExport);
+    $('exportCopy').addEventListener('click', copyExport);
+    $('exportFile').addEventListener('click', downloadExport);
     $('stethoToggle').addEventListener('click', toggleLung);
     $('vol').addEventListener('input', function () { lung.volume = this.value / 100; });
     Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function (b) {
@@ -196,13 +208,7 @@
   }
 
   function tickClock() {
-    $('clock').textContent = mmss((Date.now() - state.t0) / 1000);
-  }
-
-  function mmss(sec) {
-    var s = Math.max(0, Math.floor(sec));
-    var m = Math.floor(s / 60);
-    return (m < 10 ? '0' : '') + m + ':' + (s % 60 < 10 ? '0' : '') + (s % 60);
+    $('clock').textContent = Score.mmss((Date.now() - state.t0) / 1000);
   }
 
   /* =========================================================
@@ -528,7 +534,7 @@
 
     var h = '<div class="log-meta">' +
       '<span class="log-n">' + (row.id ? n : '·') + '</span>' +
-      '<span class="log-time">' + mmss(row.ts) + '</span>' +
+      '<span class="log-time">' + Score.mmss(row.ts) + '</span>' +
       '<span class="log-cat">' + esc(row.cat ? CAT_NAME[row.cat] : catNameOf(row.kind)) + '</span>' +
       '</div><div class="log-body">' +
       '<div class="log-act">' + esc(row.act) + '</div>';
@@ -585,9 +591,13 @@
     if (state.done['p.name'] && state.done['p.age']) {
       who += ', ' + BYID['p.age'].value;
     }
-    var why = state.done['q.duration'] ? CASE.patient.reason
-            : state.done['q.cough'] ? 'Кашель, длительность не уточнена'
-            : 'Жалоба не уточнена';
+    /* Формулировку жалобы задаёт файл персонажа: patient.chip — список
+       {done, text}, побеждает первое условие, которое уже выполнено. */
+    var why = 'Жалоба не уточнена';
+    var states = CASE.patient.chip || [];
+    for (var i = 0; i < states.length; i++) {
+      if (state.done[states[i].done]) { why = states[i].text; break; }
+    }
     $('patientChip').textContent = who + ' · ' + why;
   }
 
@@ -650,15 +660,21 @@
   function say(src, text, onEnd) {
     lung.pause();
     voice.pause();
-    voice.src = src;
-    voice.currentTime = 0;
 
     var sub = $('subtitle');
     sub.textContent = text;
     sub.hidden = false;
-    showSpeaking();
 
     voice._onEnd = onEnd || null;
+    if (!src) {
+      // Реплика без озвучки: показываем только субтитр и продолжаем.
+      onVoiceEnded();
+      return;
+    }
+
+    voice.src = src;
+    voice.currentTime = 0;
+    showSpeaking();
     voice.play().catch(function () {
       // Автовоспроизведение заблокировано — субтитр всё равно показан.
       onVoiceEnded();
@@ -771,7 +787,10 @@
     lung.pause();
     lung.src = f.audio;
     lung.currentTime = 0;
-    lung._wf = p.finding === 'crackles' ? 'lung-crackles' : 'lung-normal';
+    /* Ключ волновой формы задаёт находка (поле wf = имя файла в
+       media/lungs/ без расширения); waveforms.js построен по той же
+       библиотеке, поэтому ключи совпадают автоматически. */
+    lung._wf = f.wf || p.finding;
     lung._abn = f.abnormal;
     lung.play().then(setLungLabel).catch(setLungLabel);
   }
@@ -872,38 +891,6 @@
   }
 
   /* =========================================================
-     Хронология для правил на порядок действий
-     ========================================================= */
-
-  function makeTimeline() {
-    var acts = [], i;
-    for (i = 0; i < state.log.length; i++) if (state.log[i].id) acts.push(state.log[i]);
-
-    var idx = {};
-    for (i = 0; i < acts.length; i++) {
-      if (!(acts[i].id in idx)) idx[acts[i].id] = i;
-    }
-
-    return {
-      at: function (id) { return (id in idx) ? idx[id] : -1; },
-      did: function (id) { return (id in idx); },
-      firstOf: function (c) {
-        for (var k = 0; k < acts.length; k++) {
-          if (acts[k].cat === c || acts[k].kind === c) return k;
-        }
-        return -1;
-      },
-      countOf: function (c) {
-        var n = 0;
-        for (var k = 0; k < acts.length; k++) {
-          if (acts[k].cat === c || acts[k].kind === c) n++;
-        }
-        return n;
-      }
-    };
-  }
-
-  /* =========================================================
      Разбор
      ========================================================= */
 
@@ -938,24 +925,25 @@
   }
 
   function renderDebrief() {
-    var t = makeTimeline();
-    var s = computeScore(t);
+    var t = Score.timeline(state.log);
+    var s = Score.compute(CASE, state);
     var h = '';
 
     /* --- Итог --- */
     h += '<div class="result-head">' +
-      '<div class="result-total ' + band(s.total) + '">' + s.total + ' %</div>' +
-      '<div><h2>Разбор приёма</h2><p>' + esc(grade(s.total)) + '</p></div></div>';
+      '<div class="result-total ' + Score.band(s.total) + '">' + s.total + ' %</div>' +
+      '<div><h2>Разбор приёма</h2><p>' + esc(Score.grade(s.total)) + '</p></div></div>';
 
     h += '<div class="scores">' +
-      tile('Расспрос', pctS(s.ask), 'вес 25 %', band(s.ask * 100)) +
-      tile('Паспортная часть', pctS(s.pass), 'вес 5 %', band(s.pass * 100)) +
-      tile('Показатели', pctS(s.vit), 'вес 10 %', band(s.vit * 100)) +
-      tile('Физикальный осмотр', pctS(s.exam), 'вес 20 %', band(s.exam * 100)) +
-      tile('Обследование', pctS(s.order), 'вес 15 %', band(s.order * 100)) +
-      tile('Лечение', pctS(s.treat), 'вес 10 %', band(s.treat * 100)) +
-      tile('Диагноз', s.dx ? 'верно' : 'нет', 'вес 10 %', s.dx ? 'is-good' : 'is-bad') +
-      tile('Алгоритм', pctS(s.algo), 'вес 5 % · правил в игре ' + s.rules, band(s.algo * 100)) +
+      tile('ask', Score.pct(s.ask), Score.band(s.ask * 100)) +
+      tile('pass', Score.pct(s.pass), Score.band(s.pass * 100)) +
+      tile('vit', Score.pct(s.vit), Score.band(s.vit * 100)) +
+      tile('exam', Score.pct(s.exam), Score.band(s.exam * 100)) +
+      tile('order', Score.pct(s.order), Score.band(s.order * 100)) +
+      tile('treat', Score.pct(s.treat), Score.band(s.treat * 100)) +
+      tile('dx', s.dx ? 'верно' : 'нет', s.dx ? 'is-good' : 'is-bad') +
+      tile('algo', Score.pct(s.algo), Score.band(s.algo * 100),
+           'вес 5 % · правил в игре ' + s.rules) +
       '</div>';
 
     /* --- Хронология --- */
@@ -967,65 +955,19 @@
       if (!e.id && e.kind !== 'unknown' && e.kind !== 'refused' && e.kind !== 'patient') continue;
       if (e.id) acts++;
       h += '<li class="tl' + (e.id ? '' : ' is-void') + '">' +
-        '<span class="tl-time">' + mmss(e.ts) + '</span>' +
+        '<span class="tl-time">' + Score.mmss(e.ts) + '</span>' +
         '<span class="tl-cat">' + esc(e.cat ? CAT_NAME[e.cat] : catNameOf(e.kind)) + '</span>' +
         '<span class="tl-act">' + esc(e.act) + '</span></li>';
     }
     h += '</ol><p class="block-note">Результативных действий: ' + acts +
-      ' · длительность приёма ' + mmss(state.log.length ? state.log[state.log.length - 1].ts : 0) +
+      ' · длительность приёма ' + Score.mmss(state.log.length ? state.log[state.log.length - 1].ts : 0) +
       '</p></div>';
 
     /* --- Ошибки и пропуски --- */
     var errs = '';
-
-    errs += errGroupHtml('Не собраны паспортные данные',
-      CASE.passport.filter(notDone).map(function (p) {
-        return { label: p.field + ' — ' + p.label.toLowerCase(), why: p.why };
-      }));
-
-    errs += errGroupHtml('Не измерено',
-      CASE.vitals.filter(notDone).map(function (v) {
-        return {
-          label: v.field,
-          why: v.abnormal
-            ? 'Показатель был отклонён от нормы (' + v.value + ' ' + (v.unit || '') +
-              ') — отклонение осталось незамеченным.'
-            : null
-        };
-      }));
-
-    errs += errGroupHtml('Не заданы важные вопросы',
-      CASE.questions.filter(notDone).filter(function (q) { return q.important; })
-        .map(function (q) { return { label: q.label, why: q.why }; }));
-
-    errs += errGroupHtml('Не заданы прочие вопросы',
-      CASE.questions.filter(notDone).filter(function (q) { return !q.important; })
-        .map(function (q) { return { label: q.label, why: null }; }));
-
-    errs += errGroupHtml('Не выявленные патологии', missedPathology());
-
-    errs += errGroupHtml('Не назначено — обследование',
-      CASE.orders.filter(notDone).filter(function (o) { return o.role === 'need'; })
-        .map(function (o) { return { label: o.label, why: o.hint }; }));
-
-    errs += errGroupHtml('Стоило рассмотреть — обследование',
-      CASE.orders.filter(notDone).filter(function (o) { return o.role === 'useful'; })
-        .map(function (o) { return { label: o.label, why: o.hint }; }));
-
-    errs += errGroupHtml('Не назначено — лечение',
-      CASE.treatment.filter(notDone).filter(function (x) { return x.role === 'need'; })
-        .map(function (x) { return { label: x.label, why: x.hint }; }));
-
-    errs += errGroupHtml('Назначено зря',
-      CASE.orders.filter(isDone).filter(function (o) { return o.role === 'waste'; })
-        .map(function (o) { return { label: o.label, why: o.hint }; }));
-
-    errs += errGroupHtml('Назначено ошибочно',
-      CASE.treatment.filter(isDone).filter(function (x) { return x.role === 'harm'; })
-        .map(function (x) { return { label: x.label, why: x.hint }; }));
-
-    errs += errGroupHtml('Пациент не понял вопрос',
-      state.unknowns.map(function (u) { return { label: '«' + u + '»', why: null }; }));
+    Score.missedGroups(CASE, state).forEach(function (g) {
+      errs += errGroupHtml(g.title, g.items);
+    });
 
     h += '<div class="block"><h3>Ошибки и пропуски</h3>' +
       (errs || '<p class="all-clear">Пропусков нет: собрано всё, что можно было собрать, ' +
@@ -1033,7 +975,7 @@
       '</div>';
 
     /* --- Алгоритм --- */
-    var viol = violations(t);
+    var viol = Score.violations(CASE, t);
     h += '<div class="block"><h3>Замечания по алгоритму</h3>';
     if (!viol.length) {
       h += '<p class="all-clear">Последовательность действий выдержана правильно.</p>';
@@ -1073,45 +1015,6 @@
     $('debrief').innerHTML = h;
   }
 
-  function notDone(x) { return !state.done[x.id]; }
-  function isDone(x) { return !!state.done[x.id]; }
-
-  function missedPathology() {
-    var out = [];
-
-    /* Не выслушанные поля с патологией. */
-    CASE.auscultation.points.forEach(function (p) {
-      var f = CASE.auscultation.findings[p.finding];
-      if (f.abnormal && !state.heard[p.id]) {
-        out.push({
-          label: p.label + ' — ' + f.title,
-          why: 'Поле не выслушано. Именно здесь была слышна патология.'
-        });
-      }
-    });
-    if (!state.done['e.ausc']) {
-      out.push({ label: 'Аускультация лёгких не проводилась совсем',
-                 why: pick(CASE.exams, 'e.ausc').why });
-    }
-
-    /* Не выполненные приёмы, которые дали бы патологию. */
-    CASE.exams.forEach(function (e) {
-      if (e.findAbnormal && e.kind !== 'auscult' && !state.done[e.id]) {
-        out.push({ label: e.title || e.label, why: e.why });
-      }
-    });
-
-    /* Не найденные патологии в показателях. */
-    CASE.vitals.forEach(function (v) {
-      if (v.abnormal && !state.done[v.id]) {
-        out.push({ label: v.field + ' ' + v.value + ' ' + (v.unit || ''),
-                   why: 'Отклонение осталось неизмеренным.' });
-      }
-    });
-
-    return out;
-  }
-
   function errGroupHtml(title, items) {
     if (!items || !items.length) return '';
     var h = '<div class="err-group"><h4>' + esc(title) +
@@ -1123,130 +1026,15 @@
     return h + '</ul></div>';
   }
 
-  /* Правило участвует в оценке только если его предпосылка возникла:
-     «КТ без рентгена» ничего не говорит о враче, который КТ не назначал.
-     Без этого фильтра бездействие получало бы высокий балл за алгоритм —
-     просто потому, что нарушать было нечего. Правило без `when` в игре
-     всегда. */
-  function applies(r, t) {
-    if (!r.when) return true;
-    try { return !!r.when(t); } catch (e) { return false; }
-  }
-
-  function violations(t) {
-    var out = [];
-    CASE.algorithm.forEach(function (r) {
-      if (!applies(r, t)) return;
-      var bad = false;
-      try { bad = !!r.test(t); } catch (e) { bad = false; }
-      if (bad) out.push(r);
-    });
-    return out;
-  }
-
-  function rulesInPlay(t) {
-    var n = 0;
-    CASE.algorithm.forEach(function (r) { if (applies(r, t)) n++; });
-    return n;
-  }
-
-  /* =========================================================
-     Оценка
-     ========================================================= */
-
-  function computeScore(t) {
-    var s = {};
-
-    s.ask = ratio(CASE.questions, function (q) { return q.weight || 1; });
-    s.pass = ratio(CASE.passport, function (p) { return p.important ? 2 : 1; });
-    s.vit = ratio(CASE.vitals, function (v) { return v.weight || 1; });
-
-    /* Физикальный осмотр: аускультация считается отдельно — важно не то,
-       что врач её начал, а сколько полей прослушал и нашёл ли патологию. */
-    var eTot = 0, eGot = 0;
-    CASE.exams.forEach(function (e) {
-      var w = e.weight || 0;
-      if (!w) return;
-      eTot += w;
-      if (e.kind === 'auscult') {
-        var heard = 0, abn = 0, abnTot = 0;
-        CASE.auscultation.points.forEach(function (p) {
-          var f = CASE.auscultation.findings[p.finding];
-          if (f.abnormal) abnTot++;
-          if (state.heard[p.id]) { heard++; if (f.abnormal) abn++; }
-        });
-        var cov = heard / CASE.auscultation.points.length;
-        var found = abnTot ? abn / abnTot : 1;
-        eGot += w * (0.4 * cov + 0.6 * found);
-      } else if (state.done[e.id]) {
-        eGot += w;
-      }
-    });
-    s.exam = eTot ? eGot / eTot : 0;
-
-    s.order = roleScore(CASE.orders, 'waste', 0.10);
-    s.treat = roleScore(CASE.treatment, 'harm', 0.20);
-    s.dx = state.dx === CASE.diagnosis.correct;
-
-    /* Доля соблюдённых правил среди тех, что были в игре, а не вычитание
-       фиксированного штрафа: иначе балл зависел бы от того, сколько правил
-       вообще есть в файле случая. */
-    s.rules = rulesInPlay(t);
-    s.algo = s.rules ? Math.max(0, 1 - violations(t).length / s.rules) : 0;
-
-    s.total = Math.round(100 * (
-      0.25 * s.ask + 0.05 * s.pass + 0.10 * s.vit + 0.20 * s.exam +
-      0.15 * s.order + 0.10 * s.treat + 0.10 * (s.dx ? 1 : 0) + 0.05 * s.algo
-    ));
-    return s;
-  }
-
-  function ratio(list, wOf) {
-    var tot = 0, got = 0;
-    list.forEach(function (x) {
-      var w = wOf(x);
-      tot += w;
-      if (state.done[x.id]) got += w;
-    });
-    return tot ? got / tot : 0;
-  }
-
-  /* Полезное набирает, вредное и бессмысленное вычитает. */
-  function roleScore(list, badRole, penalty) {
-    var tot = 0, got = 0, bad = 0;
-    list.forEach(function (x) {
-      if (x.role === badRole) {
-        if (state.done[x.id]) bad++;
-        return;
-      }
-      if (x.role === 'waste') {
-        if (state.done[x.id]) bad++;
-        return;
-      }
-      var w = x.weight || 1;
-      tot += w;
-      if (state.done[x.id]) got += w;
-    });
-    var base = tot ? got / tot : 0;
-    return Math.max(0, base - bad * penalty);
-  }
-
-  function pctS(x) { return Math.round(x * 100) + ' %'; }
-
-  function tile(label, value, note, cls) {
+  /* Плитка разбора: подпись и вес — из score.js, чтобы разбор и критерии
+     преподавателя не могли разойтись. */
+  function tile(key, value, cls, noteOverride) {
     return '<div class="score ' + cls + '">' +
-      '<div class="score-label">' + esc(label) + '</div>' +
+      '<div class="score-label">' + esc(Score.TILE_LABELS[key]) + '</div>' +
       '<div class="score-value">' + esc(value) + '</div>' +
-      '<div class="score-note">' + esc(note) + '</div></div>';
-  }
-
-  function band(pct) { return pct >= 80 ? 'is-good' : pct >= 50 ? 'is-mid' : 'is-bad'; }
-
-  function grade(t) {
-    return t >= 85 ? 'приём проведён образцово' :
-           t >= 70 ? 'хорошо, но есть пробелы' :
-           t >= 50 ? 'приём поверхностный' :
-                     'ключевые данные не собраны';
+      '<div class="score-note">' +
+        esc(noteOverride || 'вес ' + Math.round(Score.WEIGHTS[key] * 100) + ' %') +
+      '</div></div>';
   }
 
   function pick(arr, id) {
@@ -1261,6 +1049,64 @@
   }
 
   /* =========================================================
+     Экспорт результата преподавателю
+     ========================================================= */
+
+  /* Код содержит весь протокол приёма, но не балл: оценка пересчитывается
+     на странице преподавателя. ФИО обязательны — иначе журнал не сможет
+     отличить студентов друг от друга. */
+  function openExport() {
+    $('exportHint').textContent = '';
+    refreshExport();
+    $('exportBox').hidden = false;
+    $('exportName').focus();
+  }
+
+  function refreshExport() {
+    var name = $('exportName').value.replace(/^\s+|\s+$/g, '');
+    var group = $('exportGroup').value.replace(/^\s+|\s+$/g, '');
+    var ready = !!name;
+    $('exportCode').value = ready
+      ? Score.encodeResult(CASE, state, { name: name, group: group })
+      : '';
+    $('exportCopy').disabled = !ready;
+    $('exportFile').disabled = !ready;
+  }
+
+  function setExportHint(text) { $('exportHint').textContent = text; }
+
+  function copyExport() {
+    var ta = $('exportCode');
+    ta.focus();
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    if (ok) { setExportHint('Код скопирован — отправьте его преподавателю.'); return; }
+    /* Некоторые браузеры на file:// не пускают execCommand — пробуем
+       асинхронный clipboard API, он работает по клику. */
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(function () {
+        setExportHint('Код скопирован — отправьте его преподавателю.');
+      }, function () {
+        setExportHint('Автокопирование не удалось — код выделен, скопируйте вручную (⌘C / Ctrl+C).');
+      });
+    } else {
+      setExportHint('Код выделен — скопируйте вручную (⌘C / Ctrl+C).');
+    }
+  }
+
+  function downloadExport() {
+    var blob = new Blob([$('exportCode').value], { type: 'text/plain;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'результат-' + CASE.id + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 0);
+    setExportHint('Файл скачан — отправьте его преподавателю.');
+  }
+
+  /* =========================================================
      Демо-прогон: правильный приём в правильном порядке.
      Нужен для проверки разбора, а не для обучения.
      ========================================================= */
@@ -1271,8 +1117,13 @@
     CASE.questions.forEach(function (q) { order.push(q.id); });
     CASE.vitals.forEach(function (v) { order.push(v.id); });
 
-    order.push('e.chestshape', 'e.skin', 'e.fingers', 'e.lymph', 'e.percussion',
-               'e.fremitus', 'e.deep', 'e.ausc');
+    /* Осмотры — из данных случая: сперва все, кроме глубокого дыхания и
+       аускультации, затем e.deep и e.ausc в правильном порядке (правило
+       a.ausc-no-deep). Точки прослушиваются ниже отдельно. */
+    CASE.exams.forEach(function (e) {
+      if (e.id !== 'e.deep' && e.id !== 'e.ausc') order.push(e.id);
+    });
+    order.push('e.deep', 'e.ausc');
 
     order.forEach(function (id) { perform(id, { silent: true }); });
 
@@ -1291,10 +1142,6 @@
       });
     });
     renderCoverage();
-
-    ['e.cough', 'e.throat', 'e.heart', 'e.abdomen'].forEach(function (id) {
-      perform(id, { silent: true });
-    });
 
     CASE.orders.forEach(function (o) {
       if (o.role !== 'waste') perform(o.id, { silent: true });
