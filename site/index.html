@@ -41,21 +41,22 @@
     </a>
   </div>
 
+  <section class="picker">
+    <h2 class="picker-title">Выбор случая</h2>
+    <p class="picker-sub">Пронумерованы все: и встроенные пациенты, и свои
+      случаи из конструктора. Перейти можно и по номеру — преподавателю
+      удобно сообщать его в группу.</p>
+    <div id="casePicker"></div>
+  </section>
+
   <footer class="landing-foot">
     Работает офлайн, без регистрации и сети. Учебный тренажёр —
     не медицинское изделие и не диагностический инструмент.
   </footer>
 </main>
 
-<script>
-/* Отладочные параметры (?char=, ?demo=1, ?dx=, ?finish=1), если они
-   пришли на витрину, прокидываются на страницу тренажёра — старые
-   ссылки вида index.html?char=cf-omarov продолжают работать. */
-(function () {
-  if (location.search) {
-    document.getElementById('studentCard').href += location.search;
-  }
-})();
-</script>
+<script src="custom-cases.js"></script>
+<script src="characters/manifest.js"></script>
+<script src="picker.js"></script>
 </body>
 </html>

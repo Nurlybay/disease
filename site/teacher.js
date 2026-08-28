@@ -11,7 +11,8 @@
 (function () {
   'use strict';
 
-  var MANIFEST = window.CHARACTER_MANIFEST || [];
+  var MANIFEST_BUILT = window.CHARACTER_MANIFEST || [];
+  var MANIFEST = MANIFEST_BUILT.slice();
   var $ = function (id) { return document.getElementById(id); };
 
   function esc(s) {
@@ -21,6 +22,27 @@
   }
 
   function cases() { return window.CASES || []; }
+
+  /* Кастомные случаи живут в localStorage: их записи манифеста дописываются
+     к встроенным, а сами случаи разворачиваются inflate() прямо в
+     window.CASES — иначе журнал не смог бы пересчитать коды студентов,
+     прошедших кастомный приём. */
+  function refreshCustoms() {
+    var have = {};
+    MANIFEST = MANIFEST_BUILT.slice();
+    MANIFEST.forEach(function (m) { have[m.file] = 1; });
+
+    if (window.CustomCases) {
+      window.CASES = cases().filter(function (C) { return !C.custom; });
+      window.CustomCases.list().forEach(function (d) {
+        window.CASES.push(window.CustomCases.inflate(d));
+      });
+      window.CustomCases.manifestEntries().forEach(function (m) {
+        if (!have[m.file]) { have[m.file] = 1; MANIFEST.push(m); }
+      });
+    }
+    if (activeChar >= MANIFEST.length) activeChar = 0;
+  }
 
   function caseByManifest(m) {
     var want = m.file.replace(/\.js$/, '');
@@ -37,11 +59,14 @@
 
   /* Динамические <script> исполняются не по порядку вставки, поэтому
      считаем завершённые и рендерим, когда готовы все. Ошибка загрузки
-     тоже засчитывается: методичка покажет, какой файл не поднялся. */
+     тоже засчитывается: методичка покажет, какой файл не поднялся.
+     Кастомные записи файлов не имеют — они уже в CASES после
+     refreshCustoms(), и загружать их не нужно. */
   function loadAll(onDone) {
-    var left = MANIFEST.length;
+    var files = MANIFEST.filter(function (m) { return !m.custom; });
+    var left = files.length;
     if (!left) { onDone(); return; }
-    MANIFEST.forEach(function (m) {
+    files.forEach(function (m) {
       var s = document.createElement('script');
       s.src = 'characters/' + m.file;
       s.onload = s.onerror = function () {
@@ -145,8 +170,9 @@
         Array.prototype.forEach.call($('ttabs').children, function (x) {
           x.classList.toggle('is-on', x === b);
         });
-        ['method', 'journal', 'criteria'].forEach(function (t) {
-          $('tab-' + t).hidden = (t !== b.getAttribute('data-tab'));
+        ['method', 'journal', 'criteria', 'constructor'].forEach(function (t) {
+          var sec = $('tab-' + t);
+          if (sec) sec.hidden = (t !== b.getAttribute('data-tab'));
         });
       });
     });
@@ -162,9 +188,11 @@
     MANIFEST.forEach(function (m, i) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'char-tab' + (i === activeChar ? ' is-on' : '');
+      b.className = 'char-tab' + (m.custom ? ' is-custom' : '') +
+                    (i === activeChar ? ' is-on' : '');
       b.innerHTML = '<span class="ct-label">' + esc(m.label) + '</span>' +
-                    '<span class="ct-dis">' + esc(m.disease) + '</span>';
+                    '<span class="ct-dis">' + esc(m.disease) +
+                    (m.custom ? ' · свой случай' : '') + '</span>';
       b.addEventListener('click', function () {
         if (i === activeChar) return;
         stopAudio();
@@ -213,8 +241,10 @@
 
   function chestSvg(C) {
     var points = '';
-    C.auscultation.points.forEach(function (p) {
-      var f = C.auscultation.findings[p.finding];
+    var pts = (C.auscultation && C.auscultation.points) || [];
+    var finds = (C.auscultation && C.auscultation.findings) || {};
+    pts.forEach(function (p) {
+      var f = finds[p.finding] || {};
       points += '<g class="m-point' + (f.abnormal ? ' is-abn' : '') + '"' +
         ' data-point="' + esc(p.id) + '" tabindex="0" role="button"' +
         ' aria-label="' + esc(p.label) + '">' +
@@ -222,6 +252,12 @@
         '<circle class="mpt-core" cx="' + p.x + '" cy="' + p.y + '" r="3.6"/></g>';
     });
     return $('chestTpl').innerHTML.replace('<g class="chest-points"></g>', points);
+  }
+
+  /* Миниатюра снимка у обследования/приёма (кастомные случаи). */
+  function thumb(src) {
+    if (!src) return '';
+    return '<img class="m-thumb" src="' + esc(src) + '" alt="Снимок — результат исследования">';
   }
 
   function auscBlock(C, e) {
@@ -279,7 +315,7 @@
         '<p class="m-dis">' + esc(C.disease) + ' · ' + esc(m.label) + '</p>' +
         '<p class="m-stats">' + C.questions.length + ' вопросов · ' + C.exams.length +
           ' приёмов осмотра · ' + C.orders.length + ' обследований · ' +
-          C.treatment.length + ' назначений лечения · ' + C.algorithm.length +
+          C.treatment.length + ' назначений лечения · ' + (C.algorithm || []).length +
           ' правил порядка</p>' +
       '</div>' +
       '<div class="m-run">' +
@@ -289,7 +325,12 @@
       '</div>' +
     '</div>';
 
-    h += '<div class="m-trap"><h3>Ловушка случая</h3><p>' + esc(C.debrief.trap) + '</p></div>';
+    /* У кастомного случая блоки разбора могут быть не заполнены —
+       пустые не показываем вовсе. */
+    var deb = C.debrief || {};
+    if (deb.trap) {
+      h += '<div class="m-trap"><h3>Ловушка случая</h3><p>' + esc(deb.trap) + '</p></div>';
+    }
 
     /* Вступительная жалоба — тоже ответ, начинается последовательность. */
     h += '<div class="m-greet">' +
@@ -312,14 +353,14 @@
         (p.important && p.why ? '<div class="mp-why">' + esc(p.why) + '</div>' : '') +
       '</div>';
     });
-    h += sec('Паспортная часть', pass);
+    if (pass) h += sec('Паспортная часть', pass);
 
     /* Расспрос. */
-    var qs = '<div class="m-sec-head">' +
-      '<button class="btn btn-ghost btn-sm m-playall" type="button">Прослушать все ответы</button>' +
-      '<span class="m-sec-note">реплики идут подряд: жалоба → паспорт → вопросы</span></div>';
+    var hasVoice = !!C.patient.greeting.audio;
+    var qRows = '';
     C.questions.forEach(function (q) {
-      qs += '<div class="m-q' + (q.important ? ' is-imp' : '') + '">' +
+      if (q.audio) hasVoice = true;
+      qRows += '<div class="m-q' + (q.important ? ' is-imp' : '') + '">' +
         '<div class="m-q-head">' +
           '<span class="m-q-label">' + esc(q.label) + '</span>' +
           (q.important ? badge('важный', 'is-imp') : '') +
@@ -331,7 +372,14 @@
         (q.why ? '<div class="m-q-why">' + esc(q.why) + '</div>' : '') +
       '</div>';
     });
-    h += sec('Расспрос', qs);
+    /* «Прослушать все» без единой озвученной реплики бессмысленна —
+       кастомные случаи голоса не имеют. */
+    var qs = hasVoice
+      ? '<div class="m-sec-head">' +
+        '<button class="btn btn-ghost btn-sm m-playall" type="button">Прослушать все ответы</button>' +
+        '<span class="m-sec-note">реплики идут подряд: жалоба → паспорт → вопросы</span></div>' + qRows
+      : qRows;
+    if (qRows) h += sec('Расспрос', qs);
 
     /* Показатели. */
     var vs = '';
@@ -347,12 +395,15 @@
         (v.tech ? '<div class="mv-tech">Методика: ' + esc(v.tech) + '</div>' : '') +
       '</div>';
     });
-    h += sec('Показатели', vs);
+    if (vs) h += sec('Показатели', vs);
 
     /* Физикальный осмотр; на месте аускультации — карта точек. */
     var ex = '';
     C.exams.forEach(function (e) {
-      if (e.kind === 'auscult') { ex += auscBlock(C, e); return; }
+      if (e.kind === 'auscult' && C.auscultation && (C.auscultation.points || []).length) {
+        ex += auscBlock(C, e);
+        return;
+      }
       ex += '<div class="m-exam' + (e.findAbnormal ? ' is-abn' : '') + '">' +
         '<div class="m-item-head">' +
           '<span class="m-item-label">' + esc(e.title || e.label) + '</span>' +
@@ -361,9 +412,10 @@
         '</div>' +
         (e.result ? '<div class="m-item-res">' + esc(e.result) + '</div>' : '') +
         (e.why ? '<div class="m-item-why">' + esc(e.why) + '</div>' : '') +
+        thumb(e.img) +
       '</div>';
     });
-    h += sec('Физикальный осмотр', ex);
+    if (ex) h += sec('Физикальный осмотр', ex);
 
     /* Обследование по ролям. */
     var os = '';
@@ -380,11 +432,12 @@
           '</div>' +
           (o.result ? '<div class="m-item-res">' + esc(o.result) + '</div>' : '') +
           (o.hint ? '<div class="m-item-why">' + esc(o.hint) + '</div>' : '') +
+          thumb(o.img) +
         '</div>';
       });
       os += '</div>';
     });
-    h += sec('Обследование', os);
+    if (os) h += sec('Обследование', os);
 
     /* Лечение по ролям. */
     var ts = '';
@@ -404,11 +457,11 @@
       });
       ts += '</div>';
     });
-    h += sec('Лечение', ts);
+    if (ts) h += sec('Лечение', ts);
 
     /* Диагноз. */
     var ds = '';
-    C.diagnosis.options.forEach(function (o) {
+    (C.diagnosis.options || []).forEach(function (o) {
       var ok = o.id === C.diagnosis.correct;
       ds += '<div class="m-dx' + (ok ? ' is-ok' : '') + '">' +
         '<div class="m-item-head">' +
@@ -419,31 +472,37 @@
         (o.why ? '<div class="m-item-why">' + esc(o.why) + '</div>' : '') +
       '</div>';
     });
-    h += sec('Диагноз', ds);
+    if (ds) h += sec('Диагноз', ds);
 
     /* Алгоритм: правила описываются, функции не исполняются. */
-    var als = '<p class="m-algo-note">Правила на порядок действий. Правило с пометкой' +
-      ' «предпосылка» включается в оценку, только если ситуация возникла; без' +
-      ' пометки — в игре всегда.</p>';
-    C.algorithm.forEach(function (r) {
-      als += '<div class="m-rule">' +
-        '<div class="m-rule-head">' +
-          '<span class="m-rule-text">' + esc(r.text) + '</span>' +
-          (typeof r.when === 'function' ? badge('предпосылка', 'is-warn')
-                                        : badge('всегда в игре', 'is-dim')) +
-        '</div>' +
-        (r.why ? '<div class="m-rule-why">' + esc(r.why) + '</div>' : '') +
-      '</div>';
-    });
-    h += sec('Алгоритм приёма — ' + C.algorithm.length + ' правил', als);
+    if ((C.algorithm || []).length) {
+      var als = '<p class="m-algo-note">Правила на порядок действий. Правило с пометкой' +
+        ' «предпосылка» включается в оценку, только если ситуация возникла; без' +
+        ' пометки — в игре всегда.</p>';
+      C.algorithm.forEach(function (r) {
+        als += '<div class="m-rule">' +
+          '<div class="m-rule-head">' +
+            '<span class="m-rule-text">' + esc(r.text) + '</span>' +
+            (typeof r.when === 'function' ? badge('предпосылка', 'is-warn')
+                                          : badge('всегда в игре', 'is-dim')) +
+          '</div>' +
+          (r.why ? '<div class="m-rule-why">' + esc(r.why) + '</div>' : '') +
+        '</div>';
+      });
+      h += sec('Алгоритм приёма — ' + C.algorithm.length + ' правил', als);
+    }
 
     /* Ключевые находки и тактика. */
-    var keys = '<ul class="m-keys">';
-    C.debrief.keyFindings.forEach(function (k) { keys += '<li>' + esc(k) + '</li>'; });
-    keys += '</ul>';
-    h += sec('Ключевые находки', keys);
+    if (deb.keyFindings && deb.keyFindings.length) {
+      var keys = '<ul class="m-keys">';
+      deb.keyFindings.forEach(function (k) { keys += '<li>' + esc(k) + '</li>'; });
+      keys += '</ul>';
+      h += sec('Ключевые находки', keys);
+    }
 
-    h += sec('Тактика после диагноза', '<p class="m-next">' + esc(C.debrief.nextSteps) + '</p>');
+    if (deb.nextSteps) {
+      h += sec('Тактика после диагноза', '<p class="m-next">' + esc(deb.nextSteps) + '</p>');
+    }
 
     box.innerHTML = h;
   }
@@ -470,15 +529,15 @@
   function playPoint(el) {
     var m = MANIFEST[activeChar];
     var C = caseByManifest(m);
-    if (!C) return;
+    if (!C || !C.auscultation) return;
+    var pts = C.auscultation.points || [];
     var p = null, i;
-    for (i = 0; i < C.auscultation.points.length; i++) {
-      if (C.auscultation.points[i].id === el.getAttribute('data-point')) {
-        p = C.auscultation.points[i];
-      }
+    for (i = 0; i < pts.length; i++) {
+      if (pts[i].id === el.getAttribute('data-point')) p = pts[i];
     }
     if (!p) return;
-    var f = C.auscultation.findings[p.finding];
+    var f = (C.auscultation.findings || {})[p.finding];
+    if (!f) return;
     var ro = $('mReadout');
     if (ro) {
       ro.innerHTML = '<b>' + esc(p.label) + '</b> — ' + esc(f.title) + ' ' +
@@ -1017,6 +1076,7 @@
      Запуск
      ========================================================= */
 
+  refreshCustoms();
   loadAll(function () {
     if (!MANIFEST.length) {
       $('methodBody').innerHTML = '<div class="m-sec"><p class="m-load-err">' +
@@ -1029,5 +1089,17 @@
     bindTabs();
     bindMethod();
   });
+
+  /* Сохранение/удаление случая в конструкторе сразу отражается в
+     методичке и журнале: кастомы переинфлейтируются, вкладки персонажей
+     пересобираются. */
+  if (window.CustomCases) {
+    window.CustomCases.onChange(function () {
+      refreshCustoms();
+      renderCharTabs();
+      renderMethod();
+      renderJournal();
+    });
+  }
 
 })();

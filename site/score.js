@@ -78,7 +78,7 @@
 
   Score.violations = function (CASE, t) {
     var out = [];
-    CASE.algorithm.forEach(function (r) {
+    (CASE.algorithm || []).forEach(function (r) {
       if (!applies(r, t)) return;
       var bad = false;
       try { bad = !!r.test(t); } catch (e) { bad = false; }
@@ -89,7 +89,7 @@
 
   Score.rulesInPlay = function (CASE, t) {
     var n = 0;
-    CASE.algorithm.forEach(function (r) { if (applies(r, t)) n++; });
+    (CASE.algorithm || []).forEach(function (r) { if (applies(r, t)) n++; });
     return n;
   };
 
@@ -132,25 +132,29 @@
       return Math.max(0, base - bad * penalty);
     }
 
-    s.ask = ratio(CASE.questions, function (q) { return q.weight || 1; });
-    s.pass = ratio(CASE.passport, function (p) { return p.important ? 2 : 1; });
-    s.vit = ratio(CASE.vitals, function (v) { return v.weight || 1; });
+    s.ask = ratio(CASE.questions || [], function (q) { return q.weight || 1; });
+    s.pass = ratio(CASE.passport || [], function (p) { return p.important ? 2 : 1; });
+    s.vit = ratio(CASE.vitals || [], function (v) { return v.weight || 1; });
 
     /* Физикальный осмотр: аускультация считается отдельно — важно не то,
-       что врач её начал, а сколько полей прослушал и нашёл ли патологию. */
+       что врач её начал, а сколько полей прослушал и нашёл ли патологию.
+       Кастомный случай без схемы грудной клетки (пустые points) оценивает
+       приём аускультации как обычный осмотр: выполнил — получил вес. */
+    var auscPts = (CASE.auscultation && CASE.auscultation.points) || [];
+    var auscFind = (CASE.auscultation && CASE.auscultation.findings) || {};
     var eTot = 0, eGot = 0;
-    CASE.exams.forEach(function (e) {
+    (CASE.exams || []).forEach(function (e) {
       var w = e.weight || 0;
       if (!w) return;
       eTot += w;
-      if (e.kind === 'auscult') {
+      if (e.kind === 'auscult' && auscPts.length) {
         var h = 0, abn = 0, abnTot = 0;
-        CASE.auscultation.points.forEach(function (p) {
-          var f = CASE.auscultation.findings[p.finding];
+        auscPts.forEach(function (p) {
+          var f = auscFind[p.finding] || {};
           if (f.abnormal) abnTot++;
           if (heard[p.id]) { h++; if (f.abnormal) abn++; }
         });
-        var cov = h / CASE.auscultation.points.length;
+        var cov = h / auscPts.length;
         var found = abnTot ? abn / abnTot : 1;
         eGot += w * (0.4 * cov + 0.6 * found);
       } else if (done[e.id]) {
@@ -159,9 +163,9 @@
     });
     s.exam = eTot ? eGot / eTot : 0;
 
-    s.order = roleScore(CASE.orders, 'waste', 0.10);
-    s.treat = roleScore(CASE.treatment, 'harm', 0.20);
-    s.dx = session.dx === CASE.diagnosis.correct;
+    s.order = roleScore(CASE.orders || [], 'waste', 0.10);
+    s.treat = roleScore(CASE.treatment || [], 'harm', 0.20);
+    s.dx = session.dx === (CASE.diagnosis || {}).correct;
 
     /* Доля соблюдённых правил среди тех, что были в игре, а не вычитание
        фиксированного штрафа: иначе балл зависел бы от того, сколько правил
@@ -170,12 +174,22 @@
     s.rules = Score.rulesInPlay(CASE, t);
     s.algo = s.rules ? Math.max(0, 1 - Score.violations(CASE, t).length / s.rules) : 0;
 
-    s.total = Math.round(100 * (
-      Score.WEIGHTS.ask * s.ask + Score.WEIGHTS.pass * s.pass +
-      Score.WEIGHTS.vit * s.vit + Score.WEIGHTS.exam * s.exam +
-      Score.WEIGHTS.order * s.order + Score.WEIGHTS.treat * s.treat +
-      Score.WEIGHTS.dx * (s.dx ? 1 : 0) + Score.WEIGHTS.algo * s.algo
-    ));
+    /* Веса нормируются по активным плиткам: у кастомного случая может не
+       быть паспорта, показателей или обследований, и пустая коллекция не
+       должна тянуть итог вниз — её вес распределяется между оставшимися.
+       У встроенных случаев все плитки на месте, делитель равен единице и
+       формула совпадает с прежней. */
+    var acc = 0, wSum = 0;
+    function tile(w, v) { acc += w * v; wSum += w; }
+    if ((CASE.questions || []).length) tile(Score.WEIGHTS.ask, s.ask);
+    if ((CASE.passport || []).length) tile(Score.WEIGHTS.pass, s.pass);
+    if ((CASE.vitals || []).length) tile(Score.WEIGHTS.vit, s.vit);
+    if (eTot) tile(Score.WEIGHTS.exam, s.exam);
+    if ((CASE.orders || []).length) tile(Score.WEIGHTS.order, s.order);
+    if ((CASE.treatment || []).length) tile(Score.WEIGHTS.treat, s.treat);
+    if ((CASE.diagnosis || {}).correct != null) tile(Score.WEIGHTS.dx, s.dx ? 1 : 0);
+    if (s.rules) tile(Score.WEIGHTS.algo, s.algo);
+    s.total = Math.round(100 * (wSum ? acc / wSum : 0));
     return s;
   };
 
@@ -190,27 +204,32 @@
     var done = session.done || {};
     var heard = session.heard || {};
 
-    CASE.auscultation.points.forEach(function (p) {
-      var f = CASE.auscultation.findings[p.finding];
+    /* Кастомный случай может быть без схемы грудной клетки и даже без
+       приёма аускультации — тогда и пропусков этой группы нет. */
+    var auscPts = (CASE.auscultation && CASE.auscultation.points) || [];
+    var auscFind = (CASE.auscultation && CASE.auscultation.findings) || {};
+    auscPts.forEach(function (p) {
+      var f = auscFind[p.finding] || {};
       if (f.abnormal && !heard[p.id]) {
         out.push({
-          label: p.label + ' — ' + f.title,
+          label: p.label + ' — ' + (f.title || 'патология'),
           why: 'Поле не выслушано. Именно здесь была слышна патология.'
         });
       }
     });
-    if (!done['e.ausc']) {
+    var auscExam = pick(CASE.exams || [], 'e.ausc');
+    if (auscExam && !done['e.ausc']) {
       out.push({ label: 'Аускультация лёгких не проводилась совсем',
-                 why: pick(CASE.exams, 'e.ausc').why });
+                 why: auscExam.why });
     }
 
-    CASE.exams.forEach(function (e) {
+    (CASE.exams || []).forEach(function (e) {
       if (e.findAbnormal && e.kind !== 'auscult' && !done[e.id]) {
         out.push({ label: e.title || e.label, why: e.why });
       }
     });
 
-    CASE.vitals.forEach(function (v) {
+    (CASE.vitals || []).forEach(function (v) {
       if (v.abnormal && !done[v.id]) {
         out.push({ label: v.field + ' ' + v.value + ' ' + (v.unit || ''),
                    why: 'Отклонение осталось неизмеренным.' });
@@ -348,13 +367,13 @@
     function reg(list, kind) {
       list.forEach(function (x) { ix[x.id] = { cat: x.cat, kind: kind }; });
     }
-    reg(CASE.passport, 'passport');
-    reg(CASE.questions, 'question');
-    reg(CASE.vitals, 'vital');
-    reg(CASE.exams, 'exam');
-    reg(CASE.orders, 'order');
-    reg(CASE.treatment, 'treat');
-    reg(CASE.diagnosis.options, 'dx');
+    reg(CASE.passport || [], 'passport');
+    reg(CASE.questions || [], 'question');
+    reg(CASE.vitals || [], 'vital');
+    reg(CASE.exams || [], 'exam');
+    reg(CASE.orders || [], 'order');
+    reg(CASE.treatment || [], 'treat');
+    reg((CASE.diagnosis && CASE.diagnosis.options) || [], 'dx');
     return ix;
   }
 

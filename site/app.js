@@ -183,6 +183,17 @@
     $('closeSheet').addEventListener('click', function () { $('sheet').hidden = true; });
     $('exportBtn').addEventListener('click', openExport);
     $('exportClose').addEventListener('click', function () { $('exportBox').hidden = true; });
+    /* Миниатюры снимков в протоколе — делегированный клик: строки
+       добавляются динамически, своя привязка у каждой была бы лишней. */
+    $('log').addEventListener('click', function (e) {
+      var n = e.target;
+      while (n && n !== this && !(n.classList && n.classList.contains('log-imgwrap'))) {
+        n = n.parentNode;
+      }
+      if (n && n !== this) openImgView(n.getAttribute('data-img'));
+    });
+    var iv = $('imgView');
+    if (iv) iv.addEventListener('click', closeImgView);
     $('exportName').addEventListener('input', refreshExport);
     $('exportGroup').addEventListener('input', refreshExport);
     $('exportCopy').addEventListener('click', copyExport);
@@ -438,11 +449,13 @@
       row.res = item.result;
       row.hint = item.hint;
       row.resCls = item.role === 'waste' ? 'is-warn' : 'is-ok';
+      if (item.img) row.img = item.img;
       addNote(item.label + ': ' + item.result, item.role === 'waste' ? 'abn' : 'ok');
 
     } else if (kind === 'treat') {
       row.res = item.hint;
       row.resCls = item.role === 'harm' ? 'is-abn' : 'is-ok';
+      if (item.img) row.img = item.img;
       addNote('Назначено: ' + item.label, item.role === 'harm' ? 'abn' : 'ok');
 
     } else if (kind === 'dx') {
@@ -477,7 +490,10 @@
       var v = $('videoThroat');
       v.currentTime = 0;
       v.play().catch(function () {});
-      if (!opts.silent) say(CASE.system[item.voice].audio, CASE.system[item.voice].text);
+      /* У кастомного случая служебной реплики может не быть — тогда
+         осмотр показывает только видео и строку протокола. */
+      var sys = CASE.system && CASE.system[item.voice];
+      if (!opts.silent && sys) say(sys.audio, sys.text);
       row.res = item.result;
       row.resCls = 'is-abn';
       addNote(item.title, 'abn');
@@ -486,15 +502,16 @@
 
     row.res = item.result;
     row.resCls = item.findAbnormal ? 'is-abn' : 'is-ok';
+    if (item.img) row.img = item.img;
     addNote(item.title || item.label, item.findAbnormal ? 'abn' : 'ok');
 
-    if (item.voice && CASE.system[item.voice] && !opts.silent) {
+    if (item.voice && CASE.system && CASE.system[item.voice] && !opts.silent) {
       say(CASE.system[item.voice].audio, CASE.system[item.voice].text);
     }
 
     /* Проба с кашлем меняет трактовку уже услышанного. */
-    if (item.id === 'e.cough' && state.currentPoint) {
-      var f = CASE.auscultation.findings[state.currentPoint.finding];
+    if (item.id === 'e.cough' && state.currentPoint && CASE.auscultation) {
+      var f = (CASE.auscultation.findings || {})[state.currentPoint.finding] || {};
       if (f.abnormal) {
         /* Заголовок правится вместе с текстом: иначе панель показывала бы
            «Точка не выбрана» над описанием пробы с кашлем. */
@@ -548,6 +565,13 @@
     if (row.hint) {
       h += '<div class="log-hint">' + esc(row.hint) + '</div>';
     }
+    /* Снимок/заключение картинкой (кастомные случаи): миниатюра в протоколе,
+       клик открывает просмотр на весь экран. */
+    if (row.img) {
+      h += '<button type="button" class="log-imgwrap" data-img="' + esc(row.img) + '">' +
+        '<img class="log-img" src="' + esc(row.img) + '" alt="Результат исследования">' +
+        '</button>';
+    }
     h += '</div>';
 
     li.innerHTML = h;
@@ -560,6 +584,22 @@
     return kind === 'patient' ? 'Пациент' :
            kind === 'unknown' ? 'Не понято' :
            kind === 'refused' ? 'Отказ' : '—';
+  }
+
+  /* Просмотр снимка из протокола поверх всего (оверлей #imgView).
+     Разметка живёт в priem.html; без неё функции молча отключаются. */
+  function openImgView(src) {
+    var b = $('imgView');
+    if (!b || !src) return;
+    $('imgViewImg').src = src;
+    b.hidden = false;
+  }
+
+  function closeImgView() {
+    var b = $('imgView');
+    if (!b) return;
+    b.hidden = true;
+    $('imgViewImg').src = '';
   }
 
   function updateCounters() {
@@ -706,12 +746,22 @@
      Аускультация
      ========================================================= */
 
+  /* Кастомный случай может быть создан без аускультации — тогда схема
+     остаётся пустой, а приёма e.ausc в каталоге просто нет. */
+  function auscPoints() {
+    return (CASE.auscultation && CASE.auscultation.points) || [];
+  }
+
+  function auscFinding(key) {
+    return ((CASE.auscultation && CASE.auscultation.findings) || {})[key] || null;
+  }
+
   function renderChest() {
     var g = $('chestPoints');
     g.innerHTML = '';
     var NS = 'http://www.w3.org/2000/svg';
 
-    CASE.auscultation.points.forEach(function (p) {
+    auscPoints().forEach(function (p) {
       var node = document.createElementNS(NS, 'g');
       node.setAttribute('class', 'pt');
       node.dataset.id = p.id;
@@ -744,14 +794,16 @@
   function markPoints(cur) {
     Array.prototype.forEach.call(document.querySelectorAll('.pt'), function (n) {
       var id = n.dataset.id, f = state.heard[id];
+      var fd = f && auscFinding(f);
       n.classList.toggle('is-current', !!cur && id === cur.id);
       n.classList.toggle('is-heard', !!f);
-      n.classList.toggle('is-abn', !!f && CASE.auscultation.findings[f].abnormal);
+      n.classList.toggle('is-abn', !!(fd && fd.abnormal));
     });
   }
 
   function showReadout(p) {
-    var f = CASE.auscultation.findings[p.finding];
+    var f = auscFinding(p.finding);
+    if (!f) return;
     var ro = document.querySelector('.stetho-readout');
     ro.classList.toggle('is-abn', f.abnormal);
     ro.classList.toggle('is-ok', !f.abnormal);
@@ -760,7 +812,8 @@
   }
 
   function pickPoint(p) {
-    var f = CASE.auscultation.findings[p.finding];
+    var f = auscFinding(p.finding);
+    if (!f) return;
     var first = !state.heard[p.id];
     state.heard[p.id] = p.finding;
     state.currentPoint = p;
@@ -810,11 +863,12 @@
   function renderCoverage() {
     var box = $('coverage');
     box.innerHTML = '';
-    CASE.auscultation.points.forEach(function (p) {
+    auscPoints().forEach(function (p) {
       var f = state.heard[p.id];
+      var fd = f && auscFinding(f);
       var s = document.createElement('span');
       s.className = 'cov' + (f ? ' is-heard' : '') +
-        (f && CASE.auscultation.findings[f].abnormal ? ' is-abn' : '');
+        (fd && fd.abnormal ? ' is-abn' : '');
       s.textContent = p.side + ' · ' + p.zone + (f ? '' : ' — не прослушано');
       box.appendChild(s);
     });
@@ -989,12 +1043,19 @@
     h += '</div>';
 
     /* --- Ключевые находки случая --- */
-    h += '<div class="block"><h3>Что было в этом случае</h3><ul class="keylist">';
-    CASE.debrief.keyFindings.forEach(function (k) { h += '<li>' + esc(k) + '</li>'; });
-    h += '</ul></div>';
+    /* У кастомного случая блоки разбора могут быть не заполнены —
+       пустые не показываем вовсе. */
+    var deb = CASE.debrief || {};
+    if (deb.keyFindings && deb.keyFindings.length) {
+      h += '<div class="block"><h3>Что было в этом случае</h3><ul class="keylist">';
+      deb.keyFindings.forEach(function (k) { h += '<li>' + esc(k) + '</li>'; });
+      h += '</ul></div>';
+    }
 
-    h += '<div class="block is-trap"><h3>Ловушка случая</h3><p>' +
-      esc(CASE.debrief.trap) + '</p></div>';
+    if (deb.trap) {
+      h += '<div class="block is-trap"><h3>Ловушка случая</h3><p>' +
+        esc(deb.trap) + '</p></div>';
+    }
 
     /* --- Разбор диагнозов --- */
     h += '<div class="block"><h3>Разбор вариантов диагноза</h3><div class="alts">';
@@ -1009,8 +1070,10 @@
     });
     h += '</div></div>';
 
-    h += '<div class="block"><h3>Дальнейшая тактика</h3><p>' +
-      esc(CASE.debrief.nextSteps) + '</p></div>';
+    if (deb.nextSteps) {
+      h += '<div class="block"><h3>Дальнейшая тактика</h3><p>' +
+        esc(deb.nextSteps) + '</p></div>';
+    }
 
     $('debrief').innerHTML = h;
   }
@@ -1123,11 +1186,15 @@
     CASE.exams.forEach(function (e) {
       if (e.id !== 'e.deep' && e.id !== 'e.ausc') order.push(e.id);
     });
-    order.push('e.deep', 'e.ausc');
+    /* У кастома без аускультации этих приёмов нет — perform их пропустит. */
+    if (BYID['e.deep']) order.push('e.deep');
+    if (BYID['e.ausc']) order.push('e.ausc');
 
     order.forEach(function (id) { perform(id, { silent: true }); });
 
-    CASE.auscultation.points.forEach(function (p) {
+    auscPoints().forEach(function (p) {
+      var f = auscFinding(p.finding);
+      if (!f) return;
       state.heard[p.id] = p.finding;
       state.currentPoint = p;
       markPoints(p);
@@ -1137,8 +1204,8 @@
       logRow({
         kind: 'exam', cat: 'exam', id: 'ausc:' + p.id,
         act: 'Выслушано: ' + p.label,
-        res: CASE.auscultation.findings[p.finding].title,
-        resCls: CASE.auscultation.findings[p.finding].abnormal ? 'is-abn' : 'is-ok'
+        res: f.title,
+        resCls: f.abnormal ? 'is-abn' : 'is-ok'
       });
     });
     renderCoverage();
@@ -1147,7 +1214,9 @@
       if (o.role !== 'waste') perform(o.id, { silent: true });
     });
 
-    perform(CASE.diagnosis.correct, { silent: true });
+    if (CASE.diagnosis && CASE.diagnosis.correct) {
+      perform(CASE.diagnosis.correct, { silent: true });
+    }
 
     CASE.treatment.forEach(function (x) {
       if (x.role !== 'harm') perform(x.id, { silent: true });

@@ -27,6 +27,7 @@
   <button class="ttab is-on" data-tab="method" type="button">Методичка по случаям</button>
   <button class="ttab" data-tab="journal" type="button">Журнал результатов</button>
   <button class="ttab" data-tab="criteria" type="button">Критерии оценки</button>
+  <button class="ttab" data-tab="constructor" type="button">Конструктор случаев</button>
 </nav>
 
 <main class="teacher-main">
@@ -139,12 +140,21 @@
   <section id="tab-criteria" hidden>
     <div id="criteriaBody"></div>
   </section>
+
+  <!-- ============ КОНСТРУКТОР СЛУЧАЕВ ============ -->
+  <section id="tab-constructor" hidden>
+    <div id="constructorRoot"></div>
+  </section>
 </main>
 
 <script src="score.js"></script>
+<!-- custom-cases.js до teacher.js: методичка и журнал берут кастомные
+     случаи из его хранилища. constructor.js стартует сам по #constructorRoot. -->
+<script src="custom-cases.js"></script>
 <!-- teacher.js сам подключает все файлы персонажей из манифеста:
      новый случай появляется в методичке автоматически. -->
 <script src="characters/manifest.js"></script>
 <script src="teacher.js"></script>
+<script src="constructor.js"></script>
 </body>
 </html>
