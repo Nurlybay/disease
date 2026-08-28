@@ -511,6 +511,37 @@
   };
 
   /* =========================================================
+     Общие случаи: публикации преподавателя из облака
+     ========================================================= */
+
+  /* Массив черновиков приносит модуль синхронизации (site/sync.js) в
+     window.SHARED_CASES. До его готовности, без него (сайт открыт с диска)
+     или без сети — пусто, и всё работает как раньше. Общие случаи здесь
+     только для чтения: публикуют их в конструкторе, на витрине и в
+     тренажёре они просто видны. */
+  function sharedDrafts() {
+    var raw = window.SHARED_CASES, out = [], seen = {};
+    if (!isArr(raw)) return out;
+    raw.forEach(function (x) {
+      if (!x || typeof x !== 'object') return;
+      var d = CC.normalize(x);
+      if (!d.id || seen[d.id]) return;
+      seen[d.id] = 1;
+      d.savedAt = +x.publishedAt || 0;   /* время публикации — для сортировки */
+      d.shared = true;
+      out.push(d);
+    });
+    out.sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+    return out;
+  }
+
+  CC.sharedIds = function () {
+    var out = {};
+    sharedDrafts().forEach(function (d) { out[d.id] = 1; });
+    return out;
+  };
+
+  /* =========================================================
      Хранилище
      ========================================================= */
 
@@ -530,20 +561,35 @@
     } catch (e) { return false; }   /* переполнение: чаще всего картинки */
   }
 
-  /* Список черновиков, новые сверху. */
+  /* Список черновиков: сначала общие (они же видны студентам), затем
+     локальные. Префикс «встроенные + общие» одинаков у преподавателя и у
+     студентов, поэтому номера случаев на витрине совпадают. */
   CC.list = function () {
-    var map = readAll(), out = [];
+    var out = sharedDrafts();
+    var shared = CC.sharedIds();
+    var map = readAll(), local = [];
     Object.keys(map).forEach(function (k) {
+      if (shared[k]) return;  /* общий уже в списке — копию не дублируем */
       var d = CC.normalize(map[k]);
-      if (d.id) out.push(d);
+      if (!d.id) return;
+      d.savedAt = map[k].savedAt || 0;
+      local.push(d);
     });
-    out.sort(function (a, b) { return (map[b.id].savedAt || 0) - (map[a.id].savedAt || 0); });
-    return out;
+    local.sort(function (a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+    return out.concat(local);
   };
 
   CC.get = function (id) {
+    /* Локальный черновик приоритетнее общего: преподаватель мог править
+       случай после публикации — запуск показывает свежую рабочую версию.
+       У студента локальной копии с тем же id нет — он получает общую. */
     var raw = readAll()[id];
-    return raw ? CC.normalize(raw) : null;
+    if (raw) return CC.normalize(raw);
+    var sh = sharedDrafts();
+    for (var i = 0; i < sh.length; i++) {
+      if (sh[i].id === id) return sh[i];
+    }
+    return null;
   };
 
   /* save(draft) → { ok, id, error }. id присваивается при первом
@@ -579,15 +625,17 @@
   };
 
   /* Записи манифеста для loader/teacher/picker. Дедуп по file — страховка
-     от повреждённого хранилища с двумя одинаковыми id. */
+     от повреждённого хранилища с двумя одинаковыми id. shared — пометка
+     общего случая (бейдж на витрине, защита от удаления у студента). */
   CC.manifestEntries = function () {
     var seen = {}, out = [];
     CC.list().forEach(function (d) {
       var file = d.id + '.js';
       if (seen[file]) return;
       seen[file] = 1;
-      out.push({ file: file, disease: d.disease || 'Свой случай',
-                 label: d.title || d.id, custom: true });
+      out.push({ file: file,
+                 disease: d.disease || (d.shared ? 'Случай преподавателя' : 'Свой случай'),
+                 label: d.title || d.id, custom: true, shared: !!d.shared });
     });
     return out;
   };

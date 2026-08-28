@@ -1076,19 +1076,27 @@
      Запуск
      ========================================================= */
 
-  refreshCustoms();
-  loadAll(function () {
-    if (!MANIFEST.length) {
-      $('methodBody').innerHTML = '<div class="m-sec"><p class="m-load-err">' +
-        'Манифест персонажей пуст: characters/manifest.js не подгрузился.</p></div>';
-    }
-    renderCharTabs();
-    renderMethod();
-    renderCriteria();
-    initJournal();
-    bindTabs();
-    bindMethod();
-  });
+  /* Общие случаи преподавателя приходят из облака (модуль синхронизации):
+     методичка и журнал стартуют после его готовности, чтобы общие случаи
+     сразу были в списке и журнал мог пересчитать их коды. Без модуля или
+     без сети — мгновенный старт, как раньше. */
+  function start() {
+    refreshCustoms();
+    loadAll(function () {
+      if (!MANIFEST.length) {
+        $('methodBody').innerHTML = '<div class="m-sec"><p class="m-load-err">' +
+          'Манифест персонажей пуст: characters/manifest.js не подгрузился.</p></div>';
+      }
+      renderCharTabs();
+      renderMethod();
+      renderCriteria();
+      initJournal();
+      bindTabs();
+      bindMethod();
+    });
+  }
+
+  if (window.Sync) { Sync.init(start); } else { start(); }
 
   /* Сохранение/удаление случая в конструкторе сразу отражается в
      методичке и журнале: кастомы переинфлейтируются, вкладки персонажей

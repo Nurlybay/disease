@@ -1,7 +1,8 @@
 /* Витрина: нумерованный выбор случая. Объединённый список — встроенные
-   персонажи из characters/manifest.js плюс свои случаи из CustomCases.
-   Каждый пункт ведёт на priem.html?char=<id>. «Случайный пациент»
-   открывает priem.html без ?char= (loader.js выберет сам). Импорт
+   персонажи из characters/manifest.js, общие случаи преподавателя из
+   облака (модуль синхронизации, если настроен) и свои случаи из
+   CustomCases. Каждый пункт ведёт на priem.html?char=<id>. «Случайный
+   пациент» открывает priem.html без ?char= (loader.js выберет сам). Импорт
    читает файл конструктора (маркеры VP-CUSTOM-CASE-V1) и складывает
    его в localStorage.
 
@@ -56,11 +57,18 @@
     return 'priem.html' + (b === '?' ? '' : b);
   }
 
-  /* Объединённый список: встроенные, затем свои (самые свежие — первыми,
-     manifestEntries отдаёт по savedAt). */
+  /* Объединённый список: встроенные, затем свои и общие (самые свежие —
+     первыми, manifestEntries отдаёт по времени). Дедуп по file: случай,
+     уже импортированный локально, не должен дублировать общую версию. */
   function entries() {
     var out = (window.CHARACTER_MANIFEST || []).slice();
-    if (CC) out = out.concat(CC.manifestEntries());
+    var have = {};
+    out.forEach(function (m) { have[m.file] = 1; });
+    if (CC) {
+      CC.manifestEntries().forEach(function (m) {
+        if (!have[m.file]) { have[m.file] = 1; out.push(m); }
+      });
+    }
     return out;
   }
 
@@ -97,9 +105,15 @@
           '<span class="picker-body">' +
           '<span class="picker-disease">' + esc(m.disease) + '</span>' +
           '<span class="picker-label">' + esc(m.label) + '</span>' +
-          (m.custom ? '<span class="picker-custom">свой случай</span>' : '') +
+          (m.custom
+            ? (m.shared
+              ? '<span class="picker-shared">случай преподавателя</span>'
+              : '<span class="picker-custom">свой случай</span>')
+            : '') +
           '</span></a>';
-        if (m.custom) {
+        /* Кнопка удаления — только у локально сохранённых своих случаев:
+           общие публикуются преподавателем, студент их не снимает. */
+        if (m.custom && !m.shared) {
           html += '<button type="button" class="picker-del" title="Удалить свой случай" ' +
             'data-id="' + esc(m.file.replace(/\.js$/, '')) + '">×</button>';
         }
@@ -170,7 +184,8 @@
   });
 
   /* Подписка: если случаи правили в другой вкладке конструктора,
-     список перерисуется. */
+     список перерисуется. Общие случаи из облака приходят через
+     Sync.init → CustomCases.emitChange и доезжают тем же путём. */
   if (CC) CC.onChange(render);
 
   /* Верхняя карточка «Студенту» — тоже случайный вход: вычищаем ?char=,
@@ -178,5 +193,7 @@
   var card = document.getElementById('studentCard');
   if (card) card.href = randomHref();
 
-  render();
+  /* Первый рендер — после загрузки общих случаев (если включена
+     синхронизация): без неё или без сети витрина рисуется сразу. */
+  if (window.Sync) { Sync.init(render); } else { render(); }
 })();

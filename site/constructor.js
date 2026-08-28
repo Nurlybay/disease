@@ -191,8 +191,28 @@
     var opts = '';
     CC.list().forEach(function (d) {
       opts += '<option value="' + esc(d.id) + '"' + (d.id === draft.id ? ' selected' : '') + '>' +
+        (d.shared ? '★ ' : '') +
         esc(d.disease || d.id) + ' — ' + esc(d.title || 'без названия') + '</option>';
     });
+
+    /* Группа публикации в облако: есть только когда синхронизация
+       настроена (адрес и ключ вписаны в sync.js). Код преподавателя
+       вводится один раз и хранится в этом браузере. */
+    var pub = '';
+    if (window.Sync && Sync.configured()) {
+      var isPub = draft.id && CC.sharedIds()[draft.id];
+      pub = '<div class="cn-bar-group">' +
+        '<input type="text" class="cn-in cn-code" id="cnSyncCode" autocomplete="off"' +
+          ' placeholder="Код преподавателя" title="Код проверяет база; вводится один раз на этой машине"' +
+          ' value="' + esc(Sync.getCode()) + '">' +
+        '<button type="button" class="btn btn-primary btn-sm" data-cmd="publish">' +
+          (isPub ? 'Снять с публикации' : 'Опубликовать для группы') + '</button>' +
+      '</div>';
+    } else {
+      pub = '<div class="cn-bar-group"><span class="cn-hint">' +
+        'Публикация в группу не настроена: впишите адрес и ключ проекта в sync.js (см. SETUP.md)' +
+        '</span></div>';
+    }
 
     return '<div class="cn-bar">' +
       '<div class="cn-bar-group">' +
@@ -206,6 +226,7 @@
         '<button type="button" class="btn btn-ghost btn-sm" data-cmd="download">Скачать .js</button>' +
         '<button type="button" class="btn btn-ghost btn-sm" data-cmd="copy" title="Тот же текст, что в скачанном файле — но сразу в буфере">Копировать текст</button>' +
       '</div>' +
+      pub +
       '<div class="cn-bar-group">' +
         '<button type="button" class="btn btn-primary btn-sm" data-cmd="run">Запустить</button>' +
         '<button type="button" class="btn btn-ghost btn-sm" data-cmd="demo">Идеальный приём</button>' +
@@ -213,10 +234,27 @@
       (flash ? '<span class="cn-flash">' + esc(flash) + '</span>' : '') +
       '<input type="file" id="cnImport" accept=".js,.json,text/*" hidden>' +
     '</div>' +
+    renderSharedList() +
     (errors && errors.length
       ? '<div class="cn-errors"><b>Случай не сохранён — ' + errors.length + ' ошибок:</b><ul>' +
         errors.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div>'
       : '');
+  }
+
+  /* Что сейчас опубликовано: видно студентам на витрине. Блок позволяет
+     снять с публикации случай, даже если его локальный черновик удалён. */
+  function renderSharedList() {
+    var shared = CC.list().filter(function (d) { return d.shared; });
+    if (!shared.length) return '';
+    var rows = shared.map(function (d) {
+      return '<li><span class="cn-shared-name">' +
+        esc(d.disease || d.id) + ' — ' + esc(d.title || d.id) + '</span>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-cmd="unpub" ' +
+        'data-id="' + esc(d.id) + '">Снять</button></li>';
+    }).join('');
+    return '<div class="cn-shared">' +
+      '<div class="cn-shared-head">На сервере — видно студентам (' + shared.length + '):</div>' +
+      '<ul class="cn-shared-list">' + rows + '</ul></div>';
   }
 
   function renderIdentity() {
@@ -691,12 +729,75 @@
   }
 
   /* =========================================================
+     Публикация в группу (облако)
+     ========================================================= */
+
+  /* Правим список общих случаев сразу после публикации/снятия, чтобы эта
+     страница не ждала перезагрузки; другие страницы подтянут изменения
+     при своей загрузке. */
+  function bumpShared(id, d) {
+    var arr = window.SHARED_CASES;
+    if (Object.prototype.toString.call(arr) !== '[object Array]') {
+      arr = [];
+      window.SHARED_CASES = arr;
+    }
+    for (var i = arr.length - 1; i >= 0; i--) {
+      if (arr[i] && arr[i].id === id) arr.splice(i, 1);
+    }
+    if (d) {
+      d.publishedAt = Date.now();
+      arr.unshift(d);
+    }
+  }
+
+  function doPublish() {
+    if (!window.Sync || !Sync.configured()) {
+      flash = 'Публикация не настроена: впишите адрес и ключ проекта в sync.js (см. SETUP.md).';
+      render();
+      return;
+    }
+    var id = doSave();      /* валидация + сохранение + присвоение id */
+    if (!id) return;
+    flash = 'Публикую…';
+    render();
+    Sync.publish(draft, function (res) {
+      if (res.ok) {
+        bumpShared(id, CC.normalize(draft));
+        CC.emitChange();
+        flash = 'Опубликовано: студенты видят случай на витрине сразу.';
+      } else {
+        errors = ['Не опубликовано: ' + res.error];
+      }
+      render();
+    });
+  }
+
+  function doUnpublish(id) {
+    if (!id) return;
+    if (!window.confirm('Снять случай «' + id + '» с публикации? У студентов он пропадёт с витрины.')) return;
+    Sync.unpublish(id, function (res) {
+      if (res.ok) {
+        bumpShared(id, null);
+        CC.emitChange();
+        flash = 'Снято с публикации: ' + id;
+      } else {
+        errors = ['Не снято с публикации: ' + res.error];
+      }
+      render();
+    });
+  }
+
+  /* =========================================================
      События
      ========================================================= */
 
   root.addEventListener('input', function (e) {
     var t = e.target;
     if (!t || !t.getAttribute) return;
+    if (t.id === 'cnSyncCode') {
+      if (window.Sync) Sync.setCode(t.value);
+      return;
+    }
     if (t.getAttribute('data-path') || (t.getAttribute('data-sec') && t.type !== 'checkbox' &&
         t.tagName !== 'SELECT' && t.type !== 'file')) writeField(t);
   });
@@ -758,6 +859,8 @@
     if (cmd === 'copy') { doCopy(); return; }
     if (cmd === 'run') { doRun(false); return; }
     if (cmd === 'demo') { doRun(true); return; }
+    if (cmd === 'publish') { doPublish(); return; }
+    if (cmd === 'unpub') { doUnpublish(t.getAttribute('data-id')); return; }
 
     var act = t.getAttribute('data-act');
     if (act === 'add') { addRow(t.getAttribute('data-sec')); return; }
@@ -770,6 +873,12 @@
   });
 
   function $(id) { return document.getElementById(id); }
+
+  /* Общие случаи приходят из облака уже после первого рендера (синхронизация
+     асинхронная) — тулбар и блок «На сервере» перерисовываются по событию. */
+  if (CC.onChange) {
+    CC.onChange(function () { render(); });
+  }
 
   render();
 })();
