@@ -204,6 +204,7 @@
       '<div class="cn-bar-group">' +
         '<button type="button" class="btn btn-primary btn-sm" data-cmd="save">Сохранить</button>' +
         '<button type="button" class="btn btn-ghost btn-sm" data-cmd="download">Скачать .js</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-cmd="copy" title="Тот же текст, что в скачанном файле — но сразу в буфере">Копировать текст</button>' +
       '</div>' +
       '<div class="cn-bar-group">' +
         '<button type="button" class="btn btn-primary btn-sm" data-cmd="run">Запустить</button>' +
@@ -640,6 +641,34 @@
       (demo ? '&demo=1&finish=1' : '');
   }
 
+  /* Отправка студенту без файла: текст случая уезжает в буфер и
+     пересылается любым мессенджером. Студент вставляет его на витрине
+     в поле «Вставить текст». */
+  function doCopy() {
+    var text = CC.exportText(draft);
+    function ok() {
+      flash = 'Скопировано. Пришлите текст студенту — он вставит его на витрине.';
+      render();
+    }
+    function legacy() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); ok(); }
+      catch (e) {
+        flash = 'Буфер заблокирован — используйте «Скачать .js».';
+        render();
+      }
+      ta.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok, legacy);
+    } else legacy();
+  }
+
   function doImportFile(file) {
     var rd = new FileReader();
     rd.onload = function () {
@@ -726,6 +755,7 @@
     if (cmd === 'import') { $('cnImport').click(); return; }
     if (cmd === 'save') { doSave(); return; }
     if (cmd === 'download') { doDownload(); return; }
+    if (cmd === 'copy') { doCopy(); return; }
     if (cmd === 'run') { doRun(false); return; }
     if (cmd === 'demo') { doRun(true); return; }
 

@@ -72,11 +72,18 @@
   }
 
   function render() {
-    var q = parseQuery();
     var html = '<div class="picker-actions">' +
       '<a class="btn btn-primary" href="' + esc(randomHref()) + '">Случайный пациент</a>' +
       '<label class="btn btn-ghost picker-import">Импорт случая (.js)' +
       '<input type="file" id="pickerImport" accept=".js,.txt"></label>' +
+      '<button type="button" class="btn btn-ghost" id="pickerTextToggle">Вставить текст</button>' +
+      '</div>' +
+      '<div class="picker-text" id="pickerTextWrap" hidden>' +
+        '<textarea id="pickerTextIn" rows="4" spellcheck="false" ' +
+          'placeholder="Вставьте сюда текст случая из мессенджера: маркеры ' +
+          '// >>> VP-CUSTOM-CASE-V1 >>> или голый JSON"></textarea>' +
+        '<button type="button" class="btn btn-primary btn-sm" id="pickerTextGo">' +
+          'Импортировать из текста</button>' +
       '</div>';
 
     var list = entries();
@@ -106,21 +113,31 @@
     note('');
   }
 
+  /* Общий финал импорта — и файлом, и вставленным текстом. */
+  function finishImport(res) {
+    if (res.error) { note('Импорт не сработал: ' + res.error, true); return; }
+    /* Импортированная копия получает новый id, чтобы не затирать
+       имеющуюся версию этого же случая. */
+    res.draft.id = '';
+    var saved = CC.save(res.draft);
+    if (!saved.ok) { note('Не сохранилось: ' + saved.error, true); return; }
+    note('Случай импортирован: ' + (res.draft.title || saved.id));
+  }
+
   function doImport(file) {
     var r = new FileReader();
     r.onload = function () {
       if (!CC) { note('Модуль своих случаев не загружен.', true); return; }
-      var res = CC.importText(r.result);
-      if (res.error) { note('Импорт не сработал: ' + res.error, true); return; }
-      /* Импортированная копия получает новый id, чтобы не затирать
-         имеющуюся версию этого же случая. */
-      res.draft.id = '';
-      var saved = CC.save(res.draft);
-      if (!saved.ok) { note('Не сохранилось: ' + saved.error, true); return; }
-      note('Случай импортирован: ' + (res.draft.title || saved.id));
+      finishImport(CC.importText(r.result));
     };
     r.onerror = function () { note('Файл не прочитался.', true); };
     r.readAsText(file);
+  }
+
+  function doImportText(txt) {
+    if (!CC) { note('Модуль своих случаев не загружен.', true); return; }
+    if (!String(txt || '').replace(/\s+/g, '')) { note('Поле пустое.', true); return; }
+    finishImport(CC.importText(txt));
   }
 
   root.addEventListener('click', function (e) {
@@ -131,6 +148,16 @@
       if (CC && id && window.confirm('Удалить этот свой случай?')) {
         CC.remove(id);
       }
+      return;
+    }
+    if (t.id === 'pickerTextToggle') {
+      var wrap = document.getElementById('pickerTextWrap');
+      if (wrap) wrap.hidden = !wrap.hidden;
+      return;
+    }
+    if (t.id === 'pickerTextGo') {
+      var ta = document.getElementById('pickerTextIn');
+      if (ta) doImportText(ta.value);
     }
   });
 
