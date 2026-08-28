@@ -24,8 +24,8 @@
      политиками таблицы (чтение случаев всем, запись — только через функции
      с кодом преподавателя). Пока оба значения пустые — синхронизация
      выключена. */
-  var SUPABASE_URL = '';
-  var SUPABASE_ANON_KEY = '';
+  var SUPABASE_URL = 'https://sawcjxnblgepkqdsvlio.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNhd2NqeG5ibGdlcGtxZHN2bGlvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MjAzMDUsImV4cCI6MjEwMzQ5NjMwNX0.39bgtMmIQKHorMvS_uFIt7D3nQiGAOnABPuFv1b3Hw0';
 
   var CODE_KEY = 'vp.sync.code';   /* код преподавателя, вводится один раз */
 
