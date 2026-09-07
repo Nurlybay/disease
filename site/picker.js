@@ -44,14 +44,17 @@
     return parts.length ? '?' + parts.join('&') : '?';
   }
 
+  var mode = /[?&]mode=independent(?:&|$)/.test(location.search) ? 'independent' : 'learning';
   function hrefFor(file) {
     var q = parseQuery();
+    q.mode = mode;
     q.char = file.replace(/\.js$/, '');
     return 'priem.html' + buildQuery(q);
   }
 
   function randomHref() {
     var q = parseQuery();
+    q.mode = mode;
     delete q.char;
     var b = buildQuery(q);
     return 'priem.html' + (b === '?' ? '' : b);
@@ -80,6 +83,8 @@
   }
 
   function render() {
+    var card = document.getElementById('studentCard');
+    if (card) card.href = randomHref();
     var html = '<div class="picker-actions">' +
       '<a class="btn btn-primary" href="' + esc(randomHref()) + '">Случайный пациент</a>' +
       '<label class="btn btn-ghost picker-import">Импорт случая (.js)' +
@@ -95,6 +100,8 @@
       '</div>';
 
     var list = entries();
+    var count = document.getElementById('caseCount');
+    if (count) count.textContent = 'Случаев в каталоге: ' + list.length + ' · реплики и доступные аудиозаписи';
     if (!list.length) {
       html += '<p class="picker-note">Нет ни одного случая.</p>';
     } else {
@@ -192,6 +199,15 @@
      но прокидываем остальные отладочные параметры (demo, finish, dx). */
   var card = document.getElementById('studentCard');
   if (card) card.href = randomHref();
+
+  Array.prototype.forEach.call(document.querySelectorAll('[name="learningMode"]'), function (radio) {
+    radio.checked = radio.value === mode;
+    radio.addEventListener('change', function () {
+      if (!radio.checked) return;
+      mode = radio.value;
+      render();
+    });
+  });
 
   /* Первый рендер — после загрузки общих случаев (если включена
      синхронизация): без неё или без сети витрина рисуется сразу. */

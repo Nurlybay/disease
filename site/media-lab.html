@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Практикум — ЭКГ и звуки сердца</title><link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="practice.css"></head>
+<body class="landing">
+<main class="media-lab">
+  <header class="lab-header"><a href="index.html">← К выбору пациента</a><span>Клинический практикум</span></header>
+  <h1>Сначала наблюдение.<br>Потом объяснение.</h1>
+  <p class="lab-lead">Реальные записи из открытых источников. Опишите, что видите или слышите, затем сопоставьте свой ответ с разбором.</p>
+  <nav id="mediaNav" class="media-nav" aria-label="Учебные записи"></nav>
+  <article class="lab-card" id="labCard">
+    <div class="lab-card-head"><h2 id="mediaTitle"></h2><span id="mediaKind"></span></div>
+    <p id="mediaPrompt"></p>
+    <div id="ecgWrap" class="ecg-scroll" hidden><div class="ecg-stage" id="ecgStage"><img id="ecgImage" alt="Учебная ЭКГ для самостоятельного описания"><div id="ecgMarks" hidden></div></div></div>
+    <button class="btn btn-ghost btn-sm" id="ecgZoom" type="button" hidden>Увеличить ЭКГ</button>
+    <div id="audioWrap" class="lab-audio" hidden><span class="audio-symbol" aria-hidden="true">◉</span><audio id="labAudio" controls preload="metadata" aria-label="Учебная запись сердца"></audio><p>Начните с небольшой громкости. Сравнивайте интервалы, а не громкость разных записей.</p></div>
+    <p class="lab-error" id="mediaError" role="status" hidden>Не удалось загрузить запись. Проверьте наличие файла в проекте и перезагрузите страницу.</p>
+    <form id="interpretForm">
+      <label for="interpretation">Ваше описание и гипотеза</label>
+      <textarea id="interpretation" rows="4" maxlength="5000" required placeholder="Какие признаки вы заметили? Что нужно проверить дальше?"></textarea>
+      <p class="lab-small" id="saveStatus" aria-live="polite">Ответ остаётся в этом браузере. Автоматической оценки правильности нет.</p>
+      <div class="lab-actions"><button class="btn btn-primary" id="revealBtn" type="submit">Зафиксировать ответ и открыть разбор</button><button class="btn btn-ghost" id="resetAttempt" type="button">Новая попытка</button></div>
+    </form>
+    <section id="mediaDebrief" class="lab-debrief" hidden tabindex="-1" aria-label="Разбор записи"></section>
+    <footer class="media-credit" id="mediaCredit"></footer>
+  </article>
+  <p class="lab-small">Разметка опирается на описание авторов источников; локальная проверка преподавателем ещё не проведена. Записи не относятся к вымышленным пациентам тренажёра.</p>
+</main>
+<script src="clinical-media.js"></script><script src="media-lab.js"></script>
+</body></html>

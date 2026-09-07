@@ -8,6 +8,8 @@
   'use strict';
 
   var CASE = (window.CASES || [])[0];
+  var MODE = window.LearningMode.fromQuery(window.location.search);
+  var independent = MODE === 'independent';
   var WF = window.WAVEFORMS || {};
   var $ = function (id) { return document.getElementById(id); };
 
@@ -83,8 +85,17 @@
 
   function init() {
     buildCatalog();
+    document.body.classList.toggle('independent-mode', independent);
+    $('passportCounter').hidden = independent;
+    $('vitalsCounter').hidden = independent;
+    $('modeBadge').textContent = LearningMode.label(MODE);
+    $('modeDescription').textContent = independent
+      ? 'Без цветовых оценок и учебных пояснений. Все объяснения — после завершения.'
+      : 'Находки выделяются цветом, назначения сопровождаются пояснениями.';
 
     state = {
+      mode: MODE,
+      clinicalNotes: '',
       log: [],            // все строки протокола, включая непонятые
       done: {},           // id намерения -> true
       heard: {},          // точки аускультации: id -> finding
@@ -102,6 +113,7 @@
       lung = new Audio();
       lung.loop = false;
       voice.addEventListener('ended', onVoiceEnded);
+      voice.addEventListener('error', function () { hideSpeaking(); $('voiceStatus').textContent = 'Аудио недоступно. Реплика остаётся в тексте.'; });
       lung.addEventListener('play', startScope);
       lung.addEventListener('pause', stopScope);
       lung.addEventListener('ended', stopScope);
@@ -114,18 +126,26 @@
     lung.volume = 0.8;
 
     var idle = $('videoIdle'), throat = $('videoThroat');
-    if (!idle.src) {
+    var portrait = $('patientPortrait');
+    portrait.hidden = !CASE.patient.portrait;
+    idle.hidden = !!CASE.patient.portrait;
+    throat.hidden = !!CASE.patient.portrait;
+    $('portraitCaption').hidden = !CASE.patient.portrait;
+    $('portraitMotion').hidden = !CASE.patient.portrait;
+    if (CASE.patient.portrait) portrait.src = CASE.patient.portrait;
+    if (!idle.src && !CASE.patient.portrait) {
       idle.src = CASE.patient.idleVideo;
       throat.src = CASE.patient.throatVideo;
       throat.poster = CASE.patient.throatPoster;
     }
     switchVideo('idle');
-    idle.play().catch(function () {});
+    if (!CASE.patient.portrait) idle.play().catch(function () {});
 
     renderCats();
     renderPassport();
     renderVitals();
     resetNotes();
+    $('clinicalNotes').value = '';
     resetLog();
     renderChest();
     renderCoverage();
@@ -170,6 +190,16 @@
   }
 
   function bind() {
+    $('clinicalNotes').addEventListener('input', function () { state.clinicalNotes = this.value; });
+    $('repeatVoice').addEventListener('click', function () {
+      if (voice._text) say(voice._source, voice._text);
+    });
+    $('portraitMotion').addEventListener('click', function () {
+      var on = this.getAttribute('aria-pressed') !== 'true';
+      this.setAttribute('aria-pressed', String(on));
+      this.textContent = on ? 'Остановить движение' : 'Включить движение';
+      $('patientPortrait').classList.toggle('has-motion', on);
+    });
     $('actForm').addEventListener('submit', function (e) {
       e.preventDefault();
       submit($('actInput').value);
@@ -213,6 +243,7 @@
   }
 
   function stopAll() {
+    hideSpeaking();
     if (voice) { voice.pause(); voice.src = ''; }
     if (lung) { lung.pause(); lung.src = ''; }
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
@@ -409,18 +440,19 @@
 
     var repeat = !!state.done[id];
     var kind = item.__kind;
+    var actionLabel = independent && opts.raw ? opts.raw : item.label;
 
     if (repeat && kind !== 'exam') {
       /* Повтор ничего не добавляет к оценке, но пациент отвечает снова. */
-      logRow({ kind: kind, cat: item.cat, id: null, act: item.label,
+      logRow({ kind: kind, cat: item.cat, id: null, act: actionLabel,
                res: 'Уже выполнено ранее — повторно.', resCls: '', repeat: true });
-      if (!opts.silent && item.audio) say(item.audio, item.text);
+      if (!opts.silent && item.text) say(item.audio, item.text);
       return;
     }
 
     state.done[id] = true;
-    var row = { kind: kind, cat: item.cat, id: id, act: item.label,
-                corrected: opts.corrected || null };
+    var row = { kind: kind, cat: item.cat, id: id, act: actionLabel,
+                corrected: independent ? null : opts.corrected || null };
 
     if (kind === 'passport') {
       row.res = item.text;
@@ -432,7 +464,7 @@
     } else if (kind === 'question') {
       row.res = item.text;
       row.resCls = item.important ? 'is-key' : '';
-      addNote(item.tag, item.important ? 'abn' : '');
+      addNote(independent ? item.text : item.tag, item.important ? 'abn' : '');
       if (!opts.silent) say(item.audio, item.text);
 
     } else if (kind === 'vital') {
@@ -440,7 +472,7 @@
                 '. Техника: ' + item.tech;
       row.resCls = item.abnormal ? 'is-abn' : 'is-ok';
       renderVitals();
-      addNote(item.note, item.abnormal ? 'abn' : 'ok');
+      addNote(independent ? item.field + ': ' + item.value + ' ' + (item.unit || '') : item.note, item.abnormal ? 'abn' : 'ok');
 
     } else if (kind === 'exam') {
       performExam(item, row, opts);
@@ -456,7 +488,7 @@
       row.res = item.hint;
       row.resCls = item.role === 'harm' ? 'is-abn' : 'is-ok';
       if (item.img) row.img = item.img;
-      addNote('Назначено: ' + item.label, item.role === 'harm' ? 'abn' : 'ok');
+      addNote('Назначено: ' + actionLabel, item.role === 'harm' ? 'abn' : 'ok');
 
     } else if (kind === 'dx') {
       state.dx = id;
@@ -470,6 +502,11 @@
     }
 
     logRow(row);
+    if (kind === 'treat' && item.patientReply) {
+      var reply = item.patientReply;
+      logRow({ kind: 'patient', cat: null, act: 'Пациент отвечает на план', res: reply.text, resCls: '' });
+      if (!opts.silent) say(reply.audio, reply.text);
+    }
     renderChip();
     updateCounters();
   }
@@ -477,7 +514,7 @@
   function performExam(item, row, opts) {
     if (item.kind === 'auscult') {
       $('auscPanel').hidden = false;
-      row.res = item.note;
+      row.res = independent ? 'Аускультация начата. Выберите точку и опишите услышанное.' : item.note;
       row.resCls = '';
       requestAnimationFrame(drawScope);
       $('auscPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -496,14 +533,14 @@
       if (!opts.silent && sys) say(sys.audio, sys.text);
       row.res = item.result;
       row.resCls = 'is-abn';
-      addNote(item.title, 'abn');
+      addNote(independent ? item.result : item.title, 'abn');
       return;
     }
 
     row.res = item.result;
     row.resCls = item.findAbnormal ? 'is-abn' : 'is-ok';
     if (item.img) row.img = item.img;
-    addNote(item.title || item.label, item.findAbnormal ? 'abn' : 'ok');
+    addNote(independent ? item.result : (item.title || item.label), item.findAbnormal ? 'abn' : 'ok');
 
     if (item.voice && CASE.system && CASE.system[item.voice] && !opts.silent) {
       say(CASE.system[item.voice].audio, CASE.system[item.voice].text);
@@ -512,13 +549,11 @@
     /* Проба с кашлем меняет трактовку уже услышанного. */
     if (item.id === 'e.cough' && state.currentPoint && CASE.auscultation) {
       var f = (CASE.auscultation.findings || {})[state.currentPoint.finding] || {};
-      if (f.abnormal) {
+      if (f.abnormal && !independent) {
         /* Заголовок правится вместе с текстом: иначе панель показывала бы
            «Точка не выбрана» над описанием пробы с кашлем. */
         $('readoutTitle').textContent = state.currentPoint.label + ' — проба с кашлем';
-        $('readoutDesc').textContent =
-          'После покашливания хрипы изменили звучание и частично исчезли, затем вернулись ' +
-          'при следующем вдохе. Это подвижный секрет в просвете бронхов, а не фиброз.';
+        $('readoutDesc').textContent = item.result || f.desc || '';
       }
     }
   }
@@ -534,6 +569,7 @@
   }
 
   function logRow(row) {
+    row = LearningMode.row(row, BYID[row.id], MODE);
     var ul = $('log');
     var empty = ul.querySelector('.log-empty');
     if (empty) empty.remove();
@@ -638,7 +674,7 @@
     for (var i = 0; i < states.length; i++) {
       if (state.done[states[i].done]) { why = states[i].text; break; }
     }
-    $('patientChip').textContent = who + ' · ' + why;
+    $('patientChip').textContent = independent ? who : who + ' · ' + why;
   }
 
   function renderPassport() {
@@ -662,7 +698,7 @@
     CASE.vitals.forEach(function (v) {
       var got = !!state.done[v.id];
       var d = document.createElement('div');
-      d.className = 'vital' + (got ? (v.flag && v.flag !== 'ok' ? ' is-' + v.flag : '') : ' is-empty') +
+      d.className = 'vital' + (got ? (!independent && v.flag && v.flag !== 'ok' ? ' is-' + v.flag : '') : ' is-empty') +
         (got && String(v.value).length > 4 ? ' is-wide' : '');
       d.innerHTML = '<div class="vital-label">' + esc(v.field) + '</div>' +
         '<div class="vital-value">' + (got ? esc(v.value) : '—') +
@@ -677,6 +713,8 @@
   }
 
   function addNote(text, kind) {
+    if (independent) kind = '';
+    if (!text) return;
     var ul = $('notes');
     var empty = ul.querySelector('.notes-empty');
     if (empty) empty.remove();
@@ -694,10 +732,12 @@
      Речь пациента
      ========================================================= */
 
-  function showSpeaking() { $('speakingIndicator').hidden = false; }
-  function hideSpeaking() { $('speakingIndicator').hidden = true; }
+  function showSpeaking() { $('speakingIndicator').hidden = false; $('patientPortrait').classList.add('is-speaking'); }
+  function hideSpeaking() { $('speakingIndicator').hidden = true; $('patientPortrait').classList.remove('is-speaking'); }
 
   function say(src, text, onEnd) {
+    voice._text = text; voice._source = src;
+    $('voiceStatus').textContent = '';
     lung.pause();
     voice.pause();
 
@@ -707,8 +747,11 @@
 
     voice._onEnd = onEnd || null;
     if (!src) {
-      // Реплика без озвучки: показываем только субтитр и продолжаем.
-      onVoiceEnded();
+      // Текст остаётся до следующей реплики: длинный ответ нельзя
+      // прочитать за таймаут короткой аудиореплики.
+      hideSpeaking();
+      voice._onEnd = null;
+      if (onEnd) onEnd();
       return;
     }
 
@@ -716,21 +759,20 @@
     voice.currentTime = 0;
     showSpeaking();
     voice.play().catch(function () {
-      // Автовоспроизведение заблокировано — субтитр всё равно показан.
+      $('voiceStatus').textContent = 'Нажмите «Повторить реплику», чтобы включить звук.';
       onVoiceEnded();
     });
   }
 
   function onVoiceEnded() {
     hideSpeaking();
-    setTimeout(function () {
-      if (voice.paused) $('subtitle').hidden = true;
-    }, 2600);
     if (voice._onEnd) { var f = voice._onEnd; voice._onEnd = null; f(); }
   }
 
   function switchVideo(which) {
     var idle = $('videoIdle'), throat = $('videoThroat');
+    $('patientPortrait').hidden = !CASE.patient.portrait || which === 'throat';
+    if (CASE.patient.portrait && which === 'idle') { idle.pause(); throat.pause(); idle.classList.remove('is-active'); throat.classList.remove('is-active'); return; }
     if (which === 'throat') {
       throat.classList.add('is-active');
       idle.classList.remove('is-active');
@@ -738,7 +780,7 @@
       idle.classList.add('is-active');
       throat.classList.remove('is-active');
       throat.pause();
-      idle.play().catch(function () {});
+      if (!CASE.patient.portrait) idle.play().catch(function () {});
     }
   }
 
@@ -797,7 +839,7 @@
       var fd = f && auscFinding(f);
       n.classList.toggle('is-current', !!cur && id === cur.id);
       n.classList.toggle('is-heard', !!f);
-      n.classList.toggle('is-abn', !!(fd && fd.abnormal));
+      n.classList.toggle('is-abn', !independent && !!(fd && fd.abnormal));
     });
   }
 
@@ -805,10 +847,11 @@
     var f = auscFinding(p.finding);
     if (!f) return;
     var ro = document.querySelector('.stetho-readout');
-    ro.classList.toggle('is-abn', f.abnormal);
-    ro.classList.toggle('is-ok', !f.abnormal);
-    $('readoutTitle').textContent = p.label + ' — ' + f.title;
-    $('readoutDesc').textContent = f.desc;
+    ro.classList.toggle('is-abn', !independent && f.abnormal);
+    ro.classList.toggle('is-ok', !independent && !f.abnormal);
+    var display = LearningMode.finding(p, f, MODE);
+    $('readoutTitle').textContent = display.title;
+    $('readoutDesc').textContent = display.text;
   }
 
   function pickPoint(p) {
@@ -825,12 +868,12 @@
     $('scopeIdle').hidden = true;
 
     if (first) {
-      addNote(p.label + ': ' + f.title, f.abnormal ? 'abn' : 'ok');
+      addNote(p.label + (independent ? ': прослушано' : ': ' + f.title), f.abnormal ? 'abn' : 'ok');
       renderCoverage();
       logRow({
         kind: 'exam', cat: 'exam', id: 'ausc:' + p.id,
         act: 'Выслушано: ' + p.label,
-        res: f.title + '. ' + f.desc,
+        res: independent ? 'Запись прослушана. Опишите находку самостоятельно.' : f.title + '. ' + f.desc,
         resCls: f.abnormal ? 'is-abn' : 'is-ok'
       });
     }
@@ -868,7 +911,7 @@
       var fd = f && auscFinding(f);
       var s = document.createElement('span');
       s.className = 'cov' + (f ? ' is-heard' : '') +
-        (fd && fd.abnormal ? ' is-abn' : '');
+        (!independent && fd && fd.abnormal ? ' is-abn' : '');
       s.textContent = p.side + ' · ' + p.zone + (f ? '' : ' — не прослушано');
       box.appendChild(s);
     });
@@ -915,7 +958,7 @@
     var prog = dur ? Math.min(1, (lung.currentTime || 0) / dur) : 0;
 
     var abn = lung._abn;
-    var played = abn ? '#e0664f' : '#4bb98a';
+    var played = independent ? '#8eafca' : abn ? '#e0664f' : '#4bb98a';
     var ahead = 'rgba(140,160,185,.26)';
 
     var bw = w / peaks.length;
@@ -933,7 +976,7 @@
     // курсор воспроизведения
     if (!lung.paused || prog > 0) {
       var cx = prog * w;
-      ctx.strokeStyle = abn ? 'rgba(224,102,79,.9)' : 'rgba(75,185,138,.9)';
+      ctx.strokeStyle = independent ? '#8eafca' : abn ? 'rgba(224,102,79,.9)' : 'rgba(75,185,138,.9)';
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke();
     }
@@ -983,6 +1026,9 @@
     var s = Score.compute(CASE, state);
     var h = '';
 
+    h += '<p class="block-note">Режим: ' + esc(LearningMode.label(MODE)) + '</p>';
+
+    if (state.clinicalNotes) h += '<div class="block"><h3>Ваши наблюдения до разбора</h3><p class="student-notes">' + esc(state.clinicalNotes) + '</p></div>';
     /* --- Итог --- */
     h += '<div class="result-head">' +
       '<div class="result-total ' + Score.band(s.total) + '">' + s.total + ' %</div>' +
@@ -1057,6 +1103,22 @@
         esc(deb.trap) + '</p></div>';
     }
 
+    if (independent) {
+      h += '<div class="block"><h3>Пояснения к выполненным действиям</h3><ul class="keylist">';
+      Object.keys(state.done).forEach(function (id) {
+        var it = BYID[id];
+        if (!it || it.__kind === 'dx') return;
+        var explanation = it.hint || it.why || it.note;
+        if (explanation) h += '<li><b>' + esc(it.label) + '</b><span>' + esc(explanation) + '</span></li>';
+      });
+      auscPoints().forEach(function (p) {
+        if (!state.heard[p.id]) return;
+        var f = auscFinding(p.finding);
+        if (f) h += '<li><b>' + esc(p.label + ' — ' + f.title) + '</b><span>' + esc(f.desc) + '</span></li>';
+      });
+      h += '</ul></div>';
+    }
+
     /* --- Разбор диагнозов --- */
     h += '<div class="block"><h3>Разбор вариантов диагноза</h3><div class="alts">';
     CASE.diagnosis.options.forEach(function (o) {
@@ -1075,6 +1137,22 @@
         esc(deb.nextSteps) + '</p></div>';
     }
 
+    if (deb.practice && deb.practice.length) {
+      h += '<div class="block"><h3>Перенос в практику · обсудите с преподавателем</h3><ul class="keylist">';
+      deb.practice.forEach(function (p) { h += '<li>' + esc(p) + '</li>'; });
+      h += '</ul><p class="block-note">Устное обоснование и качество объяснения пациенту не оцениваются автоматически.</p></div>';
+    }
+    if (deb.sources && deb.sources.length) {
+      h += '<div class="block"><h3>Источники учебного сценария</h3><ul class="keylist">';
+      deb.sources.forEach(function (source) {
+        if (/^https:\/\//i.test(source.url || '')) {
+          h += '<li><a href="' + esc(source.url) + '" target="_blank" rel="noopener noreferrer">' + esc(source.title) + '</a></li>';
+        }
+      });
+      h += '</ul></div>';
+    }
+
+    h += '<div class="block"><h3>Продолжить практику</h3><p><a href="media-lab.html" target="_blank" rel="noopener">Разобрать реальные ЭКГ и звуки сердца</a></p><p class="block-note">Отдельные учебные записи, не исследования этого пациента.</p></div>';
     $('debrief').innerHTML = h;
   }
 
@@ -1204,7 +1282,7 @@
       logRow({
         kind: 'exam', cat: 'exam', id: 'ausc:' + p.id,
         act: 'Выслушано: ' + p.label,
-        res: f.title,
+        res: independent ? 'Запись прослушана. Опишите находку самостоятельно.' : f.title,
         resCls: f.abnormal ? 'is-abn' : 'is-ok'
       });
     });

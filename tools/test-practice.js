@@ -1,0 +1,21 @@
+'use strict';
+var fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('assert'),crypto=require('crypto');
+var root=path.join(__dirname,'..'),box={window:{},btoa:function(s){return Buffer.from(s,'binary').toString('base64');},atob:function(s){return Buffer.from(s,'base64').toString('binary');}};vm.createContext(box);
+function load(p){vm.runInContext(fs.readFileSync(path.join(root,p),'utf8'),box);}
+load('site/learning-mode.js');load('site/score.js');load('site/characters/af-nurgaliev.js');load('site/clinical-media.js');
+var M=box.window.LearningMode,S=box.window.Score,C=box.window.CASES[0];
+assert.equal(M.fromQuery('?char=x&mode=independent'),'independent');assert.equal(M.fromQuery('?mode=independent-extra'),'learning');assert.equal(M.fromQuery(''),'learning');
+var harm=C.treatment.filter(function(t){return t.role==='harm';})[0];
+var hidden=M.row({kind:'treat',res: harm.hint,resCls:'is-abn',hint:harm.hint},harm,'independent');assert.equal(hidden.resCls,'');assert(!hidden.hint);assert(!hidden.res.includes(harm.hint));assert(harm.hint);
+var order=M.row({kind:'order',res:'Калий 4,3',hint:'Учебное пояснение',resCls:'is-ok'},null,'independent');assert.equal(order.res,'Калий 4,3');assert(!order.hint);
+assert.equal(M.row({hint:'Сохраняется'},null,'learning').hint,'Сохраняется');
+assert(!M.finding({label:'Правая нижняя точка'},{title:'Влажные хрипы',desc:'Застой'},'independent').text.includes('Застой'));
+var session={mode:'independent',clinicalNotes:'Нерегулярный ритм\n<script>не исполнять</script>',done:{'o.ecg':true},heard:{},dx:null,log:[{id:'o.ecg',cat:'order',ts:20}]};
+var code=S.encodeResult(C,session,{name:'Тест',group:'QA'}),decoded=S.decodeResult(code,[C]);assert(!decoded.error);assert.equal(decoded.meta.mode,'independent');assert.equal(decoded.session.clinicalNotes,session.clinicalNotes);assert.equal(S.compute(C,decoded.session).total,S.compute(C,session).total);
+var old=JSON.parse(Buffer.from(code.slice(4),'base64').toString('utf8'));delete old.mode;delete old.notes;
+var legacy=S.decodeResult('VP1.'+Buffer.from(JSON.stringify(old)).toString('base64'),[C]);assert(!legacy.error);assert.equal(legacy.session.mode,'learning');assert.equal(legacy.session.clinicalNotes,'');
+var assets=JSON.parse(fs.readFileSync(path.join(root,'sources/clinical/manifest.json')));
+assert.equal(assets.length,4);assets.forEach(function(a){assert(/^https:\/\//.test(a.source));assert(a.license);var file=path.join(root,'site',a.file);assert.equal(crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),a.sha256);});
+var count=0;
+['hypertension-saparov','angina-iskakov','af-nurgaliev','pericarditis-alimov'].forEach(function(id){box.window.CASES=[];load('site/characters/'+id+'.js');var c=box.window.CASES[0];assert(fs.existsSync(path.join(root,'site',c.patient.portrait)));var spoken=[c.patient.greeting].concat(c.passport,c.questions,Object.keys(c.system).map(function(k){return c.system[k];}),c.treatment.filter(function(t){return t.patientReply;}).map(function(t){return t.patientReply;}));spoken.forEach(function(t){assert(t.audio,id+' missing voice: '+t.text);assert(fs.existsSync(path.join(root,'site',t.audio)),t.audio);count++;});});
+console.log('OK: independent feedback, unchanged results/scoring, result-code round trip, legacy VP1, 4 licensed assets, '+count+' voiced lines and 4 portraits.');

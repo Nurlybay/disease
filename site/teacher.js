@@ -922,7 +922,7 @@
       h += '<div class="j-row' + (openIdx === i ? ' is-open' : '') + '" data-idx="' + i + '"' +
         ' title="Нажмите, чтобы раскрыть разбор">' +
         '<span class="j-name">' + esc(r.meta.name || '—') + '</span>' +
-        '<span class="j-group">' + esc(r.meta.group || '—') + '</span>' +
+        '<span class="j-group">' + esc(r.meta.group || '—') + ' · ' + (r.meta.mode === 'independent' ? 'самостоятельно' : 'с пояснениями') + '</span>' +
         '<span class="j-case">' + esc(r.CASE.disease) + '</span>' +
         '<span class="j-total ' + Score.band(s.total) + '">' + s.total + ' %</span>' +
         '<span class="j-dx ' + (s.dx ? 'is-ok-text' : 'is-bad-text') + '">' +
@@ -967,6 +967,7 @@
     }
 
     var m = '';
+
     if (groups.length) {
       m = '<div class="jd-block"><h4>Ошибки и пропуски</h4>';
       groups.forEach(function (g) {
@@ -981,6 +982,8 @@
     } else {
       m = '<div class="jd-block"><h4>Ошибки и пропуски</h4><p class="jd-ok">Пропусков нет.</p></div>';
     }
+
+    if (r.session.clinicalNotes) m += '<div class="jd-group"><b>Наблюдения студента</b><p class="student-notes">' + esc(r.session.clinicalNotes) + '</p></div>';
 
     var lm = labelMap(r.CASE, r.session);
     var tl = '<div class="jd-block"><h4>Хронология — ' + r.session.log.length +

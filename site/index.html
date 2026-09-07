@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Виртуальный приём — тренажёр клинического мышления</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="practice.css">
 </head>
 <body class="landing">
 
@@ -19,6 +20,13 @@
     </div>
   </header>
 
+  <fieldset class="mode-picker">
+    <legend>Как хотите тренироваться?</legend>
+    <label><input type="radio" name="learningMode" value="learning" checked>
+      <span><strong>С пояснениями</strong><small>Цвет находок и объяснение назначений помогают учиться.</small></span></label>
+    <label><input type="radio" name="learningMode" value="independent">
+      <span><strong>Самостоятельно</strong><small>Результаты без оценочных подсказок. Объяснения — в конце.</small></span></label>
+  </fieldset>
   <div class="landing-cards">
     <a class="landing-card" id="studentCard" href="priem.html">
       <span class="lc-tag">Студенту</span>
@@ -26,7 +34,7 @@
       <p>Пациент входит в кабинет и молчит. Спрашивайте, измеряйте, выслушивайте,
         назначайте и ставьте диагноз — своими словами и в своём порядке.
         В конце — разбор с оценкой.</p>
-      <span class="lc-meta">Случайный пациент из четырёх случаев · включите звук, лучше наушники</span>
+      <span class="lc-meta" id="caseCount">Случайный пациент · включите звук, лучше наушники</span>
       <span class="lc-go">Начать приём →</span>
     </a>
 
@@ -41,6 +49,7 @@
     </a>
   </div>
 
+  <a class="lab-entry" href="media-lab.html"><strong>Практикум: ЭКГ и звуки сердца →</strong><span>Реальные записи. Сначала ваше описание, затем разбор и области для сравнения.</span></a>
   <section class="picker">
     <h2 class="picker-title">Выбор случая</h2>
     <p class="picker-sub">Пронумерованы все: и встроенные пациенты, и свои

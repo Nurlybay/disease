@@ -346,6 +346,8 @@
 
     var payload = {
       v: 1,
+      mode: session.mode === 'independent' ? 'independent' : 'learning',
+      notes: String(session.clinicalNotes || '').slice(0, 5000),
       c: CASE.id,
       n: meta.name || '',
       g: meta.group || '',
@@ -415,9 +417,9 @@
     return {
       error: null,
       CASE: CASE,
-      meta: { name: p.n || '', group: p.g || '', duration: p.d || 0,
+      meta: { mode: p.mode === 'independent' ? 'independent' : 'learning', name: p.n || '', group: p.g || '', duration: p.d || 0,
               unknowns: p.u || [], clarifies: p.k || 0 },
-      session: { log: log, done: done, heard: p.h || {}, dx: p.dx || null,
+      session: { clinicalNotes: typeof p.notes === 'string' ? p.notes.slice(0, 5000) : '', mode: p.mode === 'independent' ? 'independent' : 'learning', log: log, done: done, heard: p.h || {}, dx: p.dx || null,
                  unknowns: p.u || [], clarifies: p.k || 0 }
     };
   };

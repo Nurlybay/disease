@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Свободный приём — тренажёр клинического мышления</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="practice.css">
 </head>
 <body>
 
@@ -38,11 +39,16 @@
   </div>
 </header>
 
+<aside class="mode-banner" aria-label="Режим приёма">
+  <strong id="modeBadge"></strong><span id="modeDescription"></span>
+  <a href="index.html">Выбрать другой режим</a>
+</aside>
 <main class="layout">
 
   <!-- ЛЕВАЯ КОЛОНКА: пациент. Всё пусто, пока врач не добудет. -->
   <section class="col-patient" aria-label="Пациент">
     <div class="video-frame">
+      <img id="patientPortrait" class="patient-portrait" alt="Иллюстрация вымышленного пациента" hidden>
       <video id="videoIdle"   class="patient-video is-active" muted loop playsinline preload="auto"></video>
       <video id="videoThroat" class="patient-video" muted playsinline preload="auto"></video>
 
@@ -55,8 +61,14 @@
       </div>
 
       <div class="subtitle" id="subtitle" hidden></div>
+      <div class="portrait-caption" id="portraitCaption" hidden>Вымышленный персонаж · ИИ-иллюстрация</div>
     </div>
 
+    <div class="patient-controls">
+      <button class="btn btn-ghost btn-sm" id="repeatVoice" type="button">Повторить реплику</button>
+      <button class="btn btn-ghost btn-sm" id="portraitMotion" type="button" aria-pressed="false" hidden>Включить движение</button>
+      <span id="voiceStatus" role="status"></span>
+    </div>
     <div class="card">
       <div class="card-head">
         <h3>Паспортная часть</h3>
@@ -196,6 +208,11 @@
       <div class="coverage" id="coverage"></div>
     </div>
 
+    <div class="own-notes">
+      <label for="clinicalNotes">Мои наблюдения и рабочая гипотеза</label>
+      <textarea id="clinicalNotes" rows="2" maxlength="5000" placeholder="Что я вижу и слышу? Чем обосновываю решение?"></textarea>
+      <small>Попадёт в разбор и код результата. Автоматически не оценивается.</small>
+    </div>
     <!-- Консоль действий -->
     <div class="console">
       <div class="cats" id="cats" role="group" aria-label="Тип действия"></div>
@@ -265,6 +282,7 @@
 <script src="media/waveforms.js"></script>
 <script src="nlu.js"></script>
 <script src="score.js"></script>
+<script src="learning-mode.js"></script>
 <!-- custom-cases.js до манифеста: loader.js сливает встроенных персонажей
      и сохранённые в браузере кастомные случаи в один список. -->
 <script src="custom-cases.js"></script>

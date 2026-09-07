@@ -1,0 +1,27 @@
+{
+  "generator": "Built-in image_gen",
+  "created": "2026-09-07",
+  "description": "Fictional character illustrations, not clinical examination images.",
+  "portraits": [
+    {
+      "id": "hypertension-saparov",
+      "path": "/Users/nurik/.codex/generated_images/01a07b3d-89b1-7053-a6ce-a7602d744e25/exec-f0a3f4a4-516b-4204-a271-1d172de094bc.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: fictional patient portrait for a clinical training web app. Subject: 52-year-old Kazakh man, short dark hair with some gray at temples, clean-shaven, broad oval face, dark olive casual buttoned shirt, attentive slightly skeptical expression. Scene: plain softly blurred neutral gray-blue medical consultation room, no equipment in foreground. Composition: centered single person, head and upper torso including shoulders, eye-level medium shot, landscape 4:3, direct eye contact with a doctor at camera. Soft realistic daylight, natural skin texture, respectful documentary photography. Entire head comfortably in frame, ample breathing room. Completely fictional individual; no likeness to a real person. No text, labels, logos, watermark, collage, medical charts, stethoscope, dramatic symptoms, or diagnostic signs. This is a character illustration, not a medical reference photograph."
+    },
+    {
+      "id": "angina-iskakov",
+      "path": "/Users/nurik/.codex/generated_images/01a07b3d-89b1-7053-a6ce-a7602d744e25/exec-a4a54f15-db5d-4cf4-8b33-87c070b0b3db.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: fictional patient portrait for a clinical training web app. Subject: 59-year-old Kazakh man, short salt-and-pepper hair, small neat moustache, longer face, navy blue knitted cardigan over pale gray shirt, concerned but calm expression. Scene: plain softly blurred neutral gray-blue medical consultation room, no equipment in foreground. Composition: centered single person, head and upper torso including shoulders, eye-level medium shot, landscape 4:3, direct eye contact with a doctor at camera. Soft realistic daylight, natural skin texture, respectful documentary photography. Entire head comfortably in frame, ample breathing room. Completely fictional individual; no likeness to a real person. No text, labels, logos, watermark, collage, medical charts, stethoscope, dramatic symptoms, or diagnostic signs. This is a character illustration, not a medical reference photograph."
+    },
+    {
+      "id": "af-nurgaliev",
+      "path": "/Users/nurik/.codex/generated_images/01a07b3d-89b1-7053-a6ce-a7602d744e25/exec-3e341168-f8a3-4a3a-894d-563f7d8ea20a.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: fictional patient portrait for a clinical training web app. Subject: 72-year-old Kazakh man, thin white hair, clean-shaven, naturally lined face, light brown knitted sweater, calm tired attentive expression. Scene: plain softly blurred neutral gray-blue medical consultation room, no equipment in foreground. Composition: centered single person, head and upper torso including shoulders, eye-level medium shot, landscape 4:3, direct eye contact with a doctor at camera. Soft realistic daylight, natural skin texture, respectful documentary photography. Entire head comfortably in frame, ample breathing room. Completely fictional individual; no likeness to a real person. No text, labels, logos, watermark, collage, medical charts, stethoscope, dramatic symptoms, or diagnostic signs. This is a character illustration, not a medical reference photograph."
+    },
+    {
+      "id": "pericarditis-alimov",
+      "path": "/Users/nurik/.codex/generated_images/01a07b3d-89b1-7053-a6ce-a7602d744e25/exec-4c9db8a8-b0fa-440f-87f6-0d4a66cd264a.png",
+      "prompt": "Use case: photorealistic-natural. Asset type: fictional patient portrait for a clinical training web app. Subject: 31-year-old Kazakh man, short black hair, light stubble, lean build, plain muted blue T-shirt, attentive slightly concerned expression, seated slightly leaning forward. Scene: plain softly blurred neutral gray-blue medical consultation room, no equipment in foreground. Composition: centered single person, head and upper torso including shoulders, eye-level medium shot, landscape 4:3, direct eye contact with a doctor at camera. Soft realistic daylight, natural skin texture, respectful documentary photography. Entire head comfortably in frame, ample breathing room. Completely fictional individual; no likeness to a real person. No text, labels, logos, watermark, collage, medical charts, stethoscope, dramatic symptoms, or diagnostic signs. This is a character illustration, not a medical reference photograph."
+    }
+  ]
+}

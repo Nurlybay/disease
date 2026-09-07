@@ -4,3 +4,4 @@ disease-standalone.html
 /tmp/
 .worktrees/
 tools/.venv/
+__pycache__/

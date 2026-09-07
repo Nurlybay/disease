@@ -1,0 +1,63 @@
+/* Practice modes: neutral feedback is produced by JS, not merely hidden. */
+.mode-picker { border: 1px solid var(--line, #34404d); border-radius: 16px; padding: 18px; margin: 0 0 24px; display: flex; gap: 16px; }
+.mode-picker legend { padding: 0 8px; font-weight: 650; }
+.mode-picker label { flex: 1; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; padding: 12px; border: 1px solid transparent; border-radius: 10px; }
+.mode-picker label:has(input:checked) { background: #21323d; border-color: #607c8e; }
+.mode-picker small { display: block; color: #a7b5c3; margin-top: 6px; line-height: 1.5; }
+.mode-picker input { accent-color: #82b6bd; margin-top: 4px; }
+.mode-banner { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; padding: 12px 24px; border-bottom: 1px solid #34404d; background: #19232c; font-size: 13px; }
+.mode-banner span { color: #acbac8; flex: 1; }
+.mode-banner a { color: #a9d4db; }
+.independent-mode #passportCounter, .independent-mode #vitalsCounter { display: none; }
+@media (max-width: 640px) { .mode-picker { flex-direction: column; gap: 4px; } .mode-banner { gap: 8px; padding: 12px; } .mode-banner span { flex-basis: 100%; } }
+
+.media-lab { max-width: 1120px; padding: 32px 24px 60px; margin: auto; }
+.lab-header { display: flex; justify-content: space-between; gap: 16px; color: #9cabb8; font-size: 13px; margin-bottom: 40px; }
+.media-lab a { color: #aacfd6; }
+.media-lab h1 { font-size: clamp(30px, 4vw, 48px); line-height: 1.12; letter-spacing: -.035em; margin: 0 0 20px; }
+.lab-lead { color: #aebdcc; max-width: 740px; line-height: 1.7; }
+.media-nav { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0; }
+.media-nav a { text-decoration: none; border: 1px solid #43505e; border-radius: 100px; padding: 10px 20px; }
+.media-nav a[aria-current=true] { color: #e7f2f4; background: #2e4856; border-color: #86a6b8; }
+.lab-card { background: #1a222b; border: 1px solid #394654; border-radius: 20px; padding: 26px; }
+.lab-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.lab-card-head h2 { margin: 0; }
+.lab-card-head span { color: #acbac8; font-size: 13px; }
+.lab-card > p { color: #bbc7d2; line-height: 1.6; }
+.ecg-scroll { overflow-x: auto; background: #eee; border-radius: 8px; margin: 20px 0 10px; }
+.ecg-stage { position: relative; width: 100%; }
+.ecg-stage.is-zoomed { width: 1800px; }
+.ecg-stage img { display: block; width: 100%; height: auto; }
+.ecg-mark { position: absolute; border: 2px solid #2762c1; background: #4587e518; pointer-events: none; }
+.ecg-mark b { position: absolute; top: -20px; left: 0; background: #224c89; color: white; font: 11px system-ui; padding: 2px 5px; white-space: nowrap; }
+.lab-audio { padding: 36px 20px; border-radius: 12px; background: #111b23; text-align: center; }
+.audio-symbol { display: block; font-size: 54px; color: #8bb4c0; margin-bottom: 22px; }
+.lab-audio audio { width: min(100%, 540px); }
+.lab-audio p, .lab-small { color: #a5b4c2; font-size: 13px; line-height: 1.65; }
+#interpretForm { margin-top: 28px; }
+#interpretForm label { display: block; font-weight: 600; margin-bottom: 10px; }
+#interpretation { width: 100%; resize: vertical; padding: 14px; background: #101820; color: #e7eef4; border: 1px solid #546573; border-radius: 10px; font: inherit; line-height: 1.6; box-sizing: border-box; }
+#interpretation:focus { outline: 2px solid #8bb4c0; outline-offset: 2px; }
+#interpretation:read-only { border-style: dashed; color: #bdcbd7; }
+.lab-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.lab-debrief { margin-top: 24px; padding: 22px; background: #23313c; border-left: 3px solid #94b5c2; border-radius: 8px; line-height: 1.65; }
+.lab-debrief h3 { margin-top: 0; }
+.lab-debrief li { margin: 9px 0; }
+.media-credit { border-top: 1px solid #374451; padding-top: 18px; margin-top: 28px; color: #9faebc; font-size: 12px; line-height: 1.8; }
+.lab-error { color: #f6b8a9 !important; }
+.lab-entry { display: block; border: 1px solid #415564; border-radius: 16px; background: #20303b; padding: 22px; margin: 0 0 28px; text-decoration: none; color: #e6eef4; }
+.lab-entry strong { display: block; font-size: 21px; margin-bottom: 8px; }
+.lab-entry span { color: #b2c2cf; line-height: 1.6; }
+@media(max-width:640px){.media-lab{padding:20px 14px}.lab-card{padding:16px}.lab-header{margin-bottom:26px}.media-nav a{padding:9px 15px}.ecg-mark b{font-size:9px;top:-17px}.lab-actions .btn{width:100%}}
+.patient-portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 40%; transform-origin: center 70%; }
+.patient-portrait.has-motion { animation: portrait-idle 6s ease-in-out infinite; }
+.portrait-caption { position: absolute; top: 12px; right: 10px; max-width: 65%; color: #d8e5ed; font-size: 10px; padding: 4px 7px; border-radius: 6px; background: #101820b8; }
+.patient-controls { display: flex; flex-wrap: wrap; gap: 8px; padding: 10px 0; }
+#voiceStatus { flex-basis: 100%; font-size: 12px; color: #abbecb; }
+@keyframes portrait-idle { 0%,100% { transform: scale(1); } 50% { transform: scale(1.012); } }
+@media(prefers-reduced-motion:reduce) { .patient-portrait.has-motion { animation: none; } }
+.own-notes { padding: 14px; border: 1px solid #364754; border-radius: 12px; margin: 12px 0; }
+.own-notes label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; }
+.own-notes textarea { width: 100%; box-sizing: border-box; background: #111a22; color: #dbe7ef; border: 1px solid #4c606f; border-radius: 6px; padding: 10px; resize: vertical; font: inherit; }
+.own-notes small { display: block; margin-top: 5px; color: #9dafbd; font-size: 11px; }
+.student-notes { white-space: pre-wrap; overflow-wrap: anywhere; }

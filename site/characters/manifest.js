@@ -11,5 +11,9 @@ window.CHARACTER_MANIFEST = [
   { file: 'bronchiectasis-abenov.js', disease: 'Бронхоэктатическая болезнь', label: 'Абенов Мурат, 34' },
   { file: 'asthma-eszhanova.js',      disease: 'Бронхиальная астма',         label: 'Есжанова Айгерим, 24' },
   { file: 'cf-omarov.js',             disease: 'Муковисцидоз',               label: 'Омаров Даулет, 21' },
-  { file: 'chf-baizhanov.js',         disease: 'ХСН, застой в лёгких',       label: 'Байжанов Серик, 67' }
+  { file: 'chf-baizhanov.js',         disease: 'Хроническая сердечная недостаточность', label: 'Байжанов Серик, 67' },
+  { file: 'hypertension-saparov.js', disease: 'Артериальная гипертензия', label: 'Сапаров Ерлан, 52' },
+  { file: 'angina-iskakov.js', disease: 'ИБС: стенокардия напряжения', label: 'Искаков Марат, 59' },
+  { file: 'af-nurgaliev.js', disease: 'Фибрилляция предсердий (мерцательная аритмия)', label: 'Нургалиев Бекзат, 72' },
+  { file: 'pericarditis-alimov.js', disease: 'Острый перикардит', label: 'Алимов Данияр, 31' }
 ];
