@@ -29,6 +29,9 @@
 
   var CODE_KEY = 'vp.sync.code';   /* код преподавателя, вводится один раз */
 
+  // Public anon credentials only; never expose a service-role/provider key here.
+  Sync.publicApi = function () { return { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY }; };
+
   Sync.configured = function () {
     return !!SUPABASE_URL && !!SUPABASE_ANON_KEY;
   };

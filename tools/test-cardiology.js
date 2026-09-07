@@ -18,6 +18,7 @@ box.window.CHARACTER_MANIFEST.forEach(function(m){
  var items=[].concat(c.passport,c.questions,c.vitals,c.exams,c.orders,c.treatment,c.diagnosis.options), ids={};
  items.forEach(function(it){assert(!ids[it.id],'duplicate '+it.id);ids[it.id]=true;assert(it.need.length);});
  assert(ids[c.diagnosis.correct]);
+ ['выслушать лёгкие','выслушать сердце','давайте посмотрим горло','пальпировать живот','проверить лимфоузлы','проверить отёки ног','осмотреть кожу'].forEach(function(q){var r=box.window.NLU.match(q,items,{cat:'exam'});assert(r.ok,c.id+': basic exam '+q);});
  function checkAssets(o){if(!o||typeof o!=='object')return;Object.keys(o).forEach(function(k){var v=o[k];if(typeof v==='string'&&/^media\//.test(v))assert(fs.existsSync(path.join(root,'site',v)),c.id+': missing '+v);else checkAssets(v);});}checkAssets(c);
  (tests[c.id]||[]).forEach(function(t){var r=box.window.NLU.match(t[0],items,{cat:t[1],label:function(id){return id;}});assert(r.ok&&r.id===t[2],c.id+' '+t[0]+' => '+JSON.stringify(r));count++;});
  if(tests[c.id]){

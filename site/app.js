@@ -11,8 +11,10 @@
   var MODE = window.LearningMode.fromQuery(window.location.search);
   var independent = MODE === 'independent';
   var female = CASE.patient.gender === 'female';
-  var person = female ? 'Пациентка' : person;
+  var person = female ? 'Пациентка' : 'Пациент';
   var speechInput = null;
+  var aiChat = null, aiBusy = false, aiUsed = false;
+  var pendingAi = null;
   var WF = window.WAVEFORMS || {};
   var $ = function (id) { return document.getElementById(id); };
 
@@ -36,7 +38,16 @@
         { label: 'SpO₂',        run: 'измерить сатурацию' },
         { label: 'Рост и вес',  run: 'взвесить пациента' }
       ] },
-    { id: 'exam',    label: 'Осмотреть', ph: 'Какой физикальный приём выполнить?' },
+    { id: 'exam', label: 'Осмотреть', ph: 'Например: послушать лёгкие, посмотреть горло, проверить отёки',
+      sub: [
+        { label: 'Лёгкие', run: 'выслушать лёгкие' },
+        { label: 'Сердце', run: 'выслушать сердце' },
+        { label: 'Горло', run: 'осмотреть горло' },
+        { label: 'Живот', run: 'пальпировать живот' },
+        { label: 'Лимфоузлы', run: 'проверить лимфоузлы' },
+        { label: 'Отёки', run: 'проверить отёки ног' },
+        { label: 'Кожа', run: 'осмотреть кожу' }
+      ] },
     { id: 'order',   label: 'Назначить', ph: 'Какое исследование назначить?',
       sub: [
         { label: 'Анализы',           ph: 'Какой анализ назначить? Напишите название' },
@@ -87,6 +98,11 @@
      ========================================================= */
 
   function init() {
+    if (aiChat) aiChat.reset();
+    pendingAi = null;
+    aiUsed = false;
+    $('aiPanel').hidden = false;
+    $('aiStatus').textContent = '';
     buildCatalog();
     document.body.classList.toggle('independent-mode', independent);
     $('passportCounter').hidden = independent;
@@ -196,7 +212,60 @@
     if (/[?&]finish=1/.test(q)) finish(true);
   }
 
+  function sendToPatient(raw, fallback) {
+    if (aiBusy) { $('aiStatus').textContent = 'Дождитесь ответа или отмените ожидание.'; return; }
+    if (raw.length > 1000) { $('aiStatus').textContent = 'Сократите вопрос до 1000 символов.'; return; }
+    pendingAi = { raw: raw, fallback: fallback };
+    voice.pause(); hideSpeaking();
+    $('aiStatus').textContent = 'Готовится ответ…';
+    aiChat.send(raw);
+  }
+
   function bind() {
+    // Remove the former shared test password; it is no longer used.
+    try { localStorage.removeItem('vp.patient-chat.access.sawcjxnblgepkqdsvlio.v1'); } catch (e) {}
+    var aiApi = window.Sync && typeof window.Sync.publicApi === 'function' ? window.Sync.publicApi() : null;
+    aiChat = PatientChat.create({
+      baseUrl: aiApi ? aiApi.url : '',
+      anonKey: aiApi ? aiApi.anonKey : '',
+      caseId: CASE.id,
+      busy: function (on) { aiBusy = on; $('aiCancel').hidden = !on; },
+      reply: function (question, answer) {
+        pendingAi = null; aiUsed = true;
+        if ($('actInput').value.trim() === question) $('actInput').value = '';
+        $('aiStatus').textContent = 'Ответ получен.';
+        logRow({kind:'patient',cat:'ask',act:question,res:answer,resCls:''});
+        say(null, answer);
+      },
+      error: function (code) {
+        var messages = {
+          guest_disabled: 'Гостевой вход ещё не включён на сервере.',
+          guest_signin_failed: 'Не удалось открыть гостевую сессию.',
+          guest_signup_rate_limit: 'Слишком много новых подключений. Попробуйте позже.',
+          guest_expired: 'Сессия завершилась. Повторите вопрос для нового подключения.',
+          guest_rate_limit: 'Вопросы отправляются слишком часто. Подождите минуту.',
+          guest_daily_limit: 'Достигнут ваш лимит ответов на сегодня.',
+          global_daily_limit: 'Общий лимит ответов на сегодня исчерпан.',
+          total_limit: 'Лимит тестирования исчерпан. Нужна настройка преподавателем.',
+          chat_disabled: 'Свободный диалог временно отключён преподавателем.',
+          quota_unavailable: 'Серверные лимиты ещё не настроены.',
+          invalid_access_code: 'На сервере ещё старая версия функции. Требуется обновление для гостевого входа.',
+          provider_timeout: 'Ответ не пришёл вовремя.',
+          connection_failed: 'Нет связи с сервером.',
+          unsupported_case: 'Свободный диалог для этого случая пока не настроен.'
+        };
+        var pending = pendingAi; pendingAi = null;
+        var text = messages[code] || 'Свободный диалог временно недоступен (' + code + ').';
+        if (pending && pending.fallback) {
+          text += ' Показан сценарный ответ.';
+          aiChat.record(pending.raw, BYID[pending.fallback].text || '');
+          perform(pending.fallback, {raw:pending.raw});
+        } else text += ' Вопрос сохранён в поле ввода. Можно повторить позже или уточнить нужное действие.';
+        $('aiStatus').textContent = text;
+      }
+    });
+    $('aiCancel').addEventListener('click', function () { aiChat.cancel(); pendingAi = null; $('aiStatus').textContent = 'Ожидание отменено.'; });
+    window.addEventListener('pagehide', function () { aiChat.reset(); pendingAi = null; });
     var Engine = window.SpeechRecognition || window.webkitSpeechRecognition;
     $('talkBtn').disabled = !Engine;
     if (!Engine) $('talkStatus').textContent = 'В этом браузере голосовой ввод недоступен. Используйте текстовый ввод или браузер с поддержкой распознавания речи.';
@@ -272,6 +341,7 @@
   }
 
   function stopAll() {
+    if (aiChat) aiChat.cancel();
     if (speechInput) speechInput.cancel();
     hideSpeaking();
     if (voice) { voice.pause(); voice.src = ''; }
@@ -344,17 +414,31 @@
     if (state.finished) return;
     raw = String(raw || '').replace(/^\s+|\s+$/g, '');
     if (!raw) return;
-    $('actInput').value = '';
+    if (aiBusy) { $('aiStatus').textContent = 'Дождитесь ответа или отмените ожидание.'; return; }
     $('clarify').hidden = true;
 
+    // An invitation to listen does not specify heart vs lungs.
+    var invitation = raw.toLowerCase().replace(/ё/g, 'е').replace(/[.,!?]/g, '').trim();
+    if ((!state.cat || state.cat === 'exam') && /^(давайте |можно |я )?(вас )?(послушаем|послушаю|послушать)( вас)?$/.test(invitation)) {
+      var choices = CASE.exams.filter(function (e) { return e.id === 'e.heart' || e.id === 'e.lungs' || e.id === 'e.ausc'; });
+      askClarify(raw, choices.map(function (e) { return { id: e.id, cat: 'exam', label: e.label }; }));
+      return;
+    }
     var r = NLU.match(raw, INTENTS, { cat: state.cat, label: labelOf });
 
+    if (r.ok && BYID[r.id] && BYID[r.id].cat === 'ask' && !CASE.custom) {
+      sendToPatient(raw, r.id); return;
+    }
     if (r.ok) {
+      $('actInput').value = '';
       perform(r.id, { raw: raw, corrected: r.corrected });
       return;
     }
 
     if (r.kind === 'clarify') {
+      if (!CASE.custom && r.options.length && r.options.every(function (o) { return o.cat === 'ask'; })) {
+        sendToPatient(raw, null); return;
+      }
       askClarify(raw, r.options);
       return;
     }
@@ -369,59 +453,8 @@
       return;
     }
 
-    /* Не понял. Прежде чем сдаться, спрашиваем локальный ЛЛМ-прокси
-       (tools/nlu-proxy.py): если он запущен и уверенно выбрал намерение
-       из каталога, действие идёт обычным конвейером — озвученный заранее
-       ответ, детерминированный разбор. Без прокси XHR на 127.0.0.1 падает
-       мгновенно, и приём работает как раньше. */
-    askLLM(raw, function (id) {
-      if (id && BYID[id]) {
-        perform(id, { raw: raw, corrected: labelOf(id) });
-        return;
-      }
-      state.unknowns.push(raw);
-      var u = CASE.system.unknown;
-      logRow({
-        kind: 'unknown', cat: null,
-        act: '«' + raw + '»',
-        res: u.text,
-        resCls: 'is-warn'
-      });
-      say(u.audio, u.text);
-    });
-  }
-
-  /* ЛЛМ-фолбэк понимания. Прокси не отвечает за пациента и не ставит
-     оценок — он лишь выбирает id из каталога, который мы сами и прислали.
-     Ключ API живёт в переменной окружения прокси, страница его не видит.
-     Любая ошибка — сеть, таймаут, кривой ответ — эквивалентна «не понял». */
-  var LLM_URL = 'http://127.0.0.1:8790/match';
-
-  function askLLM(raw, done) {
-    var x, fin = false;
-    function finish(id) { if (!fin) { fin = true; done(id); } }
-    try {
-      x = new XMLHttpRequest();
-      x.open('POST', LLM_URL, true);
-      x.timeout = 8000;
-      x.setRequestHeader('Content-Type', 'application/json');
-      x.onreadystatechange = function () {
-        if (x.readyState !== 4) return;
-        if (x.status !== 200) { finish(null); return; }
-        var id = null;
-        try { id = JSON.parse(x.responseText).id || null; } catch (e) {}
-        finish(id);
-      };
-      x.ontimeout = function () { finish(null); };
-      x.onerror = function () { finish(null); };
-      x.send(JSON.stringify({
-        text: raw,
-        cat: state.cat || null,
-        intents: INTENTS.map(function (it) {
-          return { id: it.id, cat: it.cat, label: labelOf(it.id) };
-        })
-      }));
-    } catch (e) { finish(null); }
+    // Unknown wording is sent to the patient, never auto-executed as an exam.
+    sendToPatient(raw, null);
   }
 
   function askClarify(raw, options) {
@@ -440,7 +473,8 @@
                     '<span>' + esc(o.label) + '</span>';
       b.addEventListener('click', function () {
         box.hidden = true;
-        perform(o.id, { raw: raw });
+        if (BYID[o.id] && BYID[o.id].cat === 'ask' && !CASE.custom) sendToPatient(raw, o.id);
+        else perform(o.id, { raw: raw });
       });
       box.appendChild(b);
     });
@@ -451,9 +485,7 @@
     no.textContent = 'Ни то, ни другое';
     no.addEventListener('click', function () {
       box.hidden = true;
-      state.unknowns.push(raw);
-      logRow({ kind: 'unknown', cat: null, act: '«' + raw + '»',
-               res: 'Действие не распознано и не выполнено.', resCls: 'is-warn' });
+      sendToPatient(raw, null);
     });
     box.appendChild(no);
 
@@ -1028,6 +1060,7 @@
      ========================================================= */
 
   function finish(silent) {
+    if (aiChat) aiChat.cancel();
     if (speechInput) speechInput.cancel();
     if (!state.finished && !state.dx && !silent) {
       /* Диагноз — часть задания, но принудить к нему нельзя: врач вправе
@@ -1189,6 +1222,7 @@
       h += '</ul></div>';
     }
 
+    if (aiUsed) h += '<div class="block"><h3>ИИ-расспрос</h3><p>В этом приёме использовался ИИ. Его ответы не отмечают пункты чек-листа: итоговый процент не отражает полноту такого расспроса. Текст ИИ-диалога остаётся в протоколе этой страницы и не входит в код результата для преподавателя.</p></div>';
     h += '<div class="block"><h3>Продолжить практику</h3><p><a href="media-lab.html" target="_blank" rel="noopener">Разобрать реальные ЭКГ и звуки сердца</a></p><p class="block-note">Отдельные учебные записи, не исследования этого пациента.</p></div>';
     $('debrief').innerHTML = h;
   }

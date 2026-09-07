@@ -1,0 +1,4 @@
+# The handler verifies the user via /auth/v1/user. Supports current asymmetric
+# user JWTs as well as legacy tokens; missing/invalid user auth fails closed.
+[functions.patient-chat]
+verify_jwt = false
