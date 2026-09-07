@@ -25,3 +25,6 @@ const customMale=CC.inflate({patient:{name:'Марат',gender:'male'}});
 assert.equal(customFemale.patient.gender,'female');assert(customFemale.system.unknown.text.includes('поняла'));assert(customFemale.system.cough.text.includes('покашляла'));
 assert(customMale.system.unknown.text.includes('понял вопроса'));assert(!customMale.patient.portrait);assert.equal(CC.normalize(CC.normalize({patient:{gender:'female'}})).patient.gender,'female');
 console.log('OK: custom gender round trip and isolated gendered replies.');
+
+input.start();result("Не отправлять после сетевой ошибки",true);const beforeNetwork=sent.length;engine.onerror({error:"network"});assert(!listening);assert.equal(sent.length,beforeNetwork);assert(statuses.at(-1).includes("встроенном браузере"));
+console.log("OK: network error stops microphone, does not submit and offers recovery.");
