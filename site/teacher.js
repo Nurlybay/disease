@@ -998,7 +998,7 @@
     var unknowns = (r.meta.unknowns || []);
     var uk = '';
     if (unknowns.length) {
-      uk = '<div class="jd-block"><h4>Пациент не понял вопросов — ' + unknowns.length + '</h4>' +
+      uk = '<div class="jd-block"><h4>Нераспознанные вопросы — ' + unknowns.length + '</h4>' +
         '<p class="jd-unk">' + unknowns.map(function (u) { return '«' + esc(u) + '»'; }).join(' · ') + '</p></div>';
     }
 

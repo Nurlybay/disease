@@ -61,3 +61,9 @@
 .own-notes textarea { width: 100%; box-sizing: border-box; background: #111a22; color: #dbe7ef; border: 1px solid #4c606f; border-radius: 6px; padding: 10px; resize: vertical; font: inherit; }
 .own-notes small { display: block; margin-top: 5px; color: #9dafbd; font-size: 11px; }
 .student-notes { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.voice-question { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+.voice-question p { width: 100%; margin: 0; }
+.voice-question label { font-size: 12px; color: var(--muted, #a8b4c5); }
+#talkBtn[aria-pressed="true"] { border-color: #6edcc4; color: #6edcc4; }
+#talkStatus { font-size: 13px; }

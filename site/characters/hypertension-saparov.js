@@ -5,6 +5,7 @@ window.CASES.push({
   "disease": "Артериальная гипертензия",
   "title": "Повышенное давление на профосмотре",
   "patient": {
+    gender: "male",
     "portrait": "media/patients/hypertension-saparov.png",
     "name": "Пациент, 52 года",
     "short": "52 л.",

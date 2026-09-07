@@ -10,6 +10,9 @@
   var CASE = (window.CASES || [])[0];
   var MODE = window.LearningMode.fromQuery(window.location.search);
   var independent = MODE === 'independent';
+  var female = CASE.patient.gender === 'female';
+  var person = female ? 'Пациентка' : person;
+  var speechInput = null;
   var WF = window.WAVEFORMS || {};
   var $ = function (id) { return document.getElementById(id); };
 
@@ -23,7 +26,7 @@
      не перечислены, поэтому их подгруппы остаются родовыми: что именно
      назначить, врач по-прежнему пишет сам. */
   var CATS = [
-    { id: 'ask',     label: 'Спросить',  ph: 'О чём спросить пациента? Формулируйте своими словами' },
+    { id: 'ask',     label: 'Спросить',  ph: 'Задайте вопрос своими словами' },
     { id: 'measure', label: 'Измерить',  ph: 'Какой показатель измерить?',
       sub: [
         { label: 'Температура', run: 'измерить температуру' },
@@ -128,9 +131,13 @@
     var idle = $('videoIdle'), throat = $('videoThroat');
     var portrait = $('patientPortrait');
     portrait.hidden = !CASE.patient.portrait;
+    portrait.alt = female ? 'Иллюстрация вымышленной пациентки' : 'Иллюстрация вымышленного пациента';
+    document.querySelector('.speaking-label').textContent = female ? 'пациентка говорит' : 'пациент говорит';
+    document.querySelector('.col-patient').setAttribute('aria-label', person);
     idle.hidden = !!CASE.patient.portrait;
     throat.hidden = !!CASE.patient.portrait;
     $('portraitCaption').hidden = !CASE.patient.portrait;
+    $('portraitCaption').textContent = female ? 'Вымышленная пациентка · ИИ-иллюстрация' : 'Вымышленный пациент · ИИ-иллюстрация';
     $('portraitMotion').hidden = !CASE.patient.portrait;
     if (CASE.patient.portrait) portrait.src = CASE.patient.portrait;
     if (!idle.src && !CASE.patient.portrait) {
@@ -169,7 +176,7 @@
        Дальше не произойдёт ничего, пока врач не напишет. */
     logRow({
       kind: 'patient', cat: null,
-      act: 'Пациент вошёл в кабинет',
+      act: person + (female ? ' вошла в кабинет' : ' вошёл в кабинет'),
       res: CASE.patient.greeting.text,
       resCls: ''
     });
@@ -190,6 +197,27 @@
   }
 
   function bind() {
+    var Engine = window.SpeechRecognition || window.webkitSpeechRecognition;
+    $('talkBtn').disabled = !Engine;
+    if (!Engine) $('talkStatus').textContent = 'В этом браузере голосовой ввод недоступен. Используйте текстовый ввод или браузер с поддержкой распознавания речи.';
+    speechInput = VoiceInput.create({ Engine: Engine,
+      beforeStart: function () { voice.pause(); lung.pause(); hideSpeaking(); setCat('ask'); },
+      listening: function (on) { $('talkBtn').setAttribute('aria-pressed', String(on)); $('talkBtn').textContent = on ? 'Закончить вопрос' : 'Задать вопрос голосом'; $('cancelTalk').hidden = !on; },
+      status: function (text) { $('talkStatus').textContent = text; },
+      text: function (text) { $('actInput').value = text; },
+      result: function (text) {
+        if (state.finished) return;
+        if ($('voiceAutoSend').checked) { $('talkStatus').textContent = 'Вопрос отправлен: «' + text + '»'; setCat('ask'); submit(text); }
+        else { $('talkStatus').textContent = 'Проверьте вопрос и нажмите «Выполнить».'; $('actInput').focus(); }
+      }
+    });
+    $('talkBtn').addEventListener('click', function () {
+      if (state.finished) { $('talkStatus').textContent = 'Приём завершён. Начните заново для разговора.'; return; }
+      if (speechInput.isListening()) speechInput.stop(); else speechInput.start();
+    });
+    $('cancelTalk').addEventListener('click', function () { speechInput.cancel(); $('actInput').value = ''; $('talkStatus').textContent = 'Запись отменена. Вопрос не отправлен.'; });
+    window.addEventListener('pagehide', function () { speechInput.cancel(); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden) speechInput.cancel(); });
     $('clinicalNotes').addEventListener('input', function () { state.clinicalNotes = this.value; });
     $('repeatVoice').addEventListener('click', function () {
       if (voice._text) say(voice._source, voice._text);
@@ -205,6 +233,7 @@
       submit($('actInput').value);
     });
     $('actInput').addEventListener('input', function () {
+      if (speechInput) speechInput.cancel();
       $('clarify').hidden = true;
     });
     $('restartBtn').addEventListener('click', restart);
@@ -243,6 +272,7 @@
   }
 
   function stopAll() {
+    if (speechInput) speechInput.cancel();
     hideSpeaking();
     if (voice) { voice.pause(); voice.src = ''; }
     if (lung) { lung.pause(); lung.src = ''; }
@@ -310,6 +340,8 @@
   }
 
   function submit(raw) {
+    if (speechInput) speechInput.cancel();
+    if (state.finished) return;
     raw = String(raw || '').replace(/^\s+|\s+$/g, '');
     if (!raw) return;
     $('actInput').value = '';
@@ -504,7 +536,7 @@
     logRow(row);
     if (kind === 'treat' && item.patientReply) {
       var reply = item.patientReply;
-      logRow({ kind: 'patient', cat: null, act: 'Пациент отвечает на план', res: reply.text, resCls: '' });
+      logRow({ kind: 'patient', cat: null, act: person + ' отвечает на план', res: reply.text, resCls: '' });
       if (!opts.silent) say(reply.audio, reply.text);
     }
     renderChip();
@@ -523,10 +555,10 @@
 
     if (item.kind === 'throat') {
       switchVideo('throat');
-      $('videoBadge').textContent = 'Осмотр зева';
+      $('videoBadge').textContent = CASE.patient.throatVideo ? 'Осмотр зева' : 'Осмотр зева · текстовый результат';
       var v = $('videoThroat');
       v.currentTime = 0;
-      v.play().catch(function () {});
+      if (CASE.patient.throatVideo) v.play().catch(function () {});
       /* У кастомного случая служебной реплики может не быть — тогда
          осмотр показывает только видео и строку протокола. */
       var sys = CASE.system && CASE.system[item.voice];
@@ -564,7 +596,7 @@
 
   function resetLog() {
     $('log').innerHTML =
-      '<li class="log-empty">Пациент вошёл и ждёт. Ничего не произойдёт, пока вы не начнёте.</li>';
+      '<li class="log-empty">' + person + (female ? ' вошла' : ' вошёл') + ' и ждёт. Ничего не произойдёт, пока вы не начнёте.</li>';
     updateCounters();
   }
 
@@ -617,7 +649,7 @@
   }
 
   function catNameOf(kind) {
-    return kind === 'patient' ? 'Пациент' :
+    return kind === 'patient' ? person :
            kind === 'unknown' ? 'Не понято' :
            kind === 'refused' ? 'Отказ' : '—';
   }
@@ -662,8 +694,8 @@
      пациент вслух называет свой кашель небольшим. */
   function renderChip() {
     var who = state.done['p.name'] ? BYID['p.name'].value
-            : state.done['p.age'] ? 'Пациент, ' + BYID['p.age'].value
-            : 'Пациент';
+            : state.done['p.age'] ? person + ', ' + BYID['p.age'].value
+            : person;
     if (state.done['p.name'] && state.done['p.age']) {
       who += ', ' + BYID['p.age'].value;
     }
@@ -736,6 +768,7 @@
   function hideSpeaking() { $('speakingIndicator').hidden = true; $('patientPortrait').classList.remove('is-speaking'); }
 
   function say(src, text, onEnd) {
+    if (speechInput) speechInput.cancel();
     voice._text = text; voice._source = src;
     $('voiceStatus').textContent = '';
     lung.pause();
@@ -771,6 +804,9 @@
 
   function switchVideo(which) {
     var idle = $('videoIdle'), throat = $('videoThroat');
+    if (CASE.patient.portrait && (which === 'idle' || !CASE.patient.throatVideo)) {
+      $('patientPortrait').hidden = false; idle.pause(); throat.pause(); idle.classList.remove('is-active'); throat.classList.remove('is-active'); return;
+    }
     $('patientPortrait').hidden = !CASE.patient.portrait || which === 'throat';
     if (CASE.patient.portrait && which === 'idle') { idle.pause(); throat.pause(); idle.classList.remove('is-active'); throat.classList.remove('is-active'); return; }
     if (which === 'throat') {
@@ -992,6 +1028,7 @@
      ========================================================= */
 
   function finish(silent) {
+    if (speechInput) speechInput.cancel();
     if (!state.finished && !state.dx && !silent) {
       /* Диагноз — часть задания, но принудить к нему нельзя: врач вправе
          закончить приём и без него, и разбор это покажет. */

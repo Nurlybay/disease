@@ -269,6 +269,7 @@
     var p = raw.patient || {};
     d.patient = {
       name: str(p.name), short: str(p.short), reason: str(p.reason),
+      gender: p.gender === 'female' ? 'female' : 'male',
       greetingText: str(p.greetingText || p.greeting && p.greeting.text)
     };
 
@@ -380,11 +381,13 @@
     var C = {
       id: d.id, disease: d.disease, title: d.title, custom: true,
       patient: {
-        name: d.patient.name || 'Пациент',
-        short: d.patient.short || d.patient.name || 'Пациент',
+        gender: d.patient.gender,
+        name: d.patient.name || (d.patient.gender === 'female' ? 'Пациентка' : 'Пациент'),
+        short: d.patient.short || d.patient.name || (d.patient.gender === 'female' ? 'Пациентка' : 'Пациент'),
         reason: d.patient.reason || '',
-        idleVideo: 'media/patient-idle.mp4',
-        throatVideo: 'media/patient-throat.mp4',
+        portrait: d.patient.gender === 'female' ? 'media/patients/asthma-eszhanova.png' : null,
+        idleVideo: d.patient.gender === 'female' ? '' : 'media/patient-idle.mp4',
+        throatVideo: d.patient.gender === 'female' ? '' : 'media/patient-throat.mp4',
         throatPoster: 'media/throat-poster.jpg',
         greeting: {
           audio: null,
@@ -392,7 +395,7 @@
         },
         chip: []
       },
-      system: CC.GENERIC_SYSTEM,
+      system: JSON.parse(JSON.stringify(CC.GENERIC_SYSTEM)),
       passport: [], vitals: [], questions: [], exams: [],
       auscultation: { normalAudio: NORMAL_FINDING.audio, points: [], findings: {} },
       orders: [], treatment: [],
@@ -400,6 +403,11 @@
       algorithm: [],
       debrief: d.debrief
     };
+
+    if (d.patient.gender === 'female') {
+      C.system.unknown.text = 'Извините, доктор, я не поняла вопроса.';
+      C.system.cough.text = 'Кхе-кхе… Вот, покашляла.';
+    }
 
     /* Чип жалобы: после первого вопроса показываем повод обращения. */
     if (d.questions.length) {

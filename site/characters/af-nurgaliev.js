@@ -5,6 +5,7 @@ window.CASES.push({
   "disease": "Фибрилляция предсердий (мерцательная аритмия)",
   "title": "Перебои в сердце и утомляемость",
   "patient": {
+    gender: "male",
     "portrait": "media/patients/af-nurgaliev.png",
     "name": "Пациент, 72 года",
     "short": "72 л.",

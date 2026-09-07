@@ -15,6 +15,7 @@ window.CASES.push({
   title: 'Мужчина 67 лет с ночным кашлем и одышкой',
 
   patient: {
+    gender: "male",
     name: 'Пациент Б., 67 лет',
     short: 'Б., 67 л.',
     reason: 'Ночной кашель, одышка',

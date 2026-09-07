@@ -58,7 +58,7 @@
     return {
       v: 1, id: '',
       disease: '', title: '',
-      patient: { name: '', short: '', reason: '', greetingText: '' },
+      patient: { gender: 'male', name: '', short: '', reason: '', greetingText: '' },
       passport: PASSPORT_PRESETS.map(function (p) {
         return { id: p.id, field: p.field, value: '', text: '',
                  important: false, why: '', need: p.need };
@@ -268,6 +268,8 @@
           inpPath('title', draft.title, 'Школьница, 15 лет, пришла с мамой') + '</label>' +
         '<label>ФИО пациента<br>' +
           inpPath('patient.name', draft.patient.name, 'Есжанова Айгерим') + '</label>' +
+        '<label>Пол персонажа (подписи и базовое изображение)<br>' +
+          '<select class="cn-in" data-path="patient.gender"><option value="male"' + (draft.patient.gender !== 'female' ? ' selected' : '') + '>Мужской</option><option value="female"' + (draft.patient.gender === 'female' ? ' selected' : '') + '>Женский</option></select></label>' +
         '<label>Короткое обращение<br>' +
           inpPath('patient.short', draft.patient.short, 'Айгерим') + '</label>' +
         '<label class="cn-wide">Повод обращения (строка чипа жалобы)<br>' +

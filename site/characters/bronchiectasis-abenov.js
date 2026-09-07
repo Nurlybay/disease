@@ -25,6 +25,7 @@ window.CASES.push({
   title: 'Мужчина 34 лет с длительным кашлем',
 
   patient: {
+    gender: "male",
     name: 'Пациент М., 34 года',
     short: 'М., 34 г.',
     reason: 'Длительный кашель',

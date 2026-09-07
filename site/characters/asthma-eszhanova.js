@@ -15,11 +15,13 @@ window.CASES.push({
   title: 'Девушка 24 лет с ночным кашлем',
 
   patient: {
+    gender: "female",
     name: 'Пациентка Е., 24 года',
     short: 'Е., 24 г.',
     reason: 'Ночной кашель',
-    idleVideo: 'media/patient-idle.mp4',
-    throatVideo: 'media/patient-throat.mp4',
+    portrait: 'media/patients/asthma-eszhanova.png',
+    idleVideo: '',
+    throatVideo: '',
     throatPoster: 'media/throat-poster.jpg',
     greeting: {
       audio: 'media/voice/asthma-eszhanova/greeting.mp3',
@@ -109,7 +111,7 @@ window.CASES.push({
 
     { id: 'v.rr', cat: 'measure', w: 1, label: 'Посчитать частоту дыхания',
       field: 'ЧДД', value: '20', unit: '/мин', flag: 'ok',
-      tech: 'Считать незаметно для пациента, полная минута.',
+      tech: 'Считать незаметно для пациентки, полная минута.',
       note: 'ЧДД 20 в минуту, вне приступа.', abnormal: false, weight: 1,
       need: [['чдд', 'частот']],
       no: ['пульс', 'чсс', 'сердеч'] },

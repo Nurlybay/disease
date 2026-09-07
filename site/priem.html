@@ -225,6 +225,13 @@
         <button class="btn btn-primary" id="actGo" type="submit">Выполнить</button>
       </form>
 
+      <div class="voice-question">
+        <button class="btn btn-ghost" id="talkBtn" type="button" aria-pressed="false">Задать вопрос голосом</button>
+        <button class="btn btn-ghost btn-sm" id="cancelTalk" type="button" hidden>Отменить запись</button>
+        <label><input type="checkbox" id="voiceAutoSend" checked> Сразу отправлять распознанный вопрос</label>
+        <p id="talkStatus" role="status" aria-live="polite"></p>
+        <p class="console-hint">Микрофон включается только по кнопке. Распознавание может передавать звук сервису браузера и требовать интернет. Ответы — по учебному сценарию. Для проверки текста перед отправкой снимите флажок.</p>
+      </div>
       <div class="clarify" id="clarify" hidden></div>
 
       <p class="console-hint" id="consoleHint">Ничего не подсказывается. Спрашивайте, измеряйте, осматривайте, назначайте и формулируйте диагноз в том порядке, который считаете правильным.</p>
@@ -283,6 +290,7 @@
 <script src="nlu.js"></script>
 <script src="score.js"></script>
 <script src="learning-mode.js"></script>
+<script src="voice-input.js"></script>
 <!-- custom-cases.js до манифеста: loader.js сливает встроенных персонажей
      и сохранённые в браузере кастомные случаи в один список. -->
 <script src="custom-cases.js"></script>

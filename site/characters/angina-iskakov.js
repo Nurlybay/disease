@@ -5,6 +5,7 @@ window.CASES.push({
   "disease": "ИБС: стенокардия напряжения",
   "title": "Дискомфорт за грудиной при ходьбе",
   "patient": {
+    gender: "male",
     "portrait": "media/patients/angina-iskakov.png",
     "name": "Пациент, 59 лет",
     "short": "59 л.",

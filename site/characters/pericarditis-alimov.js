@@ -5,6 +5,7 @@ window.CASES.push({
   "disease": "Острый перикардит",
   "title": "Боль в груди после простуды",
   "patient": {
+    gender: "male",
     "portrait": "media/patients/pericarditis-alimov.png",
     "name": "Пациент, 31 год",
     "short": "31 л.",
