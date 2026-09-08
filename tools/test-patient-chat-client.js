@@ -27,3 +27,6 @@ const marathon=box.window.PatientChat.create(options);
 for(let i=0;i<35;i++) { marathon.send('Вопрос '+i); assert(xhr.body.history.length<=20); respond({reply:'Ответ '+i,caseId:options.caseId}); assert(!busy); }
 assert.equal(answer,'Ответ 34');
 console.log('OK 35 consecutive questions without a ten-question cutoff.');
+let receivedAudio;const voicedClient=box.window.PatientChat.create({...options,reply:(q,a,audio)=>receivedAudio=audio});
+voicedClient.send('Кем работали?');assert.equal(xhr.body.withAudio,true);respond({reply:'Водителем.',caseId:options.caseId,audioType:'audio/mpeg',audio:'QUJDRA=='});assert.equal(receivedAudio,'data:audio/mpeg;base64,QUJDRA==');
+voicedClient.send('А сейчас?');respond({reply:'На пенсии.',caseId:options.caseId,audioType:'audio/mpeg',audio:'https://example.test'});assert.equal(receivedAudio,null);

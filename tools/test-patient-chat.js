@@ -2,7 +2,7 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 let handler,calls=0,payload,authStatus=200,quotaStatus=200,quota={allowed:true};
 const env={NEURALDEEP_API_KEY:'test-only',NEURALDEEP_MODEL:'test-model',SUPABASE_URL:'https://project.test',SUPABASE_ANON_KEY:'public'};
 let provider=async(url,opts)=>{calls++;payload=JSON.parse(opts.body);return Response.json({choices:[{message:{content:'Точно не скажу, доктор.'}}]});};
-const ctx={Deno:{env:{get:k=>env[k]},serve:f=>handler=f},Response,TextDecoder,Uint8Array,AbortController,AbortSignal,setTimeout,clearTimeout,fetch:async(url,opts)=>{
+const ctx={Deno:{env:{get:k=>env[k]},serve:f=>handler=f},Response,btoa,TextDecoder,Uint8Array,AbortController,AbortSignal,setTimeout,clearTimeout,fetch:async(url,opts)=>{
  if(url.endsWith('/auth/v1/user'))return Response.json({id:'verified-user'},{status:authStatus});
  if(url.includes('/rpc/')){assert.equal(opts.headers.Authorization,'Bearer guest-jwt');assert.equal(opts.body,'{}');return Response.json(quota,{status:quotaStatus});}
  return provider(url,opts);
@@ -54,6 +54,13 @@ function req(data=body,token='guest-jwt'){return new Request('https://example.te
  const originalProvider=provider;
  provider=async(url,opts)=>{assert.equal(url,'https://openrouter.ai/api/v1/chat/completions');return originalProvider(url,opts);};
  assert.equal((await handler(req())).status,200);assert.equal(payload.provider.sort,'latency');assert.equal(payload.reasoning.enabled,false);
+ provider=async(url,opts)=>{
+  if(url.endsWith('/audio/speech')){const t=JSON.parse(opts.body);assert.equal(t.voice,'Russian_ReliableMan');assert.equal(t.input,'Точно не скажу, доктор.');return new Response(new Uint8Array(200),{headers:{'content-type':'audio/mpeg'}});}
+  return originalProvider(url,opts);
+ };
+ const voiced=await(await handler(req({...body,withAudio:true}))).json();assert.equal(voiced.audioType,'audio/mpeg');assert(voiced.audio.length>100);
+ provider=async(url,opts)=>url.endsWith('/audio/speech')?new Response('',{status:503}):originalProvider(url,opts);
+ const silent=await(await handler(req({...body,withAudio:true}))).json();assert(silent.reply);assert(!silent.audio);
  delete env.OPENROUTER_API_KEY;assert.equal((await handler(req())).status,503);
  delete env.PATIENT_CHAT_PROVIDER;
  provider=async()=>new Response('private error',{status:401});assert.equal((await (await handler(req())).json()).error,'provider_auth_failed');

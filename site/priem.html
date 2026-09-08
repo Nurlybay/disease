@@ -72,9 +72,10 @@
     <div class="patient-controls">
       <button class="btn btn-ghost btn-sm" id="repeatVoice" type="button">Повторить реплику</button>
       <button class="btn btn-ghost btn-sm" id="portraitMotion" type="button" aria-pressed="false" hidden>Включить движение</button>
+      <div hidden>
       <label id="patientSoundsControl" hidden><input id="patientSoundsToggle" type="checkbox" checked> Звуки пациента</label>
-      <a href="media/patient-sounds/README.md" target="_blank" rel="noopener">Источники звуков</a>
       <span id="voiceStatus" role="status"></span>
+      </div>
     </div>
     <div class="card">
       <div class="card-head">
@@ -308,7 +309,7 @@
 <script src="patient-sounds.js?v=1"></script>
 <script src="patient-speech.js?v=gender-20260908"></script>
 <script src="voice-input.js?v=lang-v1"></script>
-<script src="patient-chat.js?v=lang-v1"></script>
+<script src="patient-chat.js?v=server-voice-v1"></script>
 <!-- custom-cases.js до манифеста: loader.js сливает встроенных персонажей
      и сохранённые в браузере кастомные случаи в один список. -->
 <script src="custom-cases.js"></script>
@@ -318,6 +319,6 @@
 <!-- Персонаж выбирается случайно: loader.js подключает один файл из
      characters/ и лишь затем app.js (отладка: ?char=имя-файла-без-.js). -->
 <script src="characters/manifest.js?v=lang-en-20260908"></script>
-<script src="characters/loader.js?v=patient-sounds-20260908"></script>
+<script src="characters/loader.js?v=server-voice-v1"></script>
 </body>
 </html>

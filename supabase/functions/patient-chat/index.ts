@@ -1005,7 +1005,24 @@ Deno.serve(async (req) => {
     catch { return reply(502, { error: 'provider_invalid_json' }); }
     const answer = data?.choices?.[0]?.message?.content;
     if (typeof answer !== 'string' || !answer.trim() || answer.length > 4000 || /<think>/i.test(answer)) return reply(502, { error: 'invalid_provider_answer' });
-    return reply(200, { reply: answer.trim(), caseId: body.caseId, experimental: true });
+    let audio;
+    if (body.withAudio === true && providerName === 'openrouter' && language !== 'kk') {
+      try {
+        const spoken = await fetch('https://openrouter.ai/api/v1/audio/speech', {
+          method: 'POST', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
+          headers: { 'Content-Type':'application/json', Authorization:`Bearer ${key}` },
+          body: JSON.stringify({model:'minimax/speech-2.8-turbo', input:answer.trim(), voice:language === 'ru' ? (PATIENTS[body.caseId].gender === 'female' ? 'Russian_BrightHeroine' : 'Russian_ReliableMan') : (PATIENTS[body.caseId].gender === 'female' ? 'English_CalmWoman' : 'English_PatientMan'), response_format:'mp3', speed:0.95})
+        });
+        if (spoken.ok && (spoken.headers.get('content-type') || '').includes('audio/')) {
+          const bytes = new Uint8Array(await spoken.arrayBuffer());
+          if (bytes.length > 100 && bytes.length < 1500000) {
+            let binary=''; for (let i=0;i<bytes.length;i+=8192) binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+            audio = btoa(binary);
+          }
+        }
+      } catch { /* Speech failure must not discard the patient's text answer. */ }
+    }
+    return reply(200, { reply: answer.trim(), caseId: body.caseId, experimental: true, ...(audio ? {audio, audioType:'audio/mpeg'} : {}) });
   } catch (error) {
     // Classify locally; never return/log raw exception text (may contain secrets).
     const detail = String(error?.message || '') + ' ' + String(error?.cause?.message || '');

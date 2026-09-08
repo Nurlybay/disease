@@ -45,23 +45,24 @@
       send: function (message) {
         if (active) return false;
         var op = {}; active = op; options.busy(true);
-        function done(error, answer) {
+        function done(error, answer, audio) {
           if (active !== op) return;
           active = null; options.busy(false);
           if (error) { options.error(error); return; }
           history.push({ role: 'user', content: message }, { role: 'assistant', content: answer.slice(0,1000) }); history=history.slice(-20);
-          options.reply(message, answer);
+          options.reply(message, answer, audio);
         }
         guest(op, function (error, token) {
           if (error) { done(error); return; }
-          request(op, options.baseUrl + '/functions/v1/patient-chat', {caseId:options.caseId, message:message, history:history, language:options.language ? options.language() : 'ru'}, token, function (error, data, status) {
+          request(op, options.baseUrl + '/functions/v1/patient-chat', {caseId:options.caseId, message:message, history:history, withAudio:true, language:options.language ? options.language() : 'ru'}, token, function (error, data, status) {
             if (error) { done(error); return; }
             if (status !== 200) {
               if (status === 401) save(null);
               done(data.error || (status === 401 ? 'guest_expired' : status === 404 ? 'function_not_found' : 'http_' + status)); return;
             }
             if (typeof data.reply !== 'string' || !data.reply.trim() || data.reply.length > 4000 || data.caseId !== options.caseId) { done('invalid_response'); return; }
-            done(null, data.reply);
+            var audio = data.audioType === 'audio/mpeg' && typeof data.audio === 'string' && data.audio.length < 2000000 && /^[A-Za-z0-9+/]+={0,2}$/.test(data.audio) ? 'data:audio/mpeg;base64,' + data.audio : null;
+            done(null, data.reply, audio);
           });
         });
         return true;

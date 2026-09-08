@@ -250,12 +250,12 @@
       caseId: CASE.id,
       language: function () { return window.I18n ? I18n.language() : 'ru'; },
       busy: function (on) { aiBusy = on; $('aiCancel').hidden = !on; },
-      reply: function (question, answer) {
+      reply: function (question, answer, audio) {
         pendingAi = null; aiUsed = true;
         if ($('actInput').value.trim() === question) $('actInput').value = '';
         $('aiStatus').textContent = 'Ответ получен.';
         logRow({kind:'patient',cat:'ask',act:question,res:answer,resCls:''});
-        say(null, answer, null, true);
+        say(audio || null, answer, null, true);
       },
       error: function (code) {
         var messages = {

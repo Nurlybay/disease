@@ -44,7 +44,7 @@
 
     function load(src, onDone) {
       var s = document.createElement('script');
-      s.src = src + '?v=patient-sounds-20260908';
+      s.src = src + '?v=server-voice-v1';
       s.onload = onDone;
       s.onerror = function () {
         document.title = 'Ошибка загрузки: ' + src;
