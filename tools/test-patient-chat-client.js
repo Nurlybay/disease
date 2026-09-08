@@ -20,3 +20,5 @@ const canceled=box.window.PatientChat.create(options);canceled.send('Вопро�
 console.log('OK guest signup, reuse, refresh, history, limits, auth failures, cancellation, no password headers.');
 
 options.language=()=> 'kk';const kkClient=box.window.PatientChat.create(options);kkClient.send('Қанша күн?');respond({access_token:'kk-token',refresh_token:'kk-refresh',expires_in:3600});assert.equal(xhr.body.language,'kk');kkClient.cancel();
+
+options.language=()=> 'en';const enClient=box.window.PatientChat.create(options);enClient.send('How many days?');assert.equal(xhr.body.language,'en');enClient.cancel();

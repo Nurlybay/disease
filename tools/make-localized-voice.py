@@ -8,14 +8,16 @@ ROOT=Path(__file__).resolve().parents[1]
 def spoken_ru(text):return re.sub(r'(про|по|от)кашл(я[а-яё]*)',lambda m:m[1]+'ка\u0301шл'+m[2],text,flags=re.I)
 async def main():
  lang=sys.argv[1] if len(sys.argv)>1 else 'kk'; rows=json.loads((ROOT/'site/locales/spoken-source.json').read_text())
- catalog=json.loads((ROOT/'site/locales/kk.json').read_text()) if lang=='kk' else {}
+ catalog=json.loads((ROOT/('site/locales/'+lang+'.json')).read_text()) if lang!='ru' else {}
  path=ROOT/'site/locales/voice-map.json'; mapping=json.loads(path.read_text()) if path.exists() else {'ru':{},'kk':{}}
+ mapping.setdefault(lang,{})
  sem=asyncio.Semaphore(3)
  async def line(row):
-  text=row['text'];text=catalog.get(' '.join(text.split()),text) if lang=='kk' else spoken_ru(text)
+  text=row['text'];text=catalog.get(' '.join(text.split()),text) if lang!='ru' else spoken_ru(text)
   if lang=='ru' and text==row['text']:return
-  if lang=='kk' and ' '.join(row['text'].split()) not in catalog:raise ValueError('Missing translation: '+row['text'])
+  if lang!='ru' and ' '.join(row['text'].split()) not in catalog:raise ValueError('Missing translation: '+row['text'])
   voice=('kk-KZ-AigulNeural' if row['gender']=='female' else 'kk-KZ-DauletNeural') if lang=='kk' else ('ru-RU-SvetlanaNeural' if row['gender']=='female' else 'ru-RU-DmitryNeural')
+  if lang=='en':voice='en-US-JennyNeural' if row['gender']=='female' else 'en-US-GuyNeural'
   key=hashlib.sha256((voice+text).encode()).hexdigest()[:20]; relative='media/voice/'+lang+'/'+key+'.mp3';out=ROOT/'site'/relative;out.parent.mkdir(parents=True,exist_ok=True)
   async with sem:
    if not out.exists():

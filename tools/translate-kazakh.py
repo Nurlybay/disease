@@ -1,9 +1,11 @@
 """Build a cached draft KK catalog from public fictional training copy, with explicit owner consent.
 No translation service is called by the deployed application. Review medical terminology before release.
 """
-import concurrent.futures,json,re,time,urllib.request,urllib.parse
+import concurrent.futures,json,re,time,urllib.request,urllib.parse,sys
 from pathlib import Path
-root=Path(__file__).resolve().parents[1];target=root/'site/locales/kk.json'
+language=sys.argv[1] if len(sys.argv)>1 else 'kk'
+assert language in ('kk','en')
+root=Path(__file__).resolve().parents[1];target=root/('site/locales/'+language+'.json')
 source=json.loads((root/'site/locales/ru-source.json').read_text());cache=json.loads(target.read_text()) if target.exists() else {}
 pending=[s for s in source if s not in cache];batches=[];batch=[];size=0
 for s in pending:
@@ -12,7 +14,7 @@ for s in pending:
 if batch:batches.append(batch)
 def translate(batch):
  q='\n'.join('ZXQ'+str(i)+'ZX '+s for i,s in enumerate(batch))
- u='https://translate.googleapis.com/translate_a/single?'+urllib.parse.urlencode({'client':'gtx','sl':'ru','tl':'kk','dt':'t','q':q})
+ u='https://translate.googleapis.com/translate_a/single?'+urllib.parse.urlencode({'client':'gtx','sl':'ru','tl':language,'dt':'t','q':q})
  for attempt in range(4):
   try:
    d=json.load(urllib.request.urlopen(u,timeout=35));txt=''.join(x[0] for x in d[0]);parts=re.split(r'ZXQ\s*(\d+)\s*ZX\s*',txt)

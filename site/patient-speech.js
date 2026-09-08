@@ -7,7 +7,7 @@
   var voices=synth.getVoices().filter(function(v){return v.lang.toLowerCase().slice(0,2)===language;});
   if(!voices.length){status('Голос выбранного языка недоступен в этом браузере. Ответ остаётся в тексте.');done();return;}
   var u=new SpeechSynthesisUtterance(root.Pronunciation?Pronunciation.prepare(text,language):text);active=u;
-  var preferred=gender==='female'?/Aigul|Svetlana|female|Irina/i:/Daulet|Dmitry|male|Pavel/i;
+  var preferred=gender==='female'?/Aigul|Svetlana|Jenny|Samantha|female|Irina/i:/Daulet|Dmitry|Guy|David|(^|\W)male(\W|$)|Pavel/i;
   u.voice=voices.filter(function(v){return preferred.test(v.name);})[0]||voices[0];u.lang=locale;u.rate=.95;
   u.onend=function(){if(active===u){active=null;done();}};u.onerror=function(){if(active===u){active=null;status('Озвучка недоступна. Ответ остаётся в тексте.');done();}};synth.speak(u);
  }};

@@ -23,6 +23,7 @@
   /* ---------------------------------------------------------------- */
 
   function normalize(s) {
+    s = window.EnglishNLU ? window.EnglishNLU.canonical(s == null ? '' : s) : s;
     s = window.KazakhNLU ? window.KazakhNLU.canonical(s == null ? '' : s) : s;
     return String(s == null ? '' : s)
       .toLowerCase()

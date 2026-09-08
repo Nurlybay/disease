@@ -1,15 +1,17 @@
-/* Local RU/KK presentation. No runtime translation requests; medical/scoring data stay canonical. */
+/* Local RU/KK/EN presentation. No runtime translation requests; medical/scoring data stay canonical. */
 (function(root){
   'use strict';
   var params=new URLSearchParams(location.search), lang=params.get('lang');
-  if(lang!=='ru'&&lang!=='kk'){try{lang=localStorage.getItem('vp.language.v1');}catch(e){}}
-  lang=lang==='kk'?'kk':'ru';
+  if(!['ru','kk','en'].includes(lang)){try{lang=localStorage.getItem('vp.language.v1');}catch(e){}}
+  lang=['ru','kk','en'].includes(lang)?lang:'ru';
   try{localStorage.setItem('vp.language.v1',lang);}catch(e){}
   var originalTitle=document.title;
-  var dictionary=root.KK_MESSAGES||{}, keys=Object.keys(dictionary).filter(function(k){return k.length>=3;}).sort(function(a,b){return b.length-a.length;});
+  var dictionary={}, keys=[];
+  function selectDictionary(){dictionary=(lang==='en'?root.EN_MESSAGES:root.KK_MESSAGES)||{};keys=Object.keys(dictionary).filter(function(k){return k.length>=3;}).sort(function(a,b){return b.length-a.length;});if(cache)cache.clear();}
+  selectDictionary();
   var originals=new WeakMap(), attributes=new WeakMap(), observer, cache=new Map();
   function translate(text){
-    if(lang!=='kk'||typeof text!=='string')return text;
+    if(lang==='ru'||typeof text!=='string')return text;
     if(cache.has(text))return cache.get(text);
     var clean=text.replace(/\s+/g,' ').trim();
     if(dictionary[clean])return text.replace(text.trim(),dictionary[clean]);
@@ -59,17 +61,17 @@
     if(observer)observer.observe(document.body,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt']});
   }
   function setLanguage(value){
-    if(value!=='ru'&&value!=='kk')return;
-    lang=value;try{localStorage.setItem('vp.language.v1',lang);}catch(e){}
+    if(!['ru','kk','en'].includes(value))return;
+    lang=value;selectDictionary();try{localStorage.setItem('vp.language.v1',lang);}catch(e){}
     var url=new URL(location.href);url.searchParams.set('lang',lang);history.replaceState(null,'',url);
     render();root.dispatchEvent(new CustomEvent('languagechange',{detail:{language:lang}}));
   }
-  root.I18n={language:function(){return lang;},locale:function(){return lang==='kk'?'kk-KZ':'ru-RU';},t:translate,setLanguage:setLanguage,
+  root.I18n={language:function(){return lang;},locale:function(){return {ru:'ru-RU',kk:'kk-KZ',en:'en-US'}[lang];},t:translate,setLanguage:setLanguage,
     audio:function(src){return (root.PATIENT_VOICES&&root.PATIENT_VOICES[lang]&&root.PATIENT_VOICES[lang][src])|| (lang==='ru'||(src&&src.indexOf('media/voice/')<0)?src:null);},render:render};
   ['alert','confirm'].forEach(function(name){var original=root[name];root[name]=function(message){return original.call(root,translate(message));};});
   document.addEventListener('DOMContentLoaded',function(){
     var picker=document.createElement('label');picker.className='language-picker';picker.setAttribute('data-no-translate','');
-    picker.innerHTML='<span>Тіл / Язык</span> <select id="appLanguage" aria-label="Тіл / Язык"><option value="ru">Русский</option><option value="kk">Қазақша</option></select>';
+    picker.innerHTML='<span>Тіл / Язык / Language</span> <select id="appLanguage" aria-label="Тіл / Язык / Language"><option value="ru">Русский</option><option value="kk">Қазақша</option><option value="en">English</option></select>';
     var header=document.querySelector('header')||document.body;header.appendChild(picker);
     document.getElementById('appLanguage').addEventListener('change',function(){setLanguage(this.value);});
     observer=new MutationObserver(render);render();

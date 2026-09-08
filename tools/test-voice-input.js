@@ -30,3 +30,5 @@ input.start();result("Не отправлять после сетевой оши
 console.log("OK: network error stops microphone, does not submit and offers recovery.");
 
 const kkInput=globalThis.VoiceInput.create({Engine:Fake,language:()=> 'kk-KZ',beforeStart(){},listening(){},text(){},result(){},status(){}});kkInput.start();assert.equal(engine.lang,'kk-KZ');kkInput.cancel();
+
+const enInput=globalThis.VoiceInput.create({Engine:Fake,language:()=> 'en-US',beforeStart(){},listening(){},text(){},result(){},status(){}});enInput.start();assert.equal(engine.lang,'en-US');enInput.cancel();

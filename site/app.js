@@ -432,7 +432,8 @@
     $('clarify').hidden = true;
 
     // An invitation to listen does not specify heart vs lungs.
-    var invitation = (window.KazakhNLU ? KazakhNLU.canonical(raw) : raw).toLowerCase().replace(/ё/g, 'е').replace(/[.,!?]/g, '').trim();
+    var invitationRaw = window.EnglishNLU ? EnglishNLU.canonical(raw) : raw;
+    var invitation = (window.KazakhNLU ? KazakhNLU.canonical(invitationRaw) : invitationRaw).toLowerCase().replace(/ё/g, 'е').replace(/[.,!?]/g, '').trim();
     if ((!state.cat || state.cat === 'exam') && /^(давайте |можно |я )?(вас )?(послушаем|послушаю|послушать)( вас)?$/.test(invitation)) {
       var choices = CASE.exams.filter(function (e) { return e.id === 'e.heart' || e.id === 'e.lungs' || e.id === 'e.ausc'; });
       askClarify(raw, choices.map(function (e) { return { id: e.id, cat: 'exam', label: e.label }; }));

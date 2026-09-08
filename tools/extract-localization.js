@@ -13,7 +13,7 @@ function astWalk(node){
  if(node.type==='TemplateElement')add(node.value.cooked);
  for(const [key,value]of Object.entries(node)){if(key==='value'&&node.type==='Literal')continue;if(Array.isArray(value))value.forEach(astWalk);else if(value&&typeof value==='object')astWalk(value);}
 }
-for(const f of fs.readdirSync('site').filter(f=>f.endsWith('.js')&&!['i18n.js','nlu-kk.js','pronunciation.js','nlu.js'].includes(f))){
+for(const f of fs.readdirSync('site').filter(f=>f.endsWith('.js')&&!['i18n.js','nlu-kk.js','nlu-en.js','pronunciation.js','nlu.js'].includes(f))){
  astWalk(acorn.parse(fs.readFileSync('site/'+f,'utf8'),{ecmaVersion:'latest',sourceType:'script'}));
 }
 fs.mkdirSync('site/locales',{recursive:true});fs.writeFileSync('/tmp/disease-locale-raw.json',JSON.stringify([...texts]));fs.writeFileSync('site/locales/spoken-source.json',JSON.stringify(spoken));console.log(texts.size+' raw strings, '+spoken.length+' spoken lines');

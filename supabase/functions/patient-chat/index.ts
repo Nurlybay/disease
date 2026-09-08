@@ -957,7 +957,7 @@ Deno.serve(async (req) => {
   if (!body || typeof body.caseId !== 'string' || !Object.prototype.hasOwnProperty.call(PATIENTS, body.caseId)) return reply(400, { error: 'unsupported_case' });
   if (typeof body.message !== 'string' || !body.message.trim() || body.message.length > 1000) return reply(400, { error: 'invalid_message' });
   const language = body.language ?? 'ru';
-  if (!['ru', 'kk'].includes(language)) return reply(400, { error: 'invalid_language' });
+  if (!['ru', 'kk', 'en'].includes(language)) return reply(400, { error: 'invalid_language' });
   const history = body.history ?? [];
   if (!Array.isArray(history) || history.length > 20 || history.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 1000)) return reply(400, { error: 'invalid_history' });
   // Validate the user with Auth, never trust a user id sent by the browser.
@@ -977,7 +977,7 @@ Deno.serve(async (req) => {
     quota = await reserved.json();
   } catch { return reply(503, { error: 'auth_or_quota_unavailable' }); }
   if (!quota || quota.allowed !== true) return reply(429, { error: quota?.error || 'quota_unavailable' });
-  const messages = [{ role: 'system', content: SYSTEM + (language === 'kk' ? '\nОтвечай только на казахском языке (қазақша), естественно и понятно пациенту. Переводи факты точно; не меняй сроки, дозы и отрицания. Не добавляй русский перевод.' : '\nОтвечай только по-русски.') + '\nКарточка: ' + JSON.stringify(PATIENTS[body.caseId]) }, ...history.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: body.message.trim() }];
+  const messages = [{ role: 'system', content: SYSTEM + (language === 'kk' ? '\nОтвечай только на казахском языке (қазақша), естественно и понятно пациенту. Переводи факты точно; не меняй сроки, дозы и отрицания. Не добавляй русский перевод.' : language === 'en' ? '\nRespond only in English, in a natural patient voice. Translate the case facts faithfully, preserving durations, doses and negations. Do not add a Russian translation.' : '\nОтвечай только по-русски.') + '\nКарточка: ' + JSON.stringify(PATIENTS[body.caseId]) }, ...history.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: body.message.trim() }];
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 60000);
   let stage = 'connect';
