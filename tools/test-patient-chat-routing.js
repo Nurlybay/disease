@@ -1,7 +1,7 @@
 'use strict';
 var fs=require('fs'),vm=require('vm'),assert=require('assert'),path=require('path');
 var root=path.join(__dirname,'..'),elements={},calls=[];
-var box={window:{},speechInput:null,aiBusy:false,state:{cat:'ask',finished:false},
+var box={window:{},speechInput:null,patientSounds:null,aiBusy:false,state:{cat:'ask',finished:false},
   $:function(id){return elements[id]||(elements[id]={value:'',textContent:'',hidden:false});},
   sendToPatient:function(raw,id){calls.push(['ai',raw,id]);},
   perform:function(id){calls.push(['action',id]);},

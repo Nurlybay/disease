@@ -103,5 +103,7 @@
   "Описание находки; аудиотест в этом случае не используется.": "Examination finding; no audio test is available in this case.",
   "Случайный пациент": "Random patient",
   "Фибрилляция предсердий (мерцательная аритмия)": "Atrial fibrillation",
-  "Голос нужного пола для выбранного языка недоступен. Ответ остаётся в тексте.": "No voice matching the patient’s gender is available for this language. The reply remains as text."
+  "Голос нужного пола для выбранного языка недоступен. Ответ остаётся в тексте.": "No voice matching the patient’s gender is available for this language. The reply remains as text.",
+  "Звуки пациента": "Patient sounds",
+  "Источники звуков": "Sound credits"
 }

@@ -15,6 +15,7 @@
   var speechInput = null;
   var aiChat = null, aiBusy = false, aiUsed = false;
   var pendingAi = null;
+  var patientSounds = null;
   var motionEnabled = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var WF = window.WAVEFORMS || {};
   var $ = function (id) { return document.getElementById(id); };
@@ -99,6 +100,7 @@
      ========================================================= */
 
   function init() {
+    if (patientSounds) patientSounds.reset();
     if (window.PatientSpeech) PatientSpeech.cancel();
     if (aiChat) aiChat.reset();
     pendingAi = null;
@@ -139,6 +141,7 @@
       lung.addEventListener('pause', stopScope);
       lung.addEventListener('ended', stopScope);
       lung.addEventListener('timeupdate', function () { if (!rafId) drawScope(); });
+      if (window.PatientSounds) patientSounds = PatientSounds.create({caseId:CASE.id,gender:CASE.patient.gender,canPlay:function(){return !state.finished && !aiBusy && !document.hidden && (!speechInput || !speechInput.isListening()) && voice.paused && lung.paused;}});
       bind();
     }
 
@@ -230,6 +233,14 @@
   }
 
   function bind() {
+    if (patientSounds) {
+      $('patientSoundsControl').hidden = !patientSounds.available;
+      $('patientSoundsToggle').checked = patientSounds.enabled();
+      $('patientSoundsToggle').addEventListener('change',function(){patientSounds.setEnabled(this.checked);});
+      document.addEventListener('visibilitychange',function(){if(document.hidden)patientSounds.stop();});
+      window.addEventListener('pagehide',function(){patientSounds.stop();});
+      window.addEventListener('languagechange',function(){patientSounds.stop();});
+    }
     // Remove the former shared test password; it is no longer used.
     try { localStorage.removeItem('vp.patient-chat.access.sawcjxnblgepkqdsvlio.v1'); } catch (e) {}
     var aiApi = window.Sync && typeof window.Sync.publicApi === 'function' ? window.Sync.publicApi() : null;
@@ -244,7 +255,7 @@
         if ($('actInput').value.trim() === question) $('actInput').value = '';
         $('aiStatus').textContent = 'Ответ получен.';
         logRow({kind:'patient',cat:'ask',act:question,res:answer,resCls:''});
-        say(null, answer);
+        say(null, answer, null, true);
       },
       error: function (code) {
         var messages = {
@@ -292,6 +303,7 @@
       }
     });
     $('talkBtn').addEventListener('click', function () {
+      if (patientSounds) patientSounds.stop();
       if (state.finished) { $('talkStatus').textContent = 'Приём завершён. Начните заново для разговора.'; return; }
       if (speechInput.isListening()) speechInput.stop(); else speechInput.start();
     });
@@ -355,6 +367,7 @@
   }
 
   function stopAll() {
+    if (patientSounds) patientSounds.stop();
     if (aiChat) aiChat.cancel();
     if (speechInput) speechInput.cancel();
     hideSpeaking();
@@ -424,6 +437,7 @@
   }
 
   function submit(raw) {
+    if (patientSounds) patientSounds.stop();
     if (speechInput) speechInput.cancel();
     if (state.finished) return;
     raw = String(raw || '').replace(/^\s+|\s+$/g, '');
@@ -513,6 +527,7 @@
      ========================================================= */
 
   function perform(id, opts) {
+    if (patientSounds) patientSounds.stop();
     opts = opts || {};
     var item = BYID[id];
     if (!item) return;
@@ -525,7 +540,7 @@
       /* Повтор ничего не добавляет к оценке, но пациент отвечает снова. */
       logRow({ kind: kind, cat: item.cat, id: null, act: actionLabel,
                res: 'Уже выполнено ранее — повторно.', resCls: '', repeat: true });
-      if (!opts.silent && item.text) say(item.audio, item.text);
+      if (!opts.silent && item.text) say(item.audio, item.text, null, kind === 'question' || kind === 'passport');
       return;
     }
 
@@ -538,13 +553,13 @@
       row.resCls = item.important ? 'is-key' : '';
       renderPassport();
       addNote(item.field + ': ' + item.value, item.important ? 'abn' : '');
-      if (!opts.silent) say(item.audio, item.text);
+      if (!opts.silent) say(item.audio, item.text, null, kind === 'question' || kind === 'passport');
 
     } else if (kind === 'question') {
       row.res = item.text;
       row.resCls = item.important ? 'is-key' : '';
       addNote(independent ? item.text : item.tag, item.important ? 'abn' : '');
-      if (!opts.silent) say(item.audio, item.text);
+      if (!opts.silent) say(item.audio, item.text, null, kind === 'question' || kind === 'passport');
 
     } else if (kind === 'vital') {
       row.res = item.field + ' — ' + item.value + ' ' + (item.unit || '') +
@@ -816,7 +831,9 @@
   function showSpeaking() { $('speakingIndicator').hidden = false; $('patientPortrait').classList.add('is-speaking'); }
   function hideSpeaking() { $('speakingIndicator').hidden = true; $('patientPortrait').classList.remove('is-speaking'); }
 
-  function say(src, text, onEnd) {
+  function say(src, text, onEnd, ambient) {
+    if (patientSounds) patientSounds.stop();
+    voice._ambient = !!ambient;
     if (speechInput) speechInput.cancel();
     voice._text = text; voice._source = src;
     $('voiceStatus').textContent = '';
@@ -851,6 +868,8 @@
 
   function onVoiceEnded() {
     hideSpeaking();
+    if (voice._ambient && patientSounds) patientSounds.afterReply();
+    voice._ambient = false;
     if (voice._onEnd) { var f = voice._onEnd; voice._onEnd = null; f(); }
   }
 
@@ -981,10 +1000,12 @@
        библиотеке, поэтому ключи совпадают автоматически. */
     lung._wf = f.wf || p.finding;
     lung._abn = f.abnormal;
+    if (patientSounds) patientSounds.stop();
     lung.play().then(setLungLabel).catch(setLungLabel);
   }
 
   function toggleLung() {
+    if (patientSounds) patientSounds.stop();
     if (!state.currentPoint) return;
     if (lung.paused) lung.play().then(setLungLabel).catch(setLungLabel);
     else { lung.pause(); setLungLabel(); }
@@ -1085,6 +1106,7 @@
      ========================================================= */
 
   function finish(silent) {
+    if (patientSounds) patientSounds.stop();
     if (aiChat) aiChat.cancel();
     if (speechInput) speechInput.cancel();
     if (!state.finished && !state.dx && !silent) {
