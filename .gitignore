@@ -5,3 +5,5 @@ disease-standalone.html
 .worktrees/
 tools/.venv/
 __pycache__/
+
+tools/localization/node_modules/

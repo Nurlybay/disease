@@ -54,7 +54,7 @@
         }
         guest(op, function (error, token) {
           if (error) { done(error); return; }
-          request(op, options.baseUrl + '/functions/v1/patient-chat', {caseId:options.caseId, message:message, history:history}, token, function (error, data, status) {
+          request(op, options.baseUrl + '/functions/v1/patient-chat', {caseId:options.caseId, message:message, history:history, language:options.language ? options.language() : 'ru'}, token, function (error, data, status) {
             if (error) { done(error); return; }
             if (status !== 200) {
               if (status === 401) save(null);

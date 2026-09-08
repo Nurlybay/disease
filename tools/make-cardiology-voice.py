@@ -29,14 +29,15 @@ async def main():
   folder=ROOT/'site/media/voice'/cid;folder.mkdir(parents=True,exist_ok=True)
   rawsource=source.read_text()
   for text in texts:
-   key=hashlib.sha256((voice+rate+pitch+text).encode()).hexdigest()[:16]
+   spoken=re.sub(r'(про|по|от)кашл(я[а-яё]*)',lambda m:m[1]+'ка\u0301шл'+m[2],text,flags=re.I)
+   key=hashlib.sha256((voice+rate+pitch+spoken).encode()).hexdigest()[:16]
    out=folder/(key+'.mp3')
    if not out.exists():
     for attempt in range(3):
      try:
       with tempfile.TemporaryDirectory(prefix='disease-tts-') as tmp:
        raw=pathlib.Path(tmp)/'voice.mp3'
-       await asyncio.wait_for(edge_tts.Communicate(text,voice,rate=rate,pitch=pitch).save(str(raw)),45)
+       await asyncio.wait_for(edge_tts.Communicate(spoken,voice,rate=rate,pitch=pitch).save(str(raw)),45)
        subprocess.run(['ffmpeg','-v','error','-y','-i',str(raw),'-af','highpass=f=85,lowpass=f=8200,loudnorm=I=-16:TP=-1.5:LRA=11','-ar','44100','-ac','1','-b:a','128k',str(out)],check=True)
        duration=float(subprocess.check_output(['ffprobe','-v','error','-show_entries','format=duration','-of','csv=p=0',str(out)]))
        if duration<max(.3,len(text)/45):

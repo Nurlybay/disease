@@ -47,7 +47,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить имя",
       "field": "ФИО",
-      "value": "Искаков Марат",
+      "value": "Серикбаев Болат",
       "audio": "media/voice/acs-serikbayev/18991f24b49d04ca.mp3",
       "text": "Серикбаев Болат",
       "need": [
@@ -70,7 +70,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить возраст",
       "field": "Возраст",
-      "value": "59 лет",
+      "value": "58 лет",
       "audio": "media/voice/acs-serikbayev/2e30acabef28cef0.mp3",
       "text": "58 лет",
       "need": [
@@ -88,7 +88,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить об аллергиях",
       "field": "Аллергии",
-      "value": "Аллергии на лекарства не замечал.",
+      "value": "Аллергии на аспирин и другие лекарства не было.",
       "audio": "media/voice/acs-serikbayev/23716f41fb8f846d.mp3",
       "text": "Аллергии на аспирин и другие лекарства не было.",
       "need": [
@@ -110,7 +110,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить о профессии",
       "field": "Профессия",
-      "value": "Работаю, большую часть дня провожу сидя.",
+      "value": "Работаю мастером на производстве.",
       "audio": "media/voice/acs-serikbayev/fa601bd823aeb3dc.mp3",
       "text": "Работаю мастером на производстве.",
       "need": [

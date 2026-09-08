@@ -47,7 +47,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить имя",
       "field": "ФИО",
-      "value": "Искаков Марат",
+      "value": "Омарова Алия",
       "audio": "media/voice/myocarditis-omarova/8168d0635c5ac4b0.mp3",
       "text": "Омарова Алия",
       "need": [
@@ -70,7 +70,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить возраст",
       "field": "Возраст",
-      "value": "59 лет",
+      "value": "29 лет",
       "audio": "media/voice/myocarditis-omarova/3bae13a917b52c6e.mp3",
       "text": "29 лет",
       "need": [
@@ -88,7 +88,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить об аллергиях",
       "field": "Аллергии",
-      "value": "Аллергии на лекарства не замечал.",
+      "value": "Аллергии на лекарства не замечала.",
       "audio": "media/voice/myocarditis-omarova/c3d9671a3dc2756a.mp3",
       "text": "Аллергии на лекарства не замечала.",
       "need": [
@@ -110,7 +110,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить о профессии",
       "field": "Профессия",
-      "value": "Работаю, большую часть дня провожу сидя.",
+      "value": "Работаю дизайнером, раньше бегала по утрам.",
       "audio": "media/voice/myocarditis-omarova/b7ffb73694618c63.mp3",
       "text": "Работаю дизайнером, раньше бегала по утрам.",
       "need": [

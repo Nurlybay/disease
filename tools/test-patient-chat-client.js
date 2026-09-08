@@ -18,3 +18,5 @@ for(const k of Object.keys(store))delete store[k];
 const disabled=box.window.PatientChat.create(options);disabled.send('Вопрос');respond({error_code:'anonymous_provider_disabled'},422);assert.equal(error,'guest_disabled');assert(!busy);
 const canceled=box.window.PatientChat.create(options);canceled.send('Вопрос');const signup=xhr;canceled.cancel();signup.status=200;signup.responseText=JSON.stringify({access_token:'ignored',refresh_token:'ignored',expires_in:3600});signup.onload();assert.equal(xhr,signup);
 console.log('OK guest signup, reuse, refresh, history, limits, auth failures, cancellation, no password headers.');
+
+options.language=()=> 'kk';const kkClient=box.window.PatientChat.create(options);kkClient.send('Қанша күн?');respond({access_token:'kk-token',refresh_token:'kk-refresh',expires_in:3600});assert.equal(xhr.body.language,'kk');kkClient.cancel();

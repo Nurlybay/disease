@@ -47,7 +47,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить имя",
       "field": "ФИО",
-      "value": "Искаков Марат",
+      "value": "Тулегенов Аскар",
       "audio": "media/voice/copd-tulegenov/75b459409268cf18.mp3",
       "text": "Тулегенов Аскар",
       "need": [
@@ -70,7 +70,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить возраст",
       "field": "Возраст",
-      "value": "59 лет",
+      "value": "63 года",
       "audio": "media/voice/copd-tulegenov/684c076a6eeeb83f.mp3",
       "text": "63 года",
       "need": [
@@ -110,7 +110,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить о профессии",
       "field": "Профессия",
-      "value": "Работаю, большую часть дня провожу сидя.",
+      "value": "Бывший водитель автобуса, сейчас на пенсии.",
       "audio": "media/voice/copd-tulegenov/d86e04c28d52d622.mp3",
       "text": "Бывший водитель автобуса, сейчас на пенсии.",
       "need": [

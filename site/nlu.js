@@ -23,10 +23,11 @@
   /* ---------------------------------------------------------------- */
 
   function normalize(s) {
+    s = window.KazakhNLU ? window.KazakhNLU.canonical(s == null ? '' : s) : s;
     return String(s == null ? '' : s)
       .toLowerCase()
       .replace(/ё/g, 'е')
-      .replace(/[^a-zа-я0-9]+/g, ' ')
+      .replace(/[^a-zа-яәғқңөұүһі0-9]+/g, ' ')
       .replace(/^\s+|\s+$/g, '');
   }
 

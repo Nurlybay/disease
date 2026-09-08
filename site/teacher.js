@@ -68,7 +68,7 @@
     if (!left) { onDone(); return; }
     files.forEach(function (m) {
       var s = document.createElement('script');
-      s.src = 'characters/' + m.file;
+      s.src = 'characters/' + m.file + '?v=lang-v1';
       s.onload = s.onerror = function () {
         left--;
         if (!left) onDone();
@@ -95,7 +95,7 @@
         var next = chain.shift();
         playingBtn = next;
         markBtn(next, true);
-        audio.src = next.getAttribute('data-audio');
+        audio.src = window.I18n ? (I18n.audio(next.getAttribute('data-audio')) || "") : next.getAttribute('data-audio');
         audio.currentTime = 0;
         tryPlay();
       } else {
@@ -113,6 +113,8 @@
     } catch (e) { stopAudio(); }
   }
 
+  window.addEventListener('languagechange', function () { stopAudio(); });
+
   function stopAudio() {
     if (!audio) return;
     audio.pause();
@@ -124,7 +126,7 @@
   function playSrc(src) {
     ensureAudio();
     stopAudio();
-    audio.src = src;
+    audio.src = window.I18n ? (I18n.audio(src) || "") : src;
     audio.currentTime = 0;
     tryPlay();
   }
@@ -135,7 +137,7 @@
     chain = null;
     playingBtn = btn;
     markBtn(btn, true);
-    audio.src = btn.getAttribute('data-audio');
+    audio.src = window.I18n ? (I18n.audio(btn.getAttribute('data-audio')) || "") : btn.getAttribute('data-audio');
     audio.currentTime = 0;
     tryPlay();
   }
@@ -155,7 +157,7 @@
     var first = chain.shift();
     playingBtn = first;
     markBtn(first, true);
-    audio.src = first.getAttribute('data-audio');
+    audio.src = window.I18n ? (I18n.audio(first.getAttribute('data-audio')) || "") : first.getAttribute('data-audio');
     audio.currentTime = 0;
     tryPlay();
   }

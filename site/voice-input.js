@@ -11,7 +11,7 @@
     function start() {
       if (!Engine || active) return;
       var rec = new Engine(), finalText = '', failed = false;
-      active = rec; rec.lang = 'ru-RU'; rec.continuous = false; rec.interimResults = true; rec.maxAlternatives = 1;
+      active = rec; rec.lang = options.language ? options.language() : 'ru-RU'; rec.continuous = false; rec.interimResults = true; rec.maxAlternatives = 1;
       rec.onresult = function (event) {
         if (active !== rec) return;
         var all = [], finals = [];
@@ -29,7 +29,7 @@
           'audio-capture': 'Микрофон не найден. Проверьте подключение.',
           'network': 'Браузер не смог подключиться к сервису распознавания речи. Это не обязательно проблема вашего интернета: сервис может быть недоступен во встроенном браузере. Попробуйте открыть этот же адрес отдельно в Google Chrome. Если ошибка повторится, используйте системную диктовку в поле вопроса или введите текст.',
           'no-speech': 'Речь не распознана. Нажмите микрофон и попробуйте ещё раз.',
-          'language-not-supported': 'Распознавание русской речи недоступно в этом браузере.' };
+          'language-not-supported': 'Распознавание выбранного языка недоступно в этом браузере.' };
         options.status(messages[event.error] || 'Распознавание остановлено. Можно написать вопрос.');
         cancel();
       };

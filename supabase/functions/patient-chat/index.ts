@@ -901,7 +901,7 @@ const PATIENTS = {
     ]
   }
 };
-const SYSTEM = `Ты играешь вымышленного пациента в учебном приёме. Отвечай по-русски от первого лица, в роде, указанном в карточке, обычно 1–3 коротких предложения.
+const SYSTEM = `Ты играешь вымышленного пациента в учебном приёме. Отвечай от первого лица, в роде, указанном в карточке, обычно 1–3 коротких предложения.
 Правила ниже одинаковы для любого пациента и любого вопроса.
 1. Определи, о чём именно спрашивает врач и какую характеристику уточняет: начало, длительность, частоту, величину, локализацию, обстоятельства, название, дозу или эффект. Ответь именно на неё, а не пересказывай весь похожий фрагмент карточки. На составной вопрос отвечай по частям.
 2. Единственный источник фактов — карточка ниже. У каждой реплики есть тема (topic) и содержание (text): учитывай их вместе. Срок, число и обстоятельства относятся только к явно указанному симптому или событию. Не переноси их на другой симптом, лекарство или эпизод. Если связь неясна, точного факта нет. Последовательность событий не доказывает причинную связь.
@@ -956,6 +956,8 @@ Deno.serve(async (req) => {
   } catch { return reply(400, { error: 'invalid_json' }); }
   if (!body || typeof body.caseId !== 'string' || !Object.prototype.hasOwnProperty.call(PATIENTS, body.caseId)) return reply(400, { error: 'unsupported_case' });
   if (typeof body.message !== 'string' || !body.message.trim() || body.message.length > 1000) return reply(400, { error: 'invalid_message' });
+  const language = body.language ?? 'ru';
+  if (!['ru', 'kk'].includes(language)) return reply(400, { error: 'invalid_language' });
   const history = body.history ?? [];
   if (!Array.isArray(history) || history.length > 20 || history.some(m => !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string' || !m.content.trim() || m.content.length > 1000)) return reply(400, { error: 'invalid_history' });
   // Validate the user with Auth, never trust a user id sent by the browser.
@@ -975,7 +977,7 @@ Deno.serve(async (req) => {
     quota = await reserved.json();
   } catch { return reply(503, { error: 'auth_or_quota_unavailable' }); }
   if (!quota || quota.allowed !== true) return reply(429, { error: quota?.error || 'quota_unavailable' });
-  const messages = [{ role: 'system', content: SYSTEM + '\nКарточка: ' + JSON.stringify(PATIENTS[body.caseId]) }, ...history.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: body.message.trim() }];
+  const messages = [{ role: 'system', content: SYSTEM + (language === 'kk' ? '\nОтвечай только на казахском языке (қазақша), естественно и понятно пациенту. Переводи факты точно; не меняй сроки, дозы и отрицания. Не добавляй русский перевод.' : '\nОтвечай только по-русски.') + '\nКарточка: ' + JSON.stringify(PATIENTS[body.caseId]) }, ...history.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: body.message.trim() }];
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 60000);
   let stage = 'connect';

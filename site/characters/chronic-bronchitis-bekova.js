@@ -48,7 +48,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить имя",
       "field": "ФИО",
-      "value": "Искаков Марат",
+      "value": "Бекова Гульнара",
       "audio": "media/voice/chronic-bronchitis-bekova/5e83a53112ddffa3.mp3",
       "text": "Бекова Гульнара",
       "need": [
@@ -71,7 +71,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить возраст",
       "field": "Возраст",
-      "value": "59 лет",
+      "value": "46 лет",
       "audio": "media/voice/chronic-bronchitis-bekova/2d5f59175307b15a.mp3",
       "text": "46 лет",
       "need": [
@@ -89,7 +89,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить об аллергиях",
       "field": "Аллергии",
-      "value": "Аллергии на лекарства не замечал.",
+      "value": "Аллергии на лекарства не замечала.",
       "audio": "media/voice/chronic-bronchitis-bekova/ea3c328cb1d60a60.mp3",
       "text": "Аллергии на лекарства не замечала.",
       "need": [
@@ -111,7 +111,7 @@ window.CASES.push({
       "w": 1,
       "label": "Спросить о профессии",
       "field": "Профессия",
-      "value": "Работаю, большую часть дня провожу сидя.",
+      "value": "Работаю на складе, иногда много пыли.",
       "audio": "media/voice/chronic-bronchitis-bekova/fbf7475b93935603.mp3",
       "text": "Работаю на складе, иногда много пыли.",
       "need": [

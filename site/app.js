@@ -99,6 +99,7 @@
      ========================================================= */
 
   function init() {
+    if (window.PatientSpeech) PatientSpeech.cancel();
     if (aiChat) aiChat.reset();
     pendingAi = null;
     aiUsed = false;
@@ -236,6 +237,7 @@
       baseUrl: aiApi ? aiApi.url : '',
       anonKey: aiApi ? aiApi.anonKey : '',
       caseId: CASE.id,
+      language: function () { return window.I18n ? I18n.language() : 'ru'; },
       busy: function (on) { aiBusy = on; $('aiCancel').hidden = !on; },
       reply: function (question, answer) {
         pendingAi = null; aiUsed = true;
@@ -272,11 +274,13 @@
       }
     });
     $('aiCancel').addEventListener('click', function () { aiChat.cancel(); pendingAi = null; $('aiStatus').textContent = 'Ожидание отменено.'; });
+    window.addEventListener('languagechange', function () { speechInput.cancel(); if (aiChat) aiChat.cancel(); pendingAi=null; $('aiStatus').textContent=''; $('voiceStatus').textContent=''; voice.pause(); if (window.PatientSpeech) PatientSpeech.cancel(); hideSpeaking(); });
     window.addEventListener('pagehide', function () { aiChat.reset(); pendingAi = null; });
     var Engine = window.SpeechRecognition || window.webkitSpeechRecognition;
     $('talkBtn').disabled = !Engine;
     if (!Engine) $('talkStatus').textContent = 'В этом браузере голосовой ввод недоступен. Используйте текстовый ввод или браузер с поддержкой распознавания речи.';
-    speechInput = VoiceInput.create({ Engine: Engine,
+    speechInput = VoiceInput.create({
+      language: function () { return window.I18n ? I18n.locale() : 'ru-RU'; }, Engine: Engine,
       beforeStart: function () { voice.pause(); lung.pause(); hideSpeaking(); setCat('ask'); },
       listening: function (on) { $('talkBtn').setAttribute('aria-pressed', String(on)); $('talkBtn').textContent = on ? 'Закончить вопрос' : 'Задать вопрос голосом'; $('cancelTalk').hidden = !on; },
       status: function (text) { $('talkStatus').textContent = text; },
@@ -292,6 +296,7 @@
       if (speechInput.isListening()) speechInput.stop(); else speechInput.start();
     });
     $('cancelTalk').addEventListener('click', function () { speechInput.cancel(); $('actInput').value = ''; $('talkStatus').textContent = 'Запись отменена. Вопрос не отправлен.'; });
+    window.addEventListener('languagechange', function () { speechInput.cancel(); if (aiChat) aiChat.cancel(); pendingAi=null; $('aiStatus').textContent=''; $('voiceStatus').textContent=''; voice.pause(); if (window.PatientSpeech) PatientSpeech.cancel(); hideSpeaking(); });
     window.addEventListener('pagehide', function () { speechInput.cancel(); });
     document.addEventListener('visibilitychange', function () { if (document.hidden) speechInput.cancel(); });
     $('clinicalNotes').addEventListener('input', function () { state.clinicalNotes = this.value; });
@@ -427,7 +432,7 @@
     $('clarify').hidden = true;
 
     // An invitation to listen does not specify heart vs lungs.
-    var invitation = raw.toLowerCase().replace(/ё/g, 'е').replace(/[.,!?]/g, '').trim();
+    var invitation = (window.KazakhNLU ? KazakhNLU.canonical(raw) : raw).toLowerCase().replace(/ё/g, 'е').replace(/[.,!?]/g, '').trim();
     if ((!state.cat || state.cat === 'exam') && /^(давайте |можно |я )?(вас )?(послушаем|послушаю|послушать)( вас)?$/.test(invitation)) {
       var choices = CASE.exams.filter(function (e) { return e.id === 'e.heart' || e.id === 'e.lungs' || e.id === 'e.ausc'; });
       askClarify(raw, choices.map(function (e) { return { id: e.id, cat: 'exam', label: e.label }; }));
@@ -817,17 +822,20 @@
     lung.pause();
     voice.pause();
 
+    if (window.PatientSpeech) PatientSpeech.cancel();
+    text = window.I18n ? I18n.t(text) : text;
+    src = window.I18n ? I18n.audio(src) : src;
     var sub = $('subtitle');
     sub.textContent = text;
     sub.hidden = false;
 
     voice._onEnd = onEnd || null;
     if (!src) {
-      // Текст остаётся до следующей реплики: длинный ответ нельзя
-      // прочитать за таймаут короткой аудиореплики.
-      hideSpeaking();
-      voice._onEnd = null;
-      if (onEnd) onEnd();
+      if (window.PatientSpeech) {
+        showSpeaking();
+        PatientSpeech.speak(text, CASE.patient.gender, onVoiceEnded, function (message) { $('voiceStatus').textContent = message; });
+      } else { hideSpeaking(); if (onEnd) onEnd(); }
+
       return;
     }
 

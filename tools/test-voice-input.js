@@ -28,3 +28,5 @@ console.log('OK: custom gender round trip and isolated gendered replies.');
 
 input.start();result("Не отправлять после сетевой ошибки",true);const beforeNetwork=sent.length;engine.onerror({error:"network"});assert(!listening);assert.equal(sent.length,beforeNetwork);assert(statuses.at(-1).includes("встроенном браузере"));
 console.log("OK: network error stops microphone, does not submit and offers recovery.");
+
+const kkInput=globalThis.VoiceInput.create({Engine:Fake,language:()=> 'kk-KZ',beforeStart(){},listening(){},text(){},result(){},status(){}});kkInput.start();assert.equal(engine.lang,'kk-KZ');kkInput.cancel();
