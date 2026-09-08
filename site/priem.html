@@ -6,8 +6,8 @@
 <title>Свободный приём — тренажёр клинического мышления</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="practice.css">
-<script src="locales/en.js?v=lang-en-v1"></script>
-<script src="locales/kk.js?v=lang-v1"></script>
+<script src="locales/en.js?v=router-v1"></script>
+<script src="locales/kk.js?v=router-v1"></script>
 <script src="locales/voices.js?v=lang-en-v1"></script>
 <script src="i18n.js?v=lang-en-v1"></script>
 <style>.language-picker{display:flex;align-items:center;gap:8px;margin:12px;flex-shrink:0;font-size:14px}.language-picker select{font:inherit;padding:8px;border-radius:8px;background:#18242f;color:#fff;border:1px solid #667986}</style>
@@ -231,7 +231,7 @@
       </form>
 
       <div class="card" id="aiPanel">
-        <p class="console-hint">Вопросы о симптомах и нераспознанные фразы обрабатывает ИИ. Вход без пароля. Вопрос и последние реплики передаются в NeuralDeep. Ответы ИИ озвучиваются, если в браузере доступен голос выбранного языка. ИИ-расспрос не оценивается автоматически.</p>
+        <p class="console-hint">Вопросы о симптомах и нераспознанные фразы обрабатывает ИИ. Вход без пароля. Вопрос и последние реплики передаются в OpenRouter. Ответы ИИ озвучиваются, если в браузере доступен голос выбранного языка. ИИ-расспрос не оценивается автоматически.</p>
         <button class="btn btn-ghost btn-sm" id="aiCancel" type="button" hidden>Отменить ожидание</button>
         <p id="aiStatus" role="status" aria-live="polite"></p>
       </div>

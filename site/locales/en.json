@@ -346,7 +346,7 @@
   "Вопрос (Давно ли кашель?)": "Question (How long have you been coughing?)",
   "Вопрос отправлен: «": "Question sent: \"",
   "Вопрос сохранён в поле ввода. Можно повторить позже или уточнить нужное действие.": "The question is saved in the input field. You can repeat later or specify the desired action.",
-  "Вопросы о симптомах и нераспознанные фразы обрабатывает ИИ. Вход без пароля. Вопрос и последние реплики передаются в NeuralDeep. Ответы ИИ озвучиваются, если в браузере доступен голос выбранного языка. ИИ-расспрос не оценивается автоматически.": "Questions about symptoms and unrecognized phrases are processed by AI. Login without password. The question and the last remarks are transmitted to NeuralDeep. AI responses are spoken if the selected language is available in the browser. AI questioning is not automatically scored.",
+  "Вопросы о симптомах и нераспознанные фразы обрабатывает ИИ. Вход без пароля. Вопрос и последние реплики передаются в OpenRouter. Ответы ИИ озвучиваются, если в браузере доступен голос выбранного языка. ИИ-расспрос не оценивается автоматически.": "Questions about symptoms and unrecognized phrases are processed by AI. Login without password. The question and the last remarks are transmitted to OpenRouter. AI responses are spoken if the selected language is available in the browser. AI questioning is not automatically scored.",
   "Вопросы отправляются слишком часто. Подождите минуту.": "Questions are sent too often. Wait a minute.",
   "Воспроизводимая связь с аллергенами и неспецифическими раздражителями — гиперреактивность бронхов.": "Reproducible connection with allergens and nonspecific irritants - bronchial hyperreactivity.",
   "Воспроизводимая связь с нагрузкой.": "Reproducible connection to the load.",
