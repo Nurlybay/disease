@@ -30,4 +30,4 @@ box.window.CHARACTER_MANIFEST.forEach(function(m){
  var full=box.window.Score.compute(c,{done:done,log:log,heard:heard,dx:c.diagnosis.correct});assert(full.total>empty.total,c.id+' scoring');
  console.log('OK '+c.id+' ('+items.length+' действий)');
 });
-console.log('OK '+count+' клинических формулировок; 8 сценариев: загрузка, медиа, оценка.');
+console.log('OK '+count+' клинических формулировок; '+box.window.CHARACTER_MANIFEST.length+' сценариев: загрузка, медиа, оценка.');

@@ -27,7 +27,11 @@ function req(data=body,token='guest-jwt'){return new Request('https://example.te
   ['bronchiectasis-abenov','Вы точно проверяли аллергию?'],
   ['cf-omarov','Сколько раз за ночь просыпаетесь?'],
   ['chf-baizhanov','Как давно появились отёки?'],
-  ['hypertension-saparov','Это началось из-за стресса?']
+  ['hypertension-saparov','Это началось из-за стресса?'],
+  ['copd-tulegenov','Как давно появилась одышка?'],
+  ['chronic-bronchitis-bekova','Сколько месяцев в году кашляете?'],
+  ['acs-serikbayev','Когда началась боль?'],
+  ['myocarditis-omarova','Что изменилось после простуды?']
  ];
  for(const [caseId,message] of checks){
   assert.equal((await handler(req({...body,caseId,message}))).status,200);
@@ -40,5 +44,5 @@ function req(data=body,token='guest-jwt'){return new Request('https://example.te
  }
  provider=async()=>new Response('private error',{status:401});assert.equal((await (await handler(req())).json()).error,'provider_auth_failed');
  provider=async()=>{throw new Error('DNS private');};const e=await(await handler(req())).json();assert.equal(e.reason,'dns');assert(!JSON.stringify(e).includes('private'));
- console.log('OK authenticated users, fail-closed durable quota, 8 server case support, limits and sanitized errors. Mock API.');
+ console.log('OK authenticated users, fail-closed durable quota, 12 server case support, limits and sanitized errors. Mock API.');
 })().catch(e=>{console.error(e);process.exit(1);});

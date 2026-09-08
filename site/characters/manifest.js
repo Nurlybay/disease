@@ -15,5 +15,9 @@ window.CHARACTER_MANIFEST = [
   { file: 'hypertension-saparov.js', disease: 'Артериальная гипертензия', label: 'Сапаров Ерлан, 52' },
   { file: 'angina-iskakov.js', disease: 'ИБС: стенокардия напряжения', label: 'Искаков Марат, 59' },
   { file: 'af-nurgaliev.js', disease: 'Фибрилляция предсердий (мерцательная аритмия)', label: 'Нургалиев Бекзат, 72' },
-  { file: 'pericarditis-alimov.js', disease: 'Острый перикардит', label: 'Алимов Данияр, 31' }
+  { file: 'pericarditis-alimov.js', disease: 'Острый перикардит', label: 'Алимов Данияр, 31' },
+  { file: 'copd-tulegenov.js', disease: 'ХОБЛ', label: 'Тулегенов Аскар, 63' },
+  { file: 'chronic-bronchitis-bekova.js', disease: 'Хронический бронхит', label: 'Бекова Гульнара, 46' },
+  { file: 'acs-serikbayev.js', disease: 'Острый коронарный синдром', label: 'Серикбаев Болат, 58' },
+  { file: 'myocarditis-omarova.js', disease: 'Острый миокардит', label: 'Омарова Алия, 29' }
 ];

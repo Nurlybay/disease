@@ -1,0 +1,26 @@
+[
+  {
+    "id": "copd-tulegenov",
+    "subject": "A fictional Kazakh man age 63, lean build, short gray hair, clean shaven, olive knit polo, sitting upright with forearms resting on thighs, slightly pursed lips, mildly tired but alert, no dramatic distress.",
+    "method": "Built-in imagegen",
+    "sharedPrompt": "Photorealistic fictional patient in ordinary clinic, eye level fixed camera, landscape 3:2 medium shot, fully clothed, face and hands visible, soft daylight, no text, no logos, no clinician. Reference frame for later image-to-video."
+  },
+  {
+    "id": "chronic-bronchitis-bekova",
+    "subject": "A fictional Kazakh woman age 46, dark shoulder length hair tucked behind ears, burgundy cardigan over plain beige top, sitting comfortably upright, calm attentive expression, holding a folded tissue naturally in one hand.",
+    "method": "Built-in imagegen",
+    "sharedPrompt": "Photorealistic fictional patient in ordinary clinic, eye level fixed camera, landscape 3:2 medium shot, fully clothed, face and hands visible, soft daylight, no text, no logos, no clinician. Reference frame for later image-to-video."
+  },
+  {
+    "id": "acs-serikbayev",
+    "subject": "A fictional Kazakh man age 58, stocky build, short dark graying hair, light blue button-down shirt open at collar, seated on an examination couch, one hand resting flat on central chest, tense concerned face, subtle pallor and small beads of sweat, fully conscious, no dramatic acting.",
+    "method": "Built-in imagegen",
+    "sharedPrompt": "Photorealistic fictional patient in ordinary clinic, eye level fixed camera, landscape 3:2 medium shot, fully clothed, face and hands visible, soft daylight, no text, no logos, no clinician. Reference frame for later image-to-video."
+  },
+  {
+    "id": "myocarditis-omarova",
+    "subject": "A fictional Kazakh woman age 29, black hair in a simple low ponytail, plain sage green crew-neck top, seated upright on examination couch, tired concerned attentive expression, hands resting on thighs, fully alert.",
+    "method": "Built-in imagegen",
+    "sharedPrompt": "Photorealistic fictional patient in ordinary clinic, eye level fixed camera, landscape 3:2 medium shot, fully clothed, face and hands visible, soft daylight, no text, no logos, no clinician. Reference frame for later image-to-video."
+  }
+]

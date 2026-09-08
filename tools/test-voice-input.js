@@ -15,9 +15,9 @@ input.start();result('Где болит?',true);input.stop();assert.equal(sent.a
 console.log('OK: voice final-only delivery, cancellation, stale events, permission errors, no-speech and manual stop.');
 const fs=require('fs'),vm=require('vm'),ctx={window:{CASES:[]}};vm.createContext(ctx);
 for(const f of fs.readdirSync('site/characters').filter(f=>f.endsWith('.js')&&!['manifest.js','loader.js'].includes(f)))vm.runInContext(fs.readFileSync('site/characters/'+f,'utf8'),ctx);
-for(const c of ctx.window.CASES)assert.equal(c.patient.gender,c.id==='asthma-eszhanova'?'female':'male');
+for(const c of ctx.window.CASES)assert.equal(c.patient.gender,['asthma-eszhanova','chronic-bronchitis-bekova','myocarditis-omarova'].includes(c.id)?'female':'male');
 const a=ctx.window.CASES.find(c=>c.id==='asthma-eszhanova');assert(fs.existsSync('site/'+a.patient.portrait));assert(!a.patient.idleVideo);assert(!a.patient.throatVideo);assert(a.patient.greeting.text.includes('простыла'));
-console.log('OK: gender metadata for 8 cases; female portrait, greeting and no shared male videos.');
+console.log('OK: gender metadata for all cases; female portrait, greeting and no shared male videos.');
 vm.runInContext(fs.readFileSync('site/custom-cases.js','utf8'),ctx);
 const CC=ctx.window.CustomCases;
 const customFemale=CC.inflate({patient:{name:'Айгерим',gender:'female'}});
