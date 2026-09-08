@@ -6,6 +6,7 @@ window.CASES.push({
   "title": "Боль в груди и слабость после инфекции",
   "patient": {
     "gender": "female",
+    "idleVideo": "media/patients/video/myocarditis-omarova-idle.mp4",
     "portrait": "media/patients/myocarditis-omarova.png",
     "name": "Пациентка, 29 лет",
     "short": "29 лет",

@@ -15,6 +15,7 @@
   var speechInput = null;
   var aiChat = null, aiBusy = false, aiUsed = false;
   var pendingAi = null;
+  var motionEnabled = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   var WF = window.WAVEFORMS || {};
   var $ = function (id) { return document.getElementById(id); };
 
@@ -150,19 +151,25 @@
     portrait.alt = female ? 'Иллюстрация вымышленной пациентки' : 'Иллюстрация вымышленного пациента';
     document.querySelector('.speaking-label').textContent = female ? 'пациентка говорит' : 'пациент говорит';
     document.querySelector('.col-patient').setAttribute('aria-label', person);
-    idle.hidden = !!CASE.patient.portrait;
-    throat.hidden = !!CASE.patient.portrait;
+    idle.hidden = !CASE.patient.idleVideo;
+    throat.hidden = true;
     $('portraitCaption').hidden = !CASE.patient.portrait;
-    $('portraitCaption').textContent = female ? 'Вымышленная пациентка · ИИ-иллюстрация' : 'Вымышленный пациент · ИИ-иллюстрация';
-    $('portraitMotion').hidden = !CASE.patient.portrait;
+    $('portraitCaption').textContent = person + (CASE.patient.idleVideo ? ' · ИИ-анимация' : ' · ИИ-иллюстрация');
+    $('portraitMotion').hidden = !CASE.patient.portrait && !CASE.patient.idleVideo;
+    $('portraitMotion').setAttribute('aria-pressed', String(!!CASE.patient.idleVideo && motionEnabled));
+    $('portraitMotion').textContent = CASE.patient.idleVideo && motionEnabled ? 'Остановить движение' : 'Включить движение';
     if (CASE.patient.portrait) portrait.src = CASE.patient.portrait;
-    if (!idle.src && !CASE.patient.portrait) {
+    if (CASE.patient.idleVideo) {
       idle.src = CASE.patient.idleVideo;
-      throat.src = CASE.patient.throatVideo;
-      throat.poster = CASE.patient.throatPoster;
+      idle.poster = CASE.patient.portrait || '';
     }
+    idle.onerror = function () {
+      idle.hidden = true;
+      if (CASE.patient.portrait) portrait.hidden = false;
+    };
+    throat.onended = function () { switchVideo('idle'); };
+    throat.onerror = function () { switchVideo('idle'); };
     switchVideo('idle');
-    if (!CASE.patient.portrait) idle.play().catch(function () {});
 
     renderCats();
     renderPassport();
@@ -295,7 +302,9 @@
       var on = this.getAttribute('aria-pressed') !== 'true';
       this.setAttribute('aria-pressed', String(on));
       this.textContent = on ? 'Остановить движение' : 'Включить движение';
-      $('patientPortrait').classList.toggle('has-motion', on);
+      motionEnabled = on;
+      if (CASE.patient.idleVideo) switchVideo('idle');
+      else $('patientPortrait').classList.toggle('has-motion', on);
     });
     $('actForm').addEventListener('submit', function (e) {
       e.preventDefault();
@@ -610,6 +619,8 @@
       say(CASE.system[item.voice].audio, CASE.system[item.voice].text);
     }
 
+    if (item.id === 'e.cough' && CASE.patient.coughVideo && !opts.silent) switchVideo('cough');
+
     /* Проба с кашлем меняет трактовку уже услышанного. */
     if (item.id === 'e.cough' && state.currentPoint && CASE.auscultation) {
       var f = (CASE.auscultation.findings || {})[state.currentPoint.finding] || {};
@@ -835,20 +846,25 @@
   }
 
   function switchVideo(which) {
-    var idle = $('videoIdle'), throat = $('videoThroat');
-    if (CASE.patient.portrait && (which === 'idle' || !CASE.patient.throatVideo)) {
-      $('patientPortrait').hidden = false; idle.pause(); throat.pause(); idle.classList.remove('is-active'); throat.classList.remove('is-active'); return;
-    }
-    $('patientPortrait').hidden = !CASE.patient.portrait || which === 'throat';
-    if (CASE.patient.portrait && which === 'idle') { idle.pause(); throat.pause(); idle.classList.remove('is-active'); throat.classList.remove('is-active'); return; }
-    if (which === 'throat') {
-      throat.classList.add('is-active');
-      idle.classList.remove('is-active');
+    var idle = $('videoIdle'), action = $('videoThroat'), portrait = $('patientPortrait');
+    var source = which === 'cough' ? CASE.patient.coughVideo : which === 'throat' ? CASE.patient.throatVideo : null;
+    idle.pause(); action.pause();
+    idle.classList.remove('is-active'); action.classList.remove('is-active');
+    idle.hidden = true; action.hidden = true;
+    if (source) {
+      portrait.hidden = true;
+      action.src = source;
+      action.poster = CASE.patient.throatPoster || CASE.patient.portrait || '';
+      action.hidden = false; action.classList.add('is-active');
+      $('videoBadge').textContent = which === 'cough' ? 'Проба с кашлем' : 'Осмотр зева';
+      action.play().catch(function () { switchVideo('idle'); });
+    } else if (CASE.patient.idleVideo) {
+      portrait.hidden = true;
+      idle.hidden = false; idle.classList.add('is-active');
+      $('videoBadge').textContent = 'Кабинет';
+      if (motionEnabled) idle.play().catch(function () {});
     } else {
-      idle.classList.add('is-active');
-      throat.classList.remove('is-active');
-      throat.pause();
-      if (!CASE.patient.portrait) idle.play().catch(function () {});
+      portrait.hidden = !CASE.patient.portrait;
     }
   }
 

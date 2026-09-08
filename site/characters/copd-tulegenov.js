@@ -6,6 +6,7 @@ window.CASES.push({
   "title": "Одышка при привычной ходьбе",
   "patient": {
     "gender": "male",
+    "idleVideo": "media/patients/video/copd-tulegenov-idle.mp4",
     "portrait": "media/patients/copd-tulegenov.png",
     "name": "Пациент, 63 года",
     "short": "63 года",

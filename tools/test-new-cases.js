@@ -12,7 +12,8 @@ let cases={};for(const id of Object.keys(tests)){
  ctx.window.CASES=[];vm.runInContext(fs.readFileSync('site/characters/'+id+'.js','utf8'),ctx);const c=ctx.window.CASES[0];cases[id]=c;
  const items=[].concat(c.passport,c.questions,c.vitals,c.exams,c.orders,c.treatment,c.diagnosis.options);
  for(const [query,cat,want] of tests[id]){const r=ctx.window.NLU.match(query,items,{cat});assert(r.ok&&r.id===want,query+': '+JSON.stringify(r));}
- assert(!c.patient.idleVideo&&!c.patient.throatVideo,'Do not substitute another patient video');
+ assert(c.patient.idleVideo.includes(id+'-idle.mp4')&&!c.patient.throatVideo,'Only own patient video');
+ assert(fs.existsSync('site/'+c.patient.idleVideo));
  assert(c.debrief.sources.length);assert(c.debrief.trap);assert.equal(c.passport.find(p=>p.id==='p.name').text.includes('Искаков'),false);
  for(const item of items)assert(!JSON.stringify(item).includes('media/voice/angina-iskakov'));
 }

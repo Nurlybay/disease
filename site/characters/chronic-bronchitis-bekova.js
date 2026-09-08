@@ -6,6 +6,8 @@ window.CASES.push({
   "title": "Длительный утренний кашель с мокротой",
   "patient": {
     "gender": "female",
+    "coughVideo": "media/patients/video/chronic-bronchitis-bekova-cough.mp4",
+    "idleVideo": "media/patients/video/chronic-bronchitis-bekova-idle.mp4",
     "portrait": "media/patients/chronic-bronchitis-bekova.png",
     "name": "Пациентка, 46 лет",
     "short": "46 лет",
@@ -451,6 +453,7 @@ window.CASES.push({
     }
   ],
   "exams": [
+    {"id":"e.cough","cat":"exam","label":"Попросить покашлять","need":[["покаш","кашлян","прокаш"]],"w":1,"weight":0,"result":"Пациентка прикрывает рот салфеткой и кашляет.","voice":"cough","findAbnormal":false},
     {
       "id": "e.throat",
       "cat": "exam",

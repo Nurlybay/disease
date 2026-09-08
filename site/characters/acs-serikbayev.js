@@ -6,6 +6,7 @@ window.CASES.push({
   "title": "Давящая боль в груди в покое",
   "patient": {
     "gender": "male",
+    "idleVideo": "media/patients/video/acs-serikbayev-idle.mp4",
     "portrait": "media/patients/acs-serikbayev.png",
     "name": "Пациент, 58 лет",
     "short": "58 лет",
