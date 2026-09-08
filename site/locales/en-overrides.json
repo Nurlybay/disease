@@ -94,5 +94,11 @@
   "Нажмите «Повторить реплику», чтобы включить звук.": "Click “Replay response” to enable audio.",
   "Карта осмотра": "Examination findings",
   "Порядок ваших действий фиксируется и разбирается в конце": "Your action sequence is recorded for review at the end",
-  "Попадёт в разбор и код результата. Автоматически не оценивается.": "Included in the review and result code. Not automatically scored."
+  "Попадёт в разбор и код результата. Автоматически не оценивается.": "Included in the review and result code. Not automatically scored.",
+  "Лёгкие": "Lungs",
+  "Легкие": "Lungs",
+  "Кожа": "Skin",
+  "Живот": "Abdomen",
+  "Отёки": "Edema",
+  "Описание находки; аудиотест в этом случае не используется.": "Examination finding; no audio test is available in this case."
 }
