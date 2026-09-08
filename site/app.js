@@ -255,6 +255,9 @@
         if ($('actInput').value.trim() === question) $('actInput').value = '';
         $('aiStatus').textContent = 'Ответ получен.';
         logRow({kind:'patient',cat:'ask',act:question,res:answer,resCls:''});
+        if (window.PassportQuestions) PassportQuestions.ids(question,answer).forEach(function(id){
+          if (BYID[id] && BYID[id].__kind === 'passport' && !state.done[id]) perform(id,{silent:true,raw:question});
+        });
         say(audio || null, answer, null, true);
       },
       error: function (code) {
