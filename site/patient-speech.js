@@ -7,8 +7,11 @@
   var voices=synth.getVoices().filter(function(v){return v.lang.toLowerCase().slice(0,2)===language;});
   if(!voices.length){status('Голос выбранного языка недоступен в этом браузере. Ответ остаётся в тексте.');done();return;}
   var u=new SpeechSynthesisUtterance(root.Pronunciation?Pronunciation.prepare(text,language):text);active=u;
-  var preferred=gender==='female'?/Aigul|Svetlana|Jenny|Samantha|female|Irina/i:/Daulet|Dmitry|Guy|David|(^|\W)male(\W|$)|Pavel/i;
-  u.voice=voices.filter(function(v){return preferred.test(v.name);})[0]||voices[0];u.lang=locale;u.rate=.95;
+  var preferred=gender==='female'?/\b(Aigul|Svetlana|Jenny|Samantha|female|Irina|Milena|Zira|Victoria|Karen|Moira|Tessa|Fiona|Susan|Hazel)\b/i:/\b(Daulet|Dmitry|Guy|David|male|Pavel|Yuri|Alex|Daniel|Fred|Tom|Mark|George|James)\b/i;
+  var matched=voices.filter(function(v){return preferred.test(v.name);})[0];
+  // Web Speech exposes no standard gender field. Never guess using the first voice.
+  if(!matched){active=null;status('Голос нужного пола для выбранного языка недоступен. Ответ остаётся в тексте.');done();return;}
+  u.voice=matched;u.lang=locale;u.rate=.95;
   u.onend=function(){if(active===u){active=null;done();}};u.onerror=function(){if(active===u){active=null;status('Озвучка недоступна. Ответ остаётся в тексте.');done();}};synth.speak(u);
  }};
 })(window);
