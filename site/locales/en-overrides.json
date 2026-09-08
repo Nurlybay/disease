@@ -100,5 +100,7 @@
   "Кожа": "Skin",
   "Живот": "Abdomen",
   "Отёки": "Edema",
-  "Описание находки; аудиотест в этом случае не используется.": "Examination finding; no audio test is available in this case."
+  "Описание находки; аудиотест в этом случае не используется.": "Examination finding; no audio test is available in this case.",
+  "Случайный пациент": "Random patient",
+  "Фибрилляция предсердий (мерцательная аритмия)": "Atrial fibrillation"
 }
