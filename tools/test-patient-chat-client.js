@@ -22,3 +22,8 @@ console.log('OK guest signup, reuse, refresh, history, limits, auth failures, ca
 options.language=()=> 'kk';const kkClient=box.window.PatientChat.create(options);kkClient.send('Қанша күн?');respond({access_token:'kk-token',refresh_token:'kk-refresh',expires_in:3600});assert.equal(xhr.body.language,'kk');kkClient.cancel();
 
 options.language=()=> 'en';const enClient=box.window.PatientChat.create(options);enClient.send('How many days?');assert.equal(xhr.body.language,'en');enClient.cancel();
+
+const marathon=box.window.PatientChat.create(options);
+for(let i=0;i<35;i++) { marathon.send('Вопрос '+i); assert(xhr.body.history.length<=20); respond({reply:'Ответ '+i,caseId:options.caseId}); assert(!busy); }
+assert.equal(answer,'Ответ 34');
+console.log('OK 35 consecutive questions without a ten-question cutoff.');

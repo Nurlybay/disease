@@ -929,8 +929,11 @@ Deno.serve(async (req) => {
   if (origin && !origins.has(origin)) return reply(403, { error: 'origin_not_allowed' });
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (req.method !== 'POST') return reply(405, { error: 'method_not_allowed' });
-  const key = Deno.env.get('NEURALDEEP_API_KEY')?.trim();
-  const model = Deno.env.get('NEURALDEEP_MODEL');
+  const providerName = Deno.env.get('PATIENT_CHAT_PROVIDER') || 'neuraldeep';
+  if (!['neuraldeep', 'openrouter'].includes(providerName)) return reply(503, { error: 'provider_not_configured' });
+  const prefix = providerName === 'openrouter' ? 'OPENROUTER' : 'NEURALDEEP';
+  const key = Deno.env.get(prefix + '_API_KEY')?.trim();
+  const model = Deno.env.get(prefix + '_MODEL')?.trim();
   const api = Deno.env.get('SUPABASE_URL');
   const anon = Deno.env.get('SUPABASE_ANON_KEY');
   if (!key || !model || !api || !anon) return reply(503, { error: 'server_not_configured' });
@@ -947,7 +950,7 @@ Deno.serve(async (req) => {
     while (true) {
       const { done, value } = await reader.read(); if (done) break;
       bytes += value.length;
-      if (bytes > 24000) { await reader.cancel(); return reply(413, { error: 'request_too_large' }); }
+      if (bytes > 96000) { await reader.cancel(); return reply(413, { error: 'request_too_large' }); }
       chunks.push(value);
     }
     const buffer = new Uint8Array(bytes); let offset = 0;
@@ -977,15 +980,19 @@ Deno.serve(async (req) => {
     quota = await reserved.json();
   } catch { return reply(503, { error: 'auth_or_quota_unavailable' }); }
   if (!quota || quota.allowed !== true) return reply(429, { error: quota?.error || 'quota_unavailable' });
-  const messages = [{ role: 'system', content: SYSTEM + (language === 'kk' ? '\nОтвечай только на казахском языке (қазақша), естественно и понятно пациенту. Переводи факты точно; не меняй сроки, дозы и отрицания. Не добавляй русский перевод.' : language === 'en' ? '\nRespond only in English, in a natural patient voice. Translate the case facts faithfully, preserving durations, doses and negations. Do not add a Russian translation.' : '\nОтвечай только по-русски.') + '\nКарточка: ' + JSON.stringify(PATIENTS[body.caseId]) }, ...history.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: body.message.trim() }];
+  // Keep complete recent turns; do not cut sentences (a cut can remove a negation).
+  // The authoritative patient card is always included, regardless of conversation length.
+  let context = history.slice(-12);
+  while (context.reduce((n, m) => n + m.content.length, 0) > 6000) context = context.slice(2);
+  const messages = [{ role: 'system', content: SYSTEM + (language === 'kk' ? '\nОтвечай только на казахском языке (қазақша), естественно и понятно пациенту. Переводи факты точно; не меняй сроки, дозы и отрицания. Не добавляй русский перевод.' : language === 'en' ? '\nRespond only in English, in a natural patient voice. Translate the case facts faithfully, preserving durations, doses and negations. Do not add a Russian translation.' : '\nОтвечай только по-русски.') + '\nКарточка: ' + JSON.stringify(PATIENTS[body.caseId]) }, ...context.map(m => ({ role: m.role, content: m.content })), { role: 'user', content: body.message.trim() }];
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 60000);
   let stage = 'connect';
   try {
-    const upstream = await fetch('https://api.neuraldeep.ru/v1/chat/completions', {
+    const upstream = await fetch(providerName === 'openrouter' ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.neuraldeep.ru/v1/chat/completions', {
       method: 'POST', signal: controller.signal,
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
-      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: 800 }),
+      body: JSON.stringify({ model, messages, temperature: 0.2, max_tokens: providerName === 'openrouter' ? 400 : 800, ...(providerName === 'openrouter' ? { provider: { sort: 'latency', allow_fallbacks: true }, reasoning: { enabled: false } } : {}) }),
     });
     if (!upstream.ok) {
       const errors = { 401: 'provider_auth_failed', 403: 'provider_access_denied', 404: 'provider_model_or_endpoint_not_found', 429: 'provider_rate_limit' };
