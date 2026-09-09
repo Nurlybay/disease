@@ -1,9 +1,9 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
-let handler,calls=0,payload,authStatus=200,quotaStatus=200,quota={allowed:true};
+let handler,calls=0,payload,authStatus=200,anonymous=false,quotaStatus=200,quota={allowed:true};
 const env={NEURALDEEP_API_KEY:'test-only',NEURALDEEP_MODEL:'test-model',SUPABASE_URL:'https://project.test',SUPABASE_ANON_KEY:'public'};
 let provider=async(url,opts)=>{calls++;payload=JSON.parse(opts.body);return Response.json({choices:[{message:{content:'Точно не скажу, доктор.'}}]});};
 const ctx={Deno:{env:{get:k=>env[k]},serve:f=>handler=f},Response,btoa,TextDecoder,Uint8Array,AbortController,AbortSignal,setTimeout,clearTimeout,fetch:async(url,opts)=>{
- if(url.endsWith('/auth/v1/user'))return Response.json({id:'verified-user'},{status:authStatus});
+ if(url.endsWith('/auth/v1/user'))return Response.json({id:'verified-user',is_anonymous:anonymous,email_confirmed_at:anonymous?null:'2026-09-09'},{status:authStatus});
  if(url.includes('/rpc/')){assert.equal(opts.headers.Authorization,'Bearer guest-jwt');assert.equal(opts.body,'{}');return Response.json(quota,{status:quotaStatus});}
  return provider(url,opts);
 }};
@@ -23,6 +23,7 @@ function req(data=body,token='guest-jwt'){return new Request('https://example.te
  assert.equal((await handler(req({...body,language:'kk'}))).status,200);assert(payload.messages[0].content.includes('только на казахском'));
  assert.equal((await handler(req({...body,language:'en'}))).status,200);assert(payload.messages[0].content.includes('Respond only in English'));
  assert.equal((await handler(req({...body,caseId:'asthma-eszhanova'}))).status,200);assert(payload.messages[0].content.includes('female'));assert(payload.messages[0].content.includes('Есжанова'));
+ anonymous=true;assert.equal((await handler(req({...body,caseId:'asthma-eszhanova'}))).status,403);assert.equal((await handler(req({...body,caseId:'pericarditis-alimov'}))).status,200);anonymous=false;
  const checks=[
   ['pericarditis-alimov','Сколько дней у вас температура?'],
   ['asthma-eszhanova','В какой дозе принимаете лекарство?'],

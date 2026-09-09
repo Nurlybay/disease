@@ -1,1 +1,1 @@
-{"private":true,"scripts":{"build":"esbuild ../../site/account.js --bundle --minify --outfile=../../site/vendor/account.js"},"dependencies":{"@supabase/auth-js":"2.116.0","esbuild":"0.28.2"}}
+{"private":true,"scripts":{"build":"esbuild ../../site/account.js ../../site/learning-access.js --bundle --minify --outdir=../../site/vendor"},"dependencies":{"@supabase/auth-js":"2.116.0","esbuild":"0.28.2"}}

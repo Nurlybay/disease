@@ -6,9 +6,9 @@
 <title>Виртуальный приём — тренажёр клинического мышления</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="practice.css">
-<link rel="stylesheet" href="home.css?v=1">
-<script src="locales/en.js?v=home-v1"></script>
-<script src="locales/kk.js?v=home-v1"></script>
+<link rel="stylesheet" href="home.css?v=2">
+<script src="locales/en.js?v=access-v1"></script>
+<script src="locales/kk.js?v=access-v1"></script>
 <script src="locales/voices.js?v=lang-en-v1"></script>
 <script src="i18n.js?v=lang-en-v1"></script>
 <style>.language-picker{display:flex;align-items:center;gap:8px;margin:12px;flex-shrink:0;font-size:14px}.language-picker select{font:inherit;padding:8px;border-radius:8px;background:#18242f;color:#fff;border:1px solid #667986}</style>
@@ -37,11 +37,14 @@
       <p class="hero-eyebrow">Симулятор клинического приёма</p>
       <h1>Практика клинического мышления</h1>
       <p class="hero-copy">От первого вопроса до обоснованного решения. Проводите приём виртуального пациента, исследуйте симптомы и разбирайте свои действия.</p>
+      <div class="hero-actions"><a class="hero-primary" data-demo href="priem.html?char=pericarditis-alimov&mode=learning">Попробовать без регистрации</a><button type="button" data-register>Открыть все случаи</button></div><p class="hero-note">Один полный демонстрационный приём. Остальное обучение — после регистрации.</p>
       <div class="hero-tags"><span>12 учебных случаев</span><span>3 языка</span><span>Диалог с пациентом</span></div>
     </div>
     <div class="hero-visual"><img src="media/patients/copd-tulegenov.png" alt="Виртуальный пациент в кабинете" width="500" height="500"><div class="hero-caption">Сначала — пациент. Затем — диагноз.<small>Вымышленный персонаж · учебный сценарий</small></div></div>
   </section>
 
+  <section class="how-it-works"><h2>Отработайте приём до встречи с реальным пациентом</h2><div class="how-grid"><article><span>01</span><h3>Спросите</h3><p>Общайтесь с пациентом своими словами и собирайте анамнез.</p></article><article><span>02</span><h3>Исследуйте</h3><p>Проводите осмотр, назначайте исследования и сопоставляйте находки.</p></article><article><span>03</span><h3>Разберите решение</h3><p>Завершите приём и посмотрите, что получилось и что стоит повторить.</p></article></div></section>
+  <section class="catalog-heading"><h2>Продолжайте практику с аккаунтом</h2><p>12 учебных случаев, два режима обучения и практикум ЭКГ и звуков сердца. Русский, казахский и английский.</p><p class="guest-only">Для доступа подтвердите электронную почту.</p></section>
   <fieldset class="mode-picker">
     <legend>Как хотите тренироваться?</legend>
     <label><input type="radio" name="learningMode" value="learning" checked>
@@ -66,21 +69,19 @@
       <p>Полный ключ ответов по каждому случаю: реплики пациента, находки,
         аускультация, критерии оценки. Приём результатов студентов по кодам
         и сводка по группе.</p>
-      <span class="lc-warn">Здесь все ответы случаев — не для студентов</span>
+      <span class="lc-warn">Отдельный доступ для преподавателей</span>
       <span class="lc-go">Открыть раздел →</span>
     </a>
   </div>
 
   <a class="lab-entry" href="media-lab.html"><strong>Практикум: ЭКГ и звуки сердца →</strong><span>Реальные записи. Сначала ваше описание, затем разбор и области для сравнения.</span></a>
   <section class="picker">
-    <h2 class="picker-title">Выбор случая</h2>
-    <p class="picker-sub">Пронумерованы все: и встроенные пациенты, и свои
-      случаи из конструктора. Перейти можно и по номеру — преподавателю
-      удобно сообщать его в группу.</p>
+    <h2 class="picker-title">Учебные случаи</h2>
+    <p class="picker-sub">Выберите клиническую ситуацию для следующей тренировки. Полные случаи доступны после входа.</p>
     <div id="casePicker"></div>
   </section>
 
-  <footer class="landing-foot">
+  <section class="home-final"><h2>Начните с одного пациента</h2><p>Попробуйте демонстрационный приём и познакомьтесь с форматом обучения.</p><a class="hero-primary" data-demo href="priem.html?char=pericarditis-alimov&mode=learning">Попробовать без регистрации</a></section><footer class="landing-foot">
     <p>Учебный тренажёр для отработки клинического мышления. Не предназначен для диагностики реальных пациентов. Для диалога с ИИ и входа в аккаунт нужен интернет.</p>
   </footer>
 </main>
@@ -103,6 +104,6 @@
 <script src="sync.js"></script>
 <script src="characters/manifest.js?v=cases-20260908"></script>
 <script src="picker.js?v=email-v1"></script>
-<script src="vendor/account.js?v=1"></script>
+<script src="vendor/account.js?v=2"></script>
 </body>
 </html>

@@ -30,7 +30,7 @@
     if (!s) return out;
     s.split('&').forEach(function (p) {
       var kv = p.split('=');
-      if (kv[0]) { var name=decodeURIComponent(kv[0]); if (!/^(code|state|error|error_description|access_token|refresh_token|sb_flow_id)$/.test(name)) out[name] = decodeURIComponent(kv[1] || ''); }
+      if (kv[0]) { var name=decodeURIComponent(kv[0]); if (!/^(auth|next|code|state|error|error_description|access_token|refresh_token|sb_flow_id)$/.test(name)) out[name] = decodeURIComponent(kv[1] || ''); }
     });
     return out;
   }

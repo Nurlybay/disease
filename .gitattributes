@@ -1,0 +1,3 @@
+
+# Minified third-party bundles can contain literal whitespace in template strings.
+site/vendor/*.js -whitespace

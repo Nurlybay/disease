@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="access-pending">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Свободный приём — тренажёр клинического мышления</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="practice.css">
-<script src="locales/en.js?v=sounds-v1"></script>
-<script src="locales/kk.js?v=sounds-v1"></script>
+<script src="locales/en.js?v=access-v1"></script>
+<script src="locales/kk.js?v=access-v1"></script>
 <script src="locales/voices.js?v=lang-en-v1"></script>
 <script src="i18n.js?v=lang-en-v1"></script>
 <style>.language-picker{display:flex;align-items:center;gap:8px;margin:12px;flex-shrink:0;font-size:14px}.language-picker select{font:inherit;padding:8px;border-radius:8px;background:#18242f;color:#fff;border:1px solid #667986}</style>
-</head>
+<style>.access-pending body{visibility:hidden}.demo-banner{display:flex;gap:20px;justify-content:center;align-items:center;padding:14px;background:#153e47;color:#fff}.demo-banner a{color:#73dddc}</style></head>
 <body>
 
 <header class="topbar">
@@ -299,27 +299,27 @@
   <img id="imgViewImg" alt="Результат исследования — клик закрывает">
 </div>
 
-<script src="media/waveforms.js"></script>
-<script src="nlu-en.js?v=lang-en-v1"></script>
-<script src="nlu-kk.js?v=lang-v1"></script>
-<script src="nlu.js?v=lang-en-v1"></script>
-<script src="score.js"></script>
-<script src="learning-mode.js"></script>
-<script src="pronunciation.js?v=lang-v1"></script>
-<script src="patient-sounds.js?v=1"></script>
-<script src="patient-speech.js?v=gender-20260908"></script>
-<script src="voice-input.js?v=lang-v1"></script>
-<script src="passport-questions.js?v=1"></script>
-<script src="patient-chat.js?v=email-session-v1"></script>
+<script data-training-src="media/waveforms.js"></script>
+<script data-training-src="nlu-en.js?v=lang-en-v1"></script>
+<script data-training-src="nlu-kk.js?v=lang-v1"></script>
+<script data-training-src="nlu.js?v=lang-en-v1"></script>
+<script data-training-src="score.js"></script>
+<script data-training-src="learning-mode.js"></script>
+<script data-training-src="pronunciation.js?v=lang-v1"></script>
+<script data-training-src="patient-sounds.js?v=1"></script>
+<script data-training-src="patient-speech.js?v=gender-20260908"></script>
+<script data-training-src="voice-input.js?v=lang-v1"></script>
+<script data-training-src="passport-questions.js?v=1"></script>
+<script data-training-src="patient-chat.js?v=email-session-v1"></script>
 <!-- custom-cases.js до манифеста: loader.js сливает встроенных персонажей
      и сохранённые в браузере кастомные случаи в один список. -->
-<script src="custom-cases.js"></script>
+<script data-training-src="custom-cases.js"></script>
 <!-- Синхронизация общих случаев преподавателя (облако): выбор персонажа
      ждёт её готовности, чтобы общие случаи попали в раздачу и в ?char=. -->
-<script src="sync.js?v=guest-v1"></script>
+
 <!-- Персонаж выбирается случайно: loader.js подключает один файл из
      characters/ и лишь затем app.js (отладка: ?char=имя-файла-без-.js). -->
-<script src="characters/manifest.js?v=lang-en-20260908"></script>
-<script src="characters/loader.js?v=passport-v1"></script>
-</body>
+<script data-training-src="characters/manifest.js?v=lang-en-20260908"></script>
+<script data-training-src="characters/loader.js?v=passport-v1"></script>
+<script src="sync.js?v=access-v1"></script><script src="vendor/learning-access.js?v=1"></script></body>
 </html>

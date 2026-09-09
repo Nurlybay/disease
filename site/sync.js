@@ -57,7 +57,8 @@
     }
     xhr.open(method, SUPABASE_URL + path, true);
     xhr.setRequestHeader('apikey', SUPABASE_ANON_KEY);
-    xhr.setRequestHeader('Authorization', 'Bearer ' + SUPABASE_ANON_KEY);
+    var session;try{session=JSON.parse(localStorage.getItem('vp.guest-auth.v1.'+SUPABASE_URL)||'null');}catch(e){}
+    xhr.setRequestHeader('Authorization', 'Bearer ' + (session && session.access_token || SUPABASE_ANON_KEY));
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.timeout = timeoutMs || 8000;
     xhr.onload = function () {

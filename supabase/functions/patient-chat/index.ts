@@ -972,6 +972,7 @@ Deno.serve(async (req) => {
     if (!authResponse.ok) return reply(authResponse.status === 401 || authResponse.status === 403 ? 401 : 503, { error: authResponse.status === 401 || authResponse.status === 403 ? 'guest_expired' : 'auth_unavailable' });
     const user = await authResponse.json();
     if (!user.id) return reply(401, { error: 'guest_required' });
+    if (body.caseId !== 'pericarditis-alimov' && (user.is_anonymous || !user.email_confirmed_at)) return reply(403, { error: 'registration_required' });
     const reserved = await fetch(api + '/rest/v1/rpc/reserve_patient_chat_request', {
       method: 'POST', headers: { apikey: anon, Authorization: authorization, 'Content-Type': 'application/json' },
       body: '{}', signal: AbortSignal.timeout(10000)

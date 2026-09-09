@@ -67,6 +67,7 @@
     var left = files.length;
     if (!left) { onDone(); return; }
     files.forEach(function (m) {
+      if(window.LearningAccess){window.LearningAccess.loadScript('characters/'+m.file).then(function(){if(!--left)onDone();}).catch(function(){if(!--left)onDone();});return;}
       var s = document.createElement('script');
       s.src = 'characters/' + m.file + '?v=lang-v1';
       s.onload = s.onerror = function () {

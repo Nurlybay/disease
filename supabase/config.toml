@@ -2,3 +2,6 @@
 # user JWTs as well as legacy tokens; missing/invalid user auth fails closed.
 [functions.patient-chat]
 verify_jwt = false
+
+[functions.learning-content]
+verify_jwt = false

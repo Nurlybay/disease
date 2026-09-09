@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="access-pending">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Преподавателю — виртуальный приём</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="practice.css">
-<script src="locales/en.js?v=router-v1"></script>
-<script src="locales/kk.js?v=router-v1"></script>
+<script src="locales/en.js?v=access-v1"></script>
+<script src="locales/kk.js?v=access-v1"></script>
 <script src="locales/voices.js?v=lang-en-v1"></script>
 <script src="i18n.js?v=lang-en-v1"></script>
 <style>.language-picker{display:flex;align-items:center;gap:8px;margin:12px;flex-shrink:0;font-size:14px}.language-picker select{font:inherit;padding:8px;border-radius:8px;background:#18242f;color:#fff;border:1px solid #667986}</style>
-</head>
+<style>.access-pending body{visibility:hidden}.demo-banner{display:flex;gap:20px;justify-content:center;align-items:center;padding:14px;background:#153e47;color:#fff}.demo-banner a{color:#73dddc}</style></head>
 <body class="teacher">
 
 <header class="topbar">
@@ -154,18 +154,18 @@
 <p><a href="media/patient-sounds/README.md" target="_blank" rel="noopener">Источники звуков</a></p>
 </main>
 
-<script src="score.js"></script>
+<script data-training-src="score.js"></script>
 <!-- custom-cases.js до teacher.js: методичка и журнал берут кастомные
      случаи из его хранилища. constructor.js стартует сам по #constructorRoot. -->
-<script src="custom-cases.js"></script>
+<script data-training-src="custom-cases.js"></script>
 <!-- Синхронизация общих случаев (облако): методичка стартует после её
      готовности; конструктору она даёт кнопки публикации. Без настроек
      и без сети молча неактивна. -->
-<script src="sync.js"></script>
+
 <!-- teacher.js сам подключает все файлы персонажей из манифеста:
      новый случай появляется в методичке автоматически. -->
-<script src="characters/manifest.js?v=cases-20260908"></script>
-<script src="teacher.js"></script>
-<script src="constructor.js"></script>
-</body>
+<script data-training-src="characters/manifest.js?v=cases-20260908"></script>
+<script data-training-src="teacher.js"></script>
+<script data-training-src="constructor.js"></script>
+<script src="sync.js?v=access-v1"></script><script src="vendor/learning-access.js?v=1"></script></body>
 </html>

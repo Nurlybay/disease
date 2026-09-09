@@ -46,3 +46,42 @@ node tools/test-english.js --voices
 Mocks cover signup payload, locale callback, login errors, password recovery
 state, password update, clearing passwords and sign-out. SDK MIT license is
 included in site/vendor. Browser checks cover forms and localized homepage.
+
+## Learning access and demo (2026-09-09)
+
+The landing page is public. The full pericarditis-alimov consultation is the
+single guest demo. Other cases and the media workshop require a confirmed,
+non-anonymous Supabase account. The instructor page additionally requires
+`app_metadata.role` to be `teacher` or `admin` (never user-editable metadata).
+No instructor role is granted by registration. An administrator must assign it
+after the instructor has a confirmed account.
+
+`learning-content` verifies users through Supabase Auth and serves bundled
+scenario, workshop and instructor JavaScript. Pages artifacts omit those files.
+`patient-chat` denies guest AI requests outside the demo. The `cases` table RLS
+no longer allows anonymous reading. The SQL migration was applied in the
+Supabase SQL editor. User sessions refresh using the official Auth SDK.
+
+This controls the deployed application, not source-code confidentiality:
+the repository/history and previously distributed media/translations are public.
+To make the learning materials proprietary, move the source repository and all
+clinical media/translations to private storage and audit historical exposure.
+Do not describe this release as DRM or protection against copying.
+
+Build/deploy when editing protected case or workshop code:
+
+```
+python3 tools/build-learning-content.py
+npx supabase functions deploy learning-content --project-ref sawcjxnblgepkqdsvlio --no-verify-jwt --use-api
+npx supabase functions deploy patient-chat --project-ref sawcjxnblgepkqdsvlio --no-verify-jwt --use-api
+npm run build --prefix tools/auth-build
+python3 tools/build-public-site.py
+node tools/test-learning-access.js
+```
+
+Deploy the functions before publishing the frontend. Commit the regenerated
+content.json. Never add Supabase CLI credentials to the repository.
+Live guest tests verified: demo 200, protected assets 401 without auth / 403 for
+an anonymous user, non-demo AI 403, and no shared cases returned to guests.
+Confirmed-account and instructor authorization are covered by mocked tests;
+a full email signup/recovery round trip still needs SMTP setup.

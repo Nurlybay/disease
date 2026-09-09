@@ -1,5 +1,5 @@
 # Публикация сайта на GitHub Pages.
-# Деплоит папку site/ при каждом пуше в main.
+# Собирает публичные файлы без закрытых сценариев при каждом пуше в main.
 # Включается один раз: репозиторий → Settings → Pages → Source: «GitHub Actions».
 name: Pages
 
@@ -25,9 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: python3 tools/build-public-site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: .public-site
       - id: deployment
         uses: actions/deploy-pages@v4

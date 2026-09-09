@@ -9,3 +9,5 @@ __pycache__/
 tools/localization/node_modules/
 
 tools/auth-build/node_modules/
+.public-site/
+supabase/.temp/

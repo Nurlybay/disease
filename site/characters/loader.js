@@ -18,11 +18,12 @@
 
   function run() {
     var list = (window.CHARACTER_MANIFEST || []).slice();
+    if(window.LearningAccess?.isDemo())list=list.filter(function(m){return m.file==='pericarditis-alimov.js';});
 
     /* Кастомные и общие случаи — в конец списка. Дедуп по file: страховка
        от повреждённого хранилища (id кастома имеет префикс custom- и с
        встроенным файлом столкнуться не может, но дешевле проверить). */
-    if (window.CustomCases) {
+    if (window.CustomCases && !window.LearningAccess?.isDemo()) {
       var have = {};
       list.forEach(function (m) { have[m.file] = 1; });
       window.CustomCases.manifestEntries().forEach(function (m) {
@@ -43,6 +44,7 @@
     window.CURRENT_CHARACTER = pick;
 
     function load(src, onDone) {
+      if(window.LearningAccess){window.LearningAccess.loadScript(src).then(function(){if(onDone)onDone();}).catch(function(){document.title='Ошибка загрузки';});return;}
       var s = document.createElement('script');
       s.src = src + '?v=passport-v1';
       s.onload = onDone;
