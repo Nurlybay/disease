@@ -1,0 +1,14 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+(async()=>{
+const els={};for(const id of ['Dialog','Form','Email','Password','Title','Submit','Hint','Message','EmailLabel','PasswordLabel','Switch','Forgot','Login','Register','Logout','Name','Close'])els['account'+id]={value:'',hidden:false,focus(){},reportValidity(){return true},showModal(){this.open=true},close(){this.open=false;this.events.close?.()},events:{},addEventListener(e,f){this.events[e]=f}};
+els.authStatus={};let config,changed,last,err=null;
+class AuthClient {constructor(c){config=c}async getSession(){return {data:{session:null}}}onAuthStateChange(f){changed=f}async signUp(o){last=['signup',o];return {data:{session:null},error:err}}async signInWithPassword(o){last=['login',o];return {data:{user:{email:o.email}},error:err}}async resetPasswordForEmail(e,o){last=['reset',e,o];return {error:err}}async updateUser(o){last=['update',o];return {data:{user:{email:'test@example.org'}},error:err}}async signOut(o){last=['logout',o];return {}}}
+vm.runInNewContext(fs.readFileSync('site/account.js','utf8').replace(/^import .*;\n/,''),{AuthClient,URL,location:{href:'https://nurlybay.github.io/disease/?lang=kk'},document:{getElementById:id=>els[id]},window:{Sync:{publicApi:()=>({url:'https://project.test',anonKey:'public'})},I18n:{language:()=> 'kk'}}});
+await Promise.resolve();assert.equal(config.storageKey,'vp.guest-auth.v1.https://project.test');assert.equal(config.flowType,'implicit');
+const click=id=>els['account'+id].events.click();const submit=()=>els.accountForm.events.submit({preventDefault(){}});
+click('Register');els.accountEmail.value=' test@example.org ';els.accountPassword.value='password123';await submit();assert.equal(last[0],'signup');assert.equal(last[1].email,'test@example.org');assert.equal(last[1].options.emailRedirectTo,'https://nurlybay.github.io/disease/index.html?lang=kk');assert.equal(els.accountPassword.value,'');assert(els.accountMessage.textContent.includes('Проверьте почту'));
+click('Switch');err={code:'invalid_credentials'};await submit();assert(els.accountMessage.textContent.includes('Неверная'));assert(!els.accountSubmit.disabled);err=null;
+click('Forgot');assert(els.accountPassword.disabled);await submit();assert.equal(last[0],'reset');assert(els.accountMessage.textContent.includes('Если аккаунт'));
+changed('PASSWORD_RECOVERY',{user:{email:'test@example.org'}});assert.equal(els.accountTitle.textContent,'Новый пароль');assert(els.accountEmail.disabled);els.accountPassword.value='newpassword';await submit();assert.equal(last[0],'update');assert(!els.accountDialog.open);assert.equal(els.accountPassword.value,'');
+await click('Logout');assert.equal(last[1].scope,'local');assert(els.accountName.hidden);console.log('OK email signup, login error, recovery callback, update, locale, shared session and password cleanup');
+})().catch(e=>{console.error(e);process.exit(1)});

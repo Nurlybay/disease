@@ -6,8 +6,9 @@
 <title>Виртуальный приём — тренажёр клинического мышления</title>
 <link rel="stylesheet" href="styles.css">
 <link rel="stylesheet" href="practice.css">
-<script src="locales/en.js?v=router-v1"></script>
-<script src="locales/kk.js?v=router-v1"></script>
+<link rel="stylesheet" href="home.css?v=1">
+<script src="locales/en.js?v=home-v1"></script>
+<script src="locales/kk.js?v=home-v1"></script>
 <script src="locales/voices.js?v=lang-en-v1"></script>
 <script src="i18n.js?v=lang-en-v1"></script>
 <style>.language-picker{display:flex;align-items:center;gap:8px;margin:12px;flex-shrink:0;font-size:14px}.language-picker select{font:inherit;padding:8px;border-radius:8px;background:#18242f;color:#fff;border:1px solid #667986}</style>
@@ -23,7 +24,23 @@
         <div class="brand-sub">Тренажёр клинического мышления: пациент, приём, разбор</div>
       </div>
     </div>
+    <div class="account">
+      <button class="account-button" id="accountLogin" type="button">Войти</button>
+      <button class="account-button" id="accountRegister" type="button">Регистрация</button>
+      <span id="accountName" class="account-name" data-no-translate hidden></span>
+      <button class="account-button" id="accountLogout" type="button" hidden>Выйти</button>
+    </div>
   </header>
+  <p id="authStatus" class="auth-status" role="status" hidden></p>
+  <section class="home-hero">
+    <div>
+      <p class="hero-eyebrow">Симулятор клинического приёма</p>
+      <h1>Практика клинического мышления</h1>
+      <p class="hero-copy">От первого вопроса до обоснованного решения. Проводите приём виртуального пациента, исследуйте симптомы и разбирайте свои действия.</p>
+      <div class="hero-tags"><span>12 учебных случаев</span><span>3 языка</span><span>Диалог с пациентом</span></div>
+    </div>
+    <div class="hero-visual"><img src="media/patients/copd-tulegenov.png" alt="Виртуальный пациент в кабинете" width="500" height="500"><div class="hero-caption">Сначала — пациент. Затем — диагноз.<small>Вымышленный персонаж · учебный сценарий</small></div></div>
+  </section>
 
   <fieldset class="mode-picker">
     <legend>Как хотите тренироваться?</legend>
@@ -64,16 +81,28 @@
   </section>
 
   <footer class="landing-foot">
-    Работает офлайн, без регистрации и сети. Учебный тренажёр —
-    не медицинское изделие и не диагностический инструмент.
+    <p>Учебный тренажёр для отработки клинического мышления. Не предназначен для диагностики реальных пациентов. Для диалога с ИИ и входа в аккаунт нужен интернет.</p>
   </footer>
 </main>
 
+<dialog id="accountDialog" class="account-dialog" aria-labelledby="accountTitle">
+  <button id="accountClose" class="account-close" type="button" aria-label="Закрыть">×</button>
+  <h2 id="accountTitle">Вход</h2>
+  <form id="accountForm">
+    <label id="accountEmailLabel">Электронная почта<input id="accountEmail" type="email" autocomplete="email" required maxlength="254"></label>
+    <label id="accountPasswordLabel">Пароль<input id="accountPassword" type="password" autocomplete="current-password" required></label>
+    <p id="accountHint">Используйте почту и пароль своего аккаунта.</p>
+    <p id="accountMessage" role="status" aria-live="polite"></p>
+    <button id="accountSubmit" class="account-button" type="submit">Войти</button>
+  </form>
+  <div class="account-links"><button id="accountSwitch" type="button">Создать аккаунт</button><button id="accountForgot" type="button">Забыли пароль?</button></div>
+</dialog>
 <script src="custom-cases.js"></script>
 <!-- Синхронизация общих случаев преподавателя (облако). Без настроек и без
      сети молча неактивна — страницы ждут её готовности. -->
 <script src="sync.js"></script>
 <script src="characters/manifest.js?v=cases-20260908"></script>
-<script src="picker.js"></script>
+<script src="picker.js?v=email-v1"></script>
+<script src="vendor/account.js?v=1"></script>
 </body>
 </html>

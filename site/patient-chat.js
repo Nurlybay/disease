@@ -24,6 +24,7 @@
       } catch (e) { finish('connection_failed'); }
     }
     function guest(op, callback) {
+      try { session = JSON.parse(localStorage.getItem(sessionKey) || 'null'); } catch (e) {}
       if (session && session.access_token && session.expires_at > Date.now()/1000 + 60) { callback(null, session.access_token); return; }
       var refresh = session && session.refresh_token;
       request(op, options.baseUrl + (refresh ? '/auth/v1/token?grant_type=refresh_token' : '/auth/v1/signup'), refresh ? { refresh_token: refresh } : {}, null, function (error, data, status) {
@@ -33,7 +34,7 @@
           callback(status === 429 ? 'guest_signup_rate_limit' : data.error_code === 'anonymous_provider_disabled' || data.code === 'anonymous_provider_disabled' ? 'guest_disabled' : 'guest_signin_failed'); return;
         }
         if (!data.access_token || !data.refresh_token || !data.expires_in) { callback('invalid_auth_response'); return; }
-        save({ access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now()/1000 + Number(data.expires_in) });
+        save({ access_token: data.access_token, refresh_token: data.refresh_token, expires_at: Date.now()/1000 + Number(data.expires_in), user: data.user || (session && session.user) });
         callback(null, session.access_token);
       });
     }

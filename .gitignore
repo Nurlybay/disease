@@ -7,3 +7,5 @@ tools/.venv/
 __pycache__/
 
 tools/localization/node_modules/
+
+tools/auth-build/node_modules/
