@@ -913,7 +913,7 @@ const SYSTEM = `Ты играешь вымышленного пациента в
 Примеры принципа: давность кашля не задаёт давность одышки; название лекарства не задаёт его дозу; «аллергии не замечал» не означает отрицательный аллергологический тест. Это примеры правил, не факты о текущем пациенте.
 `;
 
-const origins = new Set(['https://nurlybay.github.io', 'http://localhost:8777', 'http://127.0.0.1:8777']);
+const origins = new Set(['https://medqadam.com', 'https://www.medqadam.com', 'https://nurlybay.github.io', 'http://localhost:8777', 'http://127.0.0.1:8777']);
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin');

@@ -14,8 +14,9 @@ and when closing the dialog. Never put SMTP credentials in site files.
 ## Deployment status and remaining setup
 
 Verified 2026-09-09 in Supabase: email sign-in and confirmation enabled; custom
-SMTP disabled. Default mail delivery is restricted to project organization
-members. Public signup confirmation and recovery need a custom SMTP sender.
+SMTP enabled through Resend, with verified domain medqadam.com and sender
+MedQadam <noreply@medqadam.com>. SMTP host smtp.resend.com, port 465.
+Delivery and the full signup/recovery round trip still require testing.
 See https://supabase.com/docs/guides/auth/auth-smtp .
 
 Configure Authentication → Emails → SMTP Settings with the sender email, name,
@@ -24,8 +25,11 @@ in Supabase. Keep email confirmation enabled. Then test signup, confirm link,
 sign-in, sign-out, reset link and a new password with an authorized test mailbox.
 This full delivery test has NOT yet been performed.
 
-Configured and verified Site URL: https://nurlybay.github.io/disease/
+Configured and verified Site URL: https://medqadam.com/
 Allowed redirect URLs:
+- https://medqadam.com/index.html?lang=ru
+- https://medqadam.com/index.html?lang=kk
+- https://medqadam.com/index.html?lang=en
 - https://nurlybay.github.io/disease/index.html?lang=ru
 - https://nurlybay.github.io/disease/index.html?lang=kk
 - https://nurlybay.github.io/disease/index.html?lang=en
@@ -85,3 +89,10 @@ Live guest tests verified: demo 200, protected assets 401 without auth / 403 for
 an anonymous user, non-demo AI 403, and no shared cases returned to guests.
 Confirmed-account and instructor authorization are covered by mocked tests;
 a full email signup/recovery round trip still needs SMTP setup.
+
+## Custom domain (2026-09-09)
+
+GitHub Pages custom domain: medqadam.com. Namecheap ALIAS @ and CNAME www
+point to nurlybay.github.io. Resend DKIM, send, rsend and DMARC records remain.
+The patient-chat function permits HTTPS origins medqadam.com and www.medqadam.com.
+GitHub Actions publishing does not require a CNAME file.
