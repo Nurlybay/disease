@@ -314,7 +314,7 @@
     /* Шапка: кто перед студентом и как запустить. */
     h += '<div class="m-head">' +
       '<div class="m-head-txt">' +
-        '<h2>' + esc(C.title) + '</h2>' +
+        '<h2>' + esc(C.title) + '</h2>' + (C.complaintMedia && window.CustomCases ? '<p>Анимация при общем вопросе о жалобах</p>'+CustomCases.mediaHtml(C.complaintMedia) : '') +
         '<p class="m-dis">' + esc(C.disease) + ' · ' + esc(m.label) + '</p>' +
         '<p class="m-stats">' + C.questions.length + ' вопросов · ' + C.exams.length +
           ' приёмов осмотра · ' + C.orders.length + ' обследований · ' +

@@ -276,7 +276,7 @@
           inpPath('patient.reason', draft.patient.reason, 'приступы удушья') + '</label>' +
         '<label>Идентификатор (присваивается при сохранении)<br>' +
           '<input type="text" class="cn-in" value="' + esc(draft.id || slug) + '" disabled></label>' +
-      '</div>' + (draft.patient.appearance ? '<p>Сохранённая внешность пациента</p>' + CC.mediaHtml(draft.patient.appearance) + '<button type="button" class="btn btn-ghost" data-act="clearpatient">Убрать внешность</button>' : '<p class="cn-hint">Создайте или выберите пациента в медиастудии выше.</p>') + '<p>' + (CC.hasAnimation(draft) ? 'Есть анимация' : 'Без анимации') + '</p>');
+      '</div>' + '<label>Пациент из готовой библиотеки<select class="cn-in" id="cnPatientTemplate"><option value="">Выберите пациента</option>' + CC.PATIENTS.map(function(p){return '<option value="'+esc(p.id)+'"'+(draft.patient.templateId===p.id?' selected':'')+'>'+esc(p.label)+'</option>';}).join('') + '</select></label><p class="cn-hint">Выберите готовую внешность. Анимация ниже необязательна — случай работает и без неё.</p>' + (draft.patient.appearance ? '<p>Сохранённая внешность пациента</p>' + CC.mediaHtml(draft.patient.appearance) + '<button type="button" class="btn btn-ghost" data-act="clearpatient">Убрать внешность</button>' : '<p class="cn-hint">Выберите пациента из списка выше.</p>') + (draft.complaintMedia ? '<p>Анимация при вопросе о жалобах</p>' + CC.mediaHtml(draft.complaintMedia) + '<button class="btn btn-ghost" type="button" data-act="clearcomplaint">Убрать анимацию жалобы</button>' : '') + '<p>' + (CC.hasAnimation(draft) ? 'Есть анимация' : 'Без анимации') + '</p>');
   }
 
   function renderGreeting() {
@@ -870,7 +870,8 @@
     if (cmd === 'unpub') { doUnpublish(t.getAttribute('data-id')); return; }
 
     var act = t.getAttribute('data-act');
-    if(act==='clearpatient'){draft.patient.appearance=null;render();return;}
+    if(act==='clearpatient'){draft.patient.appearance=null;draft.patient.templateId='';draft.complaintMedia=null;render();return;}
+    if(act==='clearcomplaint'){draft.complaintMedia=null;render();return;}
     if(act==='delquestionmedia'){draft.questions[+t.getAttribute('data-i')].media=null;render();return;}
     if (act === 'delmedia') { var exam = draft.exams[+t.getAttribute('data-i')]; if (exam) { exam.media = null; render(); } return; }
     if (act === 'add') { addRow(t.getAttribute('data-sec')); return; }
@@ -890,7 +891,11 @@
     CC.onChange(function () { render(); });
   }
 
+  root.addEventListener('change',function(e){if(e.target.id!=='cnPatientTemplate')return;var p=CC.PATIENTS.filter(function(x){return x.id===e.target.value;})[0];draft.patient.templateId=p?p.id:'';draft.patient.appearance=p?CC.normalizeMedia(p):null;if(p)draft.patient.gender=p.gender;draft.complaintMedia=null;render();});
   window.ConstructorMedia = {
+    choosePatient: function(id){var p=CC.PATIENTS.filter(function(x){return x.id===id;})[0];if(draft.patient.templateId===id)return;draft.patient.templateId=p?p.id:'';draft.patient.appearance=p?CC.normalizeMedia(p):null;if(p)draft.patient.gender=p.gender;draft.complaintMedia=null;render();},
+    patient: function(){return draft.patient.templateId||'';},
+    setComplaint: function(media){var clean=CC.normalizeMedia(media);if(!clean||!clean.video)return {ok:false,error:'Сначала создайте или выберите готовое видео.'};if(clean.patientKey&&clean.patientKey!==draft.patient.templateId)return {ok:false,error:'Эта сцена создана для другого пациента. Выберите его в случае или создайте новую сцену.'};draft.complaintMedia=clean;render();return {ok:true};},
     setPatient: function(media){draft.patient.appearance=CC.normalizeMedia(media);render();},
     targets: function(){return draft.questions.map(function(q){return {id:'question:'+q.id,label:'Вопрос: '+(q.label||'без названия')};}).concat(draft.exams.map(function(e){return {id:e.id,label:'Осмотр: '+(e.label||'без названия')};}));},
     exams: function () { return draft.exams.map(function (e) { return { id: e.id, label: e.label }; }); },

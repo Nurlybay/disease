@@ -2,10 +2,11 @@
 const env = (name: string) => Deno.env.get(name) || '';
 const cors = {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS','Cache-Control':'no-store'};
 const reply = (status: number, data: unknown) => Response.json(data,{status,headers:cors});
+const PATIENTS=[{"id":"acs-serikbayev","label":"Пациент, 58 лет","gender":"male","image":"https://medqadam.com/media/patients/acs-serikbayev.png","video":"https://medqadam.com/media/patients/video/acs-serikbayev-idle.mp4"},{"id":"af-nurgaliev","label":"Пациент, 72 года","gender":"male","image":"https://medqadam.com/media/patients/af-nurgaliev.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"angina-iskakov","label":"Пациент, 59 лет","gender":"male","image":"https://medqadam.com/media/patients/angina-iskakov.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"asthma-eszhanova","label":"Пациентка Е., 24 года","gender":"female","image":"https://medqadam.com/media/patients/asthma-eszhanova.png","video":""},{"id":"chronic-bronchitis-bekova","label":"Пациентка, 46 лет","gender":"female","image":"https://medqadam.com/media/patients/chronic-bronchitis-bekova.png","video":"https://medqadam.com/media/patients/video/chronic-bronchitis-bekova-idle.mp4"},{"id":"copd-tulegenov","label":"Пациент, 63 года","gender":"male","image":"https://medqadam.com/media/patients/copd-tulegenov.png","video":"https://medqadam.com/media/patients/video/copd-tulegenov-idle.mp4"},{"id":"hypertension-saparov","label":"Пациент, 52 года","gender":"male","image":"https://medqadam.com/media/patients/hypertension-saparov.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"myocarditis-omarova","label":"Пациентка, 29 лет","gender":"female","image":"https://medqadam.com/media/patients/myocarditis-omarova.png","video":"https://medqadam.com/media/patients/video/myocarditis-omarova-idle.mp4"},{"id":"pericarditis-alimov","label":"Пациент, 31 год","gender":"male","image":"https://medqadam.com/media/patients/pericarditis-alimov.png","video":"https://medqadam.com/media/patient-idle.mp4"}];
 const ROUTER='https://openrouter.ai/api/v1';
 const IMAGE_MODEL='openai/gpt-image-2.5-sunburst', VIDEO_MODEL='minimax/hailuo-3-max';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-type Job = {context?:{purpose?:string;detail_image?:string;references?:string[]};usage?:{cost?:number};id:string;owner_id:string;kind:string;status:string;description:string;motion:string;image_url?:string;video_url?:string;provider_task_id?:string;created_at:string;updated_at:string;error?:string};
+type Job = {context?:{purpose?:string;patient_key?:string;detail_image?:string;references?:string[]};usage?:{cost?:number};id:string;owner_id:string;kind:string;status:string;description:string;motion:string;image_url?:string;video_url?:string;provider_task_id?:string;created_at:string;updated_at:string;error?:string};
 class Fault extends Error { constructor(public code:string,public status=400){super(code);} }
 const base = () => env('SUPABASE_URL');
 const serviceHeaders = () => ({apikey:env('SUPABASE_SERVICE_ROLE_KEY'),Authorization:'Bearer '+env('SUPABASE_SERVICE_ROLE_KEY'),'Content-Type':'application/json'});
@@ -20,7 +21,7 @@ async function owned(id:unknown, owner:string):Promise<Job>{
  const rows=await db('teacher_media_jobs?id=eq.'+id+'&owner_id=eq.'+owner);
  if(!rows.length)throw new Fault('not_found',404);return rows[0];
 }
-function present(job:Job){return {id:job.id,kind:job.kind,status:job.status,description:job.description,motion:job.motion,image_url:job.image_url,video_url:job.video_url,created_at:job.created_at,error:job.error,purpose:job.context?.purpose||'finding',detail_image:job.context?.detail_image,cost:typeof job.usage?.cost==='number'?job.usage.cost:null};}
+function present(job:Job){return {id:job.id,kind:job.kind,status:job.status,description:job.description,motion:job.motion,image_url:job.image_url,video_url:job.video_url,created_at:job.created_at,error:job.error,patient_key:job.context?.patient_key,purpose:job.context?.purpose||'finding',detail_image:job.context?.detail_image,cost:typeof job.usage?.cost==='number'?job.usage.cost:null};}
 async function user(req:Request){
  const authorization=req.headers.get('authorization')||'';
  if(!/^Bearer [^\s]+$/.test(authorization))throw new Fault('signin_required',401);
@@ -66,7 +67,7 @@ async function start(job:Job){
    const r=await provider(ROUTER+'/images',env('OPENROUTER_API_KEY'),{
     model:IMAGE_MODEL,n:1,aspect_ratio:'16:9',quality:'medium',output_format:'png',
     input_references:(job.context?.references||[]).map(url=>({type:'image_url',image_url:{url}})),
-    prompt:job.context?.purpose==='patient' ? 'Create a photorealistic fictional adult patient seated in a neutral medical office, waist-up, both hands visible, natural lighting, consistent face and clothing, no text. Character description: '+job.description : job.context?.purpose==='scene' ? 'Create a clinical teaching scene. Reference 1 is the exact fictional patient: preserve identity, age, skin tone and clothing. If reference 2 is supplied, it is the clinical finding to reproduce on this patient, not a second person. Show the patient demonstrating their complaint. Anatomically accurate, no text, no extra pathology. Scene: '+job.description : 'Create one realistic clinical education illustration of a fictional adult. Close-up examination view, neutral clinical lighting, accurate anatomy, plain background, no text or labels. Show only the requested finding; do not add other pathology, instruments or diagnostic conclusions. This is synthetic educational material. Requested finding: '+job.description
+    prompt:job.context?.purpose==='scene' ? 'Create a clinical teaching scene. Reference 1 is the exact fictional patient: preserve identity, age, skin tone and clothing. If reference 2 is supplied, it is the clinical finding to reproduce on this patient, not a second person. Show the patient demonstrating their complaint. Anatomically accurate, no text, no extra pathology. Scene: '+job.description : 'Create one realistic clinical education illustration of a fictional adult. Close-up examination view, neutral clinical lighting, accurate anatomy, plain background, no text or labels. Show only the requested finding; do not add other pathology, instruments or diagnostic conclusions. This is synthetic educational material. Requested finding: '+job.description
    },120000);
    const encoded=r.data?.[0]?.b64_json;
    if(typeof encoded!=='string'||encoded.length>28*1024*1024)throw new Fault('invalid_image');
@@ -123,13 +124,13 @@ export async function handle(req:Request){
   let desc='',motion='',parent=null,context:NonNullable<Job['context']>={purpose:'finding'};
   if(body.action==='image'){
    desc=description(body.description,1500);
-   if(!['finding','patient','scene'].includes(body.purpose||'finding'))throw new Fault('invalid_action');
+   if(!['finding','scene'].includes(body.purpose||'finding'))throw new Fault('invalid_action');
    context.purpose=body.purpose||'finding';
    if(context.purpose==='scene'){
     if(body.reviewed!==true)throw new Fault('review_required');
-    const patient=await owned(body.patient_id,owner);
-    if(patient.status!=='ready'||!patient.image_url)throw new Fault('image_required');
-    context.references=[patient.image_url];
+    const patient=PATIENTS.find(p=>p.id===body.patient_key);
+    if(!patient)throw new Fault('patient_required');
+    context.references=[patient.image];context.patient_key=patient.id;
     if(body.finding_id){const finding=await owned(body.finding_id,owner);if(finding.status!=='ready'||!finding.image_url)throw new Fault('image_required');context.references.push(finding.image_url);context.detail_image=finding.image_url;}
    }
   }

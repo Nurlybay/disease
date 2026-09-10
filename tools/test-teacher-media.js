@@ -64,13 +64,14 @@ async function finish(){while(tasks.length)await tasks.shift();}
  timeout=true;const uncertain=crypto.randomUUID();await call({...image,id:uncertain});await finish();assert.equal(jobs.get(uncertain).status,'uncertain');const before=paidImages;await call({...image,id:uncertain});await finish();assert.equal(paidImages,before);timeout=false;
  const failed=crypto.randomUUID();await call({action:'video',id:failed,parent_id:id,reviewed:true,motion:'Поворот кисти'});await finish();providerState='failed';assert.equal((await call({action:'status',id:failed})).data.job.status,'failed');
  providerState='completed';
- const portrait=crypto.randomUUID();await call({...image,id:portrait,purpose:'patient',description:'Вымышленный пациент в кабинете'});await finish();assert.equal(jobs.get(portrait).context.purpose,'patient');assert(lastImageRequest.prompt.includes('both hands visible'));
- const scene=crypto.randomUUID(),sceneRequest={...image,id:scene,purpose:'scene',patient_id:portrait,finding_id:id,reviewed:true};
+ const portrait=id;assert.equal((await call({...image,id:crypto.randomUUID(),purpose:'patient'})).data.error,'invalid_action');
+ const scene=crypto.randomUUID(),sceneRequest={...image,id:scene,purpose:'scene',patient_key:'asthma-eszhanova',finding_id:id,reviewed:true};
  user.id=other;assert.equal((await call(sceneRequest)).status,404);user.id=owner;
  assert.equal((await call({...sceneRequest,reviewed:false})).data.error,'review_required');
  await call(sceneRequest);await finish();assert.equal(lastImageRequest.input_references.length,2);assert.equal(jobs.get(scene).context.detail_image,jobs.get(id).image_url);
  const sceneVideo=crypto.randomUUID();await call({action:'video',id:sceneVideo,parent_id:scene,reviewed:true,motion:'Пациент показывает руку'});await finish();
  const sceneResult=(await call({action:'status',id:sceneVideo})).data.job;assert.equal(sceneResult.cost,0.48);assert.equal(sceneResult.detail_image,jobs.get(id).image_url);assert.equal(sceneResult.purpose,'scene');
+ assert.equal((await call({...sceneRequest,id:crypto.randomUUID(),patient_key:'http://127.0.0.1'})).data.error,'patient_required');
  const noDetail=crypto.randomUUID();await call({...sceneRequest,id:noDetail,finding_id:null});await finish();assert.equal(lastImageRequest.input_references.length,1);
  const ccContext={window:{},URL,localStorage:{setItem(){},getItem(){return null},removeItem(){}},console};vm.createContext(ccContext);vm.runInContext(fs.readFileSync('site/custom-cases.js','utf8'),ccContext);const CC=ccContext.window.CustomCases;
  const media={image:jobs.get(id).image_url,video:jobs.get(vid).video_url,synthetic:true,jobId:vid};
@@ -83,10 +84,21 @@ async function finish(){while(tasks.length)await tasks.shift();}
  draft.patient.appearance={image:jobs.get(portrait).image_url};draft.questions=[{id:'q.complaint',label:'Что беспокоит?',text:'Болит рука',media:sceneMedia}];draft.exams=[];
  const round=CC.importText(CC.exportText(draft)).draft,runtime=CC.inflate(round);assert.equal(runtime.questions[0].media.detail,sceneMedia.detail);assert.equal(runtime.patient.portrait,draft.patient.appearance.image);assert.equal(runtime.patient.idleVideo,'');assert.equal(runtime.patient.throatVideo,'');assert.equal(CC.hasAnimation(round),true);
  round.questions=[];assert.equal(CC.hasAnimation(round),false);round.questions=[{media:{image:media.image}}];assert.equal(CC.hasAnimation(round),false);
+ round.complaintMedia=sceneMedia;assert.equal(CC.hasAnimation(round),true);
+ const automatic=CC.inflate(CC.importText(CC.exportText(round)).draft);assert.equal(automatic.complaintMedia.video,media.video);
+ for(const q of ['Что вас беспокоит?','Какие у вас жалобы?','С чем вы пришли?','What brings you in today?','Сізді не мазалайды?'])assert(CC.complaintMediaFor(automatic,q),q);
+ for(const q of ['Какие лекарства принимаете?','Какие жалобы были раньше?','Ничего не беспокоит?','Где работаете?','Осмотреть кожу'])assert.equal(CC.complaintMediaFor(automatic,q),null,q);
+ assert.equal(CC.complaintMediaFor({complaintMedia:null},'Что беспокоит?'),null);
  const html=CC.mediaHtml(media);assert(html.includes('controls muted playsinline'));assert(!html.includes('autoplay'));assert(html.includes('Синтетический'));assert(html.includes('Открыть изображение'));
  // Exercise the real exam branch: custom throat media must not play the generic throat.
  const app=fs.readFileSync('site/app.js','utf8'),start=app.indexOf('  function performExam('),end=app.indexOf('\n  function ',start+10);
  const runContext={window:{CustomCases:CC},CustomCases:CC,independent:true,CASE:{system:{},patient:{}},addNote(){},switchVideo(){throw new Error('Generic throat must not play');},say(){}};
  vm.createContext(runContext);vm.runInContext(app.slice(start,end),runContext);const row={};runContext.performExam({id:'e.skin',kind:'throat',media,result:'Осмотр',findAbnormal:true},row,{silent:true});assert.equal(row.media.video,media.video);
+ const logStart=app.indexOf('  function logRow('),logEnd=app.indexOf('\n  function ',logStart+10),rendered=[];
+ const logContext={window:{CustomCases:CC},CustomCases:CC,CASE:automatic,LearningMode:{row:r=>r},BYID:{},MODE:'independent',state:{t0:Date.now(),log:[]},Date,Score:{mmss:()=>''},CAT_NAME:{ask:'Расспрос'},esc:String,updateCounters(){},document:{createElement:()=>({})},$:()=>({querySelector:()=>null,appendChild:x=>rendered.push(x.innerHTML)})};
+ vm.createContext(logContext);vm.runInContext(app.slice(logStart,logEnd),logContext);
+ logContext.logRow({cat:'ask',kind:'patient',act:'Что вас беспокоит?',res:'Болит рука',ai:true});assert(rendered[0].includes(media.video),'AI response renders the available complaint scene');
+ logContext.logRow({cat:'ask',kind:'question',act:'Основная жалоба',raw:'Какие у вас жалобы?',res:'Болит рука'});assert(rendered[1].includes(media.video),'template question uses original wording');
+ logContext.logRow({cat:'ask',kind:'question',act:'Какие лекарства принимаете?',res:'Нет'});assert(!rendered[2].includes(media.video),'unrelated question has no animation');
  console.log('OK: teacher auth, provider configuration, image/video contracts, idempotency, ownership, review gate, quotas, uncertain submission, download-only retry, failure status, case round-trip, URL validation and exam playback. No paid requests.');
 })().catch(e=>{console.error(e);process.exit(1)});

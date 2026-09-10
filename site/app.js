@@ -459,6 +459,9 @@
     }
     var r = NLU.match(raw, INTENTS, { cat: state.cat, label: labelOf });
 
+    if(CASE.custom&&!r.ok&&window.CustomCases&&CustomCases.complaintMediaFor(CASE,raw)){
+      $('actInput').value='';var response=CASE.patient.reason||CASE.patient.greeting.text;logRow({kind:'patient',cat:'ask',act:raw,res:response});say(null,response,null,true);return;
+    }
     if (r.ok && BYID[r.id] && BYID[r.id].cat === 'ask' && !CASE.custom) {
       sendToPatient(raw, r.id); return;
     }
@@ -543,13 +546,13 @@
     if (repeat && kind !== 'exam') {
       /* Повтор ничего не добавляет к оценке, но пациент отвечает снова. */
       logRow({ kind: kind, cat: item.cat, id: null, act: actionLabel,
-               res: item.text || 'Уже выполнено ранее — повторно.', media: item.media, resCls: '', repeat: true });
+               res: item.text || 'Уже выполнено ранее — повторно.', raw:opts.raw, media: item.media, resCls: '', repeat: true });
       if (!opts.silent && item.text) say(item.audio, item.text, null, kind === 'question' || kind === 'passport');
       return;
     }
 
     state.done[id] = true;
-    var row = { kind: kind, cat: item.cat, id: id, act: actionLabel,
+    var row = { kind: kind, cat: item.cat, id: id, act: actionLabel, raw: opts.raw,
                 corrected: independent ? null : opts.corrected || null };
 
     if (kind === 'passport') {
@@ -671,6 +674,7 @@
   }
 
   function logRow(row) {
+    if(!row.media&&row.cat==='ask'&&window.CustomCases)row.media=CustomCases.complaintMediaFor(CASE,row.raw||row.act);
     row = LearningMode.row(row, BYID[row.id], MODE);
     var ul = $('log');
     var empty = ul.querySelector('.log-empty');

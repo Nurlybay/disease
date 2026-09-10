@@ -268,11 +268,19 @@
     var image = url(raw.image), video = url(raw.video);
     if (!image) return null;
     return { image: image, video: video, detail: url(raw.detail), synthetic: true,
+      patientKey: typeof raw.patientKey==='string' ? raw.patientKey : '',
       jobId: /^[0-9a-f-]{36}$/i.test(raw.jobId || '') ? raw.jobId : '' };
   };
 
+  CC.PATIENTS = [{"id":"acs-serikbayev","label":"Пациент, 58 лет","gender":"male","image":"https://medqadam.com/media/patients/acs-serikbayev.png","video":"https://medqadam.com/media/patients/video/acs-serikbayev-idle.mp4"},{"id":"af-nurgaliev","label":"Пациент, 72 года","gender":"male","image":"https://medqadam.com/media/patients/af-nurgaliev.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"angina-iskakov","label":"Пациент, 59 лет","gender":"male","image":"https://medqadam.com/media/patients/angina-iskakov.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"asthma-eszhanova","label":"Пациентка Е., 24 года","gender":"female","image":"https://medqadam.com/media/patients/asthma-eszhanova.png","video":""},{"id":"chronic-bronchitis-bekova","label":"Пациентка, 46 лет","gender":"female","image":"https://medqadam.com/media/patients/chronic-bronchitis-bekova.png","video":"https://medqadam.com/media/patients/video/chronic-bronchitis-bekova-idle.mp4"},{"id":"copd-tulegenov","label":"Пациент, 63 года","gender":"male","image":"https://medqadam.com/media/patients/copd-tulegenov.png","video":"https://medqadam.com/media/patients/video/copd-tulegenov-idle.mp4"},{"id":"hypertension-saparov","label":"Пациент, 52 года","gender":"male","image":"https://medqadam.com/media/patients/hypertension-saparov.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"myocarditis-omarova","label":"Пациентка, 29 лет","gender":"female","image":"https://medqadam.com/media/patients/myocarditis-omarova.png","video":"https://medqadam.com/media/patients/video/myocarditis-omarova-idle.mp4"},{"id":"pericarditis-alimov","label":"Пациент, 31 год","gender":"male","image":"https://medqadam.com/media/patients/pericarditis-alimov.png","video":"https://medqadam.com/media/patient-idle.mp4"}];
+  CC.complaintMediaFor = function (c, question) {
+    var media=CC.normalizeMedia(c.complaintMedia);if(!media||!media.video)return null;
+    var q=String(question||'').toLowerCase().replace(/ё/g,'е').replace(/[?!.,’']/g,' ').replace(/\s+/g,' ').trim();
+    if(/(?:раньше|ранее|в прошлом|не беспокоит|не жалует|previous|used to|бұрын)/.test(q))return null;
+    return /^(?:скажите |расскажите |скажите пожалуйста |пожалуйста )?(?:что (?:вас |тебя )?беспокоит|на что (?:вы )?жалуетесь|какие (?:у вас )?жалобы|какие жалобы (?:у вас )?есть|с чем (?:вы )?(?:пришли|обратились)|что (?:у вас )?случилось|что вас привело|жалобы)(?: сегодня| сейчас| у вас)?$/.test(q) || /^(?:what (?:brings you in|is bothering you|are your complaints|s wrong)|how can i help(?: you)?|what brings you here)(?: today)?$/.test(q) || /^(?:не мазалайды|сізді не мазалайды|қандай шағымдарыңыз бар|қандай шағымыңыз бар)$/.test(q) ? media : null;
+  };
   CC.hasAnimation = function (d) {
-    return !!(d.patient && d.patient.appearance && d.patient.appearance.video) || !!(d.patient && !d.patient.appearance && d.patient.gender !== 'female') ||
+    return !!(d.complaintMedia && d.complaintMedia.video) || !!(d.patient && d.patient.appearance && d.patient.appearance.video) || !!(d.patient && !d.patient.appearance && d.patient.gender !== 'female') ||
       ['questions','exams'].some(function (key) { return (d[key] || []).some(function (x) { return !!(x.media && x.media.video); }); });
   };
   CC.openScene = function (raw) {
@@ -316,12 +324,13 @@
     d.id = str(raw.id);
     d.disease = str(raw.disease);
     d.title = str(raw.title);
+    d.complaintMedia = CC.normalizeMedia(raw.complaintMedia);
 
     var p = raw.patient || {};
     d.patient = {
       name: str(p.name), short: str(p.short), reason: str(p.reason),
       gender: p.gender === 'female' ? 'female' : 'male',
-      appearance: CC.normalizeMedia(p.appearance),
+      appearance: CC.normalizeMedia(p.appearance), templateId: str(p.templateId),
       greetingText: str(p.greetingText || p.greeting && p.greeting.text)
     };
 
@@ -432,7 +441,7 @@
   CC.inflate = function (raw) {
     var d = CC.normalize(raw);
     var C = {
-      id: d.id, disease: d.disease, title: d.title, custom: true,
+      id: d.id, disease: d.disease, title: d.title, custom: true, complaintMedia: d.complaintMedia,
       patient: {
         gender: d.patient.gender,
         name: d.patient.name || (d.patient.gender === 'female' ? 'Пациентка' : 'Пациент'),
