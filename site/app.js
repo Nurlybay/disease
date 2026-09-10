@@ -457,6 +457,8 @@
       askClarify(raw, choices.map(function (e) { return { id: e.id, cat: 'exam', label: e.label }; }));
       return;
     }
+    var demonstration=window.CustomCases&&CustomCases.demonstrationMediaFor(CASE,raw);
+    if(demonstration){$('actInput').value='';logRow({kind:'exam',cat:'exam',act:raw,res:'Пациент показывает область жалобы.',media:demonstration});return;}
     var r = NLU.match(raw, INTENTS, { cat: state.cat, label: labelOf });
 
     if(CASE.custom&&!r.ok&&window.CustomCases&&CustomCases.complaintMediaFor(CASE,raw)){
@@ -546,13 +548,13 @@
     if (repeat && kind !== 'exam') {
       /* Повтор ничего не добавляет к оценке, но пациент отвечает снова. */
       logRow({ kind: kind, cat: item.cat, id: null, act: actionLabel,
-               res: item.text || 'Уже выполнено ранее — повторно.', raw:opts.raw, media: item.media, resCls: '', repeat: true });
+               res: item.text || 'Уже выполнено ранее — повторно.', raw:opts.raw, silent:!!opts.silent, media: item.media, resCls: '', repeat: true });
       if (!opts.silent && item.text) say(item.audio, item.text, null, kind === 'question' || kind === 'passport');
       return;
     }
 
     state.done[id] = true;
-    var row = { kind: kind, cat: item.cat, id: id, act: actionLabel, raw: opts.raw,
+    var row = { kind: kind, cat: item.cat, id: id, act: actionLabel, raw: opts.raw, silent: !!opts.silent,
                 corrected: independent ? null : opts.corrected || null };
 
     if (kind === 'passport') {
@@ -674,7 +676,7 @@
   }
 
   function logRow(row) {
-    if(!row.media&&row.cat==='ask'&&window.CustomCases)row.media=CustomCases.complaintMediaFor(CASE,row.raw||row.act);
+    if(!row.media&&(row.cat==='ask'||row.cat==='exam')&&window.CustomCases)row.media=CustomCases.complaintMediaFor(CASE,row.raw||row.act);
     row = LearningMode.row(row, BYID[row.id], MODE);
     var ul = $('log');
     var empty = ul.querySelector('.log-empty');
@@ -719,6 +721,7 @@
 
     li.innerHTML = h;
     ul.appendChild(li);
+    if(row.media&&row.media.video&&!row.silent&&window.CustomCases)CustomCases.openScene(row.media);
     ul.scrollTop = ul.scrollHeight;
     updateCounters();
   }

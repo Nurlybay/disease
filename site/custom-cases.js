@@ -268,12 +268,26 @@
     var image = url(raw.image), video = url(raw.video);
     if (!image) return null;
     return { image: image, video: video, detail: url(raw.detail), synthetic: true,
+      description: typeof raw.description==='string' ? raw.description.slice(0,1500) : '',
       patientKey: typeof raw.patientKey==='string' ? raw.patientKey : '',
       jobId: /^[0-9a-f-]{36}$/i.test(raw.jobId || '') ? raw.jobId : '' };
   };
 
   CC.PATIENTS = [{"id":"acs-serikbayev","label":"Пациент, 58 лет","gender":"male","image":"https://medqadam.com/media/patients/acs-serikbayev.png","video":"https://medqadam.com/media/patients/video/acs-serikbayev-idle.mp4"},{"id":"af-nurgaliev","label":"Пациент, 72 года","gender":"male","image":"https://medqadam.com/media/patients/af-nurgaliev.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"angina-iskakov","label":"Пациент, 59 лет","gender":"male","image":"https://medqadam.com/media/patients/angina-iskakov.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"asthma-eszhanova","label":"Пациентка Е., 24 года","gender":"female","image":"https://medqadam.com/media/patients/asthma-eszhanova.png","video":""},{"id":"chronic-bronchitis-bekova","label":"Пациентка, 46 лет","gender":"female","image":"https://medqadam.com/media/patients/chronic-bronchitis-bekova.png","video":"https://medqadam.com/media/patients/video/chronic-bronchitis-bekova-idle.mp4"},{"id":"copd-tulegenov","label":"Пациент, 63 года","gender":"male","image":"https://medqadam.com/media/patients/copd-tulegenov.png","video":"https://medqadam.com/media/patients/video/copd-tulegenov-idle.mp4"},{"id":"hypertension-saparov","label":"Пациент, 52 года","gender":"male","image":"https://medqadam.com/media/patients/hypertension-saparov.png","video":"https://medqadam.com/media/patient-idle.mp4"},{"id":"myocarditis-omarova","label":"Пациентка, 29 лет","gender":"female","image":"https://medqadam.com/media/patients/myocarditis-omarova.png","video":"https://medqadam.com/media/patients/video/myocarditis-omarova-idle.mp4"},{"id":"pericarditis-alimov","label":"Пациент, 31 год","gender":"male","image":"https://medqadam.com/media/patients/pericarditis-alimov.png","video":"https://medqadam.com/media/patient-idle.mp4"}];
+  CC.demonstrationMediaFor = function(c, question){
+    var m=CC.normalizeMedia(c.complaintMedia);if(!m||!m.video)return null;
+    var q=String(question||'').toLowerCase().replace(/ё/g,'е');
+    if(/(?:не показы|не покаж|не нужно|раньше|ранее|в прошлом|previous|used to|do not|don t|don't|көрсетп)/.test(q))return null;
+    if(!/(?:покажи|покажите|показать|можно (?:мне )?посмотреть|show|көрсет)/.test(q))return null;
+    if(/(?:где (?:у вас )?болит|что (?:вас )?беспокоит|область жалобы|where it hurts)/.test(q))return m;
+    var description=(m.description||c.patient&&c.patient.reason||'').toLowerCase();
+    var areas=[/^(?:кист|рук|ладон|пальц|hand|arm|қол)/,/^(?:горл|рот|зев|миндал|throat|mouth|тамақ|ауыз|язык|tongue)/,/^(?:ног|стоп|голен|foot|feet|leg|аяқ)/,/^(?:живот|брюш|abdomen|belly|іш)/,/^(?:груд|chest|кеуде)/,/^(?:спин|back|арқа)/,/^(?:лиц|face|бет)/,/^(?:кож|сып|skin|rash|тері)/];
+    var words=q.split(/[^\p{L}]+/u),details=description.split(/[^\p{L}]+/u);
+    var requested=areas.filter(function(area){return words.some(function(w){return area.test(w);});});
+    return requested.length&&requested.every(function(area){return details.some(function(w){return area.test(w);});})?m:null;
+  };
   CC.complaintMediaFor = function (c, question) {
+    var demonstrated=CC.demonstrationMediaFor(c,question);if(demonstrated)return demonstrated;
     var media=CC.normalizeMedia(c.complaintMedia);if(!media||!media.video)return null;
     var q=String(question||'').toLowerCase().replace(/ё/g,'е').replace(/[?!.,’']/g,' ').replace(/\s+/g,' ').trim();
     if(/(?:раньше|ранее|в прошлом|не беспокоит|не жалует|previous|used to|бұрын)/.test(q))return null;
@@ -295,7 +309,7 @@
     var detail=document.createElement('button');detail.className='btn btn-ghost';detail.textContent='Рассмотреть крупный план';detail.hidden=!m.detail;
     function showDetail(){if(video)video.pause();frame.replaceChildren(image);detail.hidden=true;}
     detail.onclick=showDetail;
-    if(m.video){video=document.createElement('video');video.src=m.video;video.poster=m.image;video.controls=true;video.muted=true;video.playsInline=true;video.style.cssText='width:100%;max-height:70vh';video.onended=function(){if(m.detail)showDetail();};video.onerror=showDetail;frame.appendChild(video);}
+    if(m.video){video=document.createElement('video');video.src=m.video;video.poster=m.image;video.controls=true;video.muted=true;video.playsInline=true;video.style.cssText='width:100%;max-height:70vh';video.onended=function(){if(m.detail)showDetail();else dialog.close();};video.onerror=showDetail;frame.appendChild(video);}
     else frame.appendChild(image);
     dialog.append(close,title,frame,detail);document.body.appendChild(dialog);
     dialog.addEventListener('close',function(){if(video){video.pause();video.removeAttribute('src');video.load();}dialog.remove();});

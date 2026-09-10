@@ -80,7 +80,7 @@ async function finish(){while(tasks.length)await tasks.shift();}
  assert.equal(CC.normalizeMedia({image:'javascript:alert(1)',video:media.video}),null);
  assert.equal(CC.normalizeMedia({image:'https://user:pass@host/a.png'}),null);
  assert.equal(CC.normalizeMedia({image:media.image,video:'data:text/html,x'}).video,'');
- const sceneMedia={...media,detail:jobs.get(id).image_url};
+ const sceneMedia={...media,description:'Пациент показывает сухую кожу на кисти',detail:jobs.get(id).image_url};
  draft.patient.appearance={image:jobs.get(portrait).image_url};draft.questions=[{id:'q.complaint',label:'Что беспокоит?',text:'Болит рука',media:sceneMedia}];draft.exams=[];
  const round=CC.importText(CC.exportText(draft)).draft,runtime=CC.inflate(round);assert.equal(runtime.questions[0].media.detail,sceneMedia.detail);assert.equal(runtime.patient.portrait,draft.patient.appearance.image);assert.equal(runtime.patient.idleVideo,'');assert.equal(runtime.patient.throatVideo,'');assert.equal(CC.hasAnimation(round),true);
  round.questions=[];assert.equal(CC.hasAnimation(round),false);round.questions=[{media:{image:media.image}}];assert.equal(CC.hasAnimation(round),false);
@@ -94,11 +94,17 @@ async function finish(){while(tasks.length)await tasks.shift();}
  const app=fs.readFileSync('site/app.js','utf8'),start=app.indexOf('  function performExam('),end=app.indexOf('\n  function ',start+10);
  const runContext={window:{CustomCases:CC},CustomCases:CC,independent:true,CASE:{system:{},patient:{}},addNote(){},switchVideo(){throw new Error('Generic throat must not play');},say(){}};
  vm.createContext(runContext);vm.runInContext(app.slice(start,end),runContext);const row={};runContext.performExam({id:'e.skin',kind:'throat',media,result:'Осмотр',findAbnormal:true},row,{silent:true});assert.equal(row.media.video,media.video);
+ var opened=0;CC.openScene=function(){opened++;};
+ for(const q of ['Покажите руки','Покажите кисть пожалуйста','Show your hands','Покажите где болит'])assert(CC.demonstrationMediaFor(automatic,q),q);
+ for(const q of ['Покажите горло','Покажите список инструкций','Не показывайте руки','Покажите руки и ноги','Какие лекарства?'])assert.equal(CC.demonstrationMediaFor(automatic,q),null,q);
  const logStart=app.indexOf('  function logRow('),logEnd=app.indexOf('\n  function ',logStart+10),rendered=[];
  const logContext={window:{CustomCases:CC},CustomCases:CC,CASE:automatic,LearningMode:{row:r=>r},BYID:{},MODE:'independent',state:{t0:Date.now(),log:[]},Date,Score:{mmss:()=>''},CAT_NAME:{ask:'Расспрос'},esc:String,updateCounters(){},document:{createElement:()=>({})},$:()=>({querySelector:()=>null,appendChild:x=>rendered.push(x.innerHTML)})};
  vm.createContext(logContext);vm.runInContext(app.slice(logStart,logEnd),logContext);
  logContext.logRow({cat:'ask',kind:'patient',act:'Что вас беспокоит?',res:'Болит рука',ai:true});assert(rendered[0].includes(media.video),'AI response renders the available complaint scene');
  logContext.logRow({cat:'ask',kind:'question',act:'Основная жалоба',raw:'Какие у вас жалобы?',res:'Болит рука'});assert(rendered[1].includes(media.video),'template question uses original wording');
  logContext.logRow({cat:'ask',kind:'question',act:'Какие лекарства принимаете?',res:'Нет'});assert(!rendered[2].includes(media.video),'unrelated question has no animation');
+ assert.equal(opened,2,'relevant questions start the player automatically');
+ logContext.logRow({cat:'ask',kind:'question',act:'Что вас беспокоит?',res:'Болит рука',silent:true});assert.equal(opened,2,'silent demo must not open a player');
+ logContext.logRow({cat:'exam',kind:'exam',act:'Покажите руки',res:'Показывает'});assert.equal(opened,3,'demonstration starts the available scene');
  console.log('OK: teacher auth, provider configuration, image/video contracts, idempotency, ownership, review gate, quotas, uncertain submission, download-only retry, failure status, case round-trip, URL validation and exam playback. No paid requests.');
 })().catch(e=>{console.error(e);process.exit(1)});
