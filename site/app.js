@@ -610,6 +610,7 @@
   }
 
   function performExam(item, row, opts) {
+    if (item.media && window.CustomCases) row.media = CustomCases.normalizeMedia(item.media);
     if (item.kind === 'auscult') {
       $('auscPanel').hidden = false;
       row.res = independent ? 'Аускультация начата. Выберите точку и опишите услышанное.' : item.note;
@@ -619,7 +620,7 @@
       return;
     }
 
-    if (item.kind === 'throat') {
+    if (item.kind === 'throat' && !row.media) {
       switchVideo('throat');
       $('videoBadge').textContent = CASE.patient.throatVideo ? 'Осмотр зева' : 'Осмотр зева · текстовый результат';
       var v = $('videoThroat');
@@ -703,7 +704,8 @@
     }
     /* Снимок/заключение картинкой (кастомные случаи): миниатюра в протоколе,
        клик открывает просмотр на весь экран. */
-    if (row.img) {
+    if (row.media && window.CustomCases) h += CustomCases.mediaHtml(row.media);
+    if (row.img && !row.media) {
       h += '<button type="button" class="log-imgwrap" data-img="' + esc(row.img) + '">' +
         '<img class="log-img" src="' + esc(row.img) + '" alt="Результат исследования">' +
         '</button>';

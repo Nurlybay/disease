@@ -15,7 +15,7 @@ Deno.serve(async req => {
    if(!r.ok)return reply(r.status===401||r.status===403?401:503,{error:'auth_unavailable'});
    const user=await r.json();
    if(!user.id||user.is_anonymous||!user.email_confirmed_at)return reply(403,{error:'confirmed_account_required'});
-   if((section==='teacher'||asset==='teacher.js'||asset==='constructor.js')&&!['teacher','admin'].includes(user.app_metadata?.role))return reply(403,{error:'teacher_required'});
+   if((section==='teacher'||asset==='teacher.js'||asset==='constructor.js'||asset==='media-studio.js')&&!['teacher','admin'].includes(user.app_metadata?.role))return reply(403,{error:'teacher_required'});
   }catch{return reply(503,{error:'auth_unavailable'});}
  }
  if(asset==='access')return reply(200,{allowed:true});

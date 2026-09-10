@@ -258,6 +258,29 @@
     return out;
   }
 
+  CC.normalizeMedia = function (raw) {
+    if (!raw || typeof raw !== 'object') return null;
+    function url(s) {
+      if (typeof s !== 'string' || s.length > 2048) return '';
+      try { var u = new URL(s); return u.protocol === 'https:' && !u.username && !u.password ? u.href : ''; }
+      catch (e) { return ''; }
+    }
+    var image = url(raw.image), video = url(raw.video);
+    if (!image) return null;
+    return { image: image, video: video, synthetic: true,
+      jobId: /^[0-9a-f-]{36}$/i.test(raw.jobId || '') ? raw.jobId : '' };
+  };
+
+  CC.mediaHtml = function (raw) {
+    var m = CC.normalizeMedia(raw);
+    if (!m) return '';
+    function esc(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+    return '<figure class="exam-generated-media">' + (m.video ?
+      '<video controls muted playsinline loop preload="none" style="width:100%;max-width:480px;max-height:360px" src="' + esc(m.video) + '" poster="' + esc(m.image) + '" aria-label="Анимация осмотра">Видео недоступно. Откройте изображение ниже.</video>' :
+      '<img loading="lazy" style="width:100%;max-width:480px;max-height:360px;object-fit:contain" src="' + esc(m.image) + '" alt="Иллюстрация осмотра">') +
+      '<figcaption>Синтетический учебный материал · <a target="_blank" rel="noopener" href="' + esc(m.image) + '">Открыть изображение</a></figcaption></figure>';
+  };
+
   CC.normalize = function (raw) {
     raw = raw && typeof raw === 'object' ? raw : {};
     var d = { v: 1 };
@@ -310,6 +333,7 @@
         label: str(x.label), title: str(x.title), result: str(x.result),
         why: str(x.why), weight: num(x.weight, 1),
         findAbnormal: !!x.findAbnormal, img: str(x.img),
+        media: CC.normalizeMedia(x.media),
         need: normNeed(x.need, x.label)
       };
     });
@@ -448,6 +472,7 @@
         weight: x.weight, findAbnormal: x.findAbnormal, need: x.need
       };
       if (x.img) e.img = x.img;
+      if (x.media) e.media = x.media;
       if (x.kind === 'throat') e.voice = 'mouth';
       C.exams.push(e);
     });

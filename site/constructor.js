@@ -10,7 +10,7 @@
    субтитрами. Запуск и «идеальный приём» сначала сохраняют случай — ссылка
    priem.html?char=<id> работает только на сохранённом.
 
-   Один IIFE, ES5, без сети. Стартует сам, если на странице есть
+   Один IIFE. Генерация медиа вынесена в media-studio.js. Стартует, если есть
    #constructorRoot (сейчас — teacher.html). */
 (function () {
   'use strict';
@@ -391,11 +391,14 @@
           needInp('exams', i, e.need) +
         '</div>' +
         imgCtl('exams', i, e.img) +
+        (e.media ? '<div class="cn-generated">' +
+          (e.media.video ? '<video controls muted playsinline preload="none" src="' + esc(e.media.video) + '" poster="' + esc(e.media.image) + '"></video>' : '<img class="cn-thumb" src="' + esc(e.media.image) + '" alt="Иллюстрация осмотра">') +
+          '<small>Синтетический учебный материал</small><button type="button" class="btn btn-ghost btn-sm" data-act="delmedia" data-i="' + i + '">Убрать материал</button></div>' : '') +
       '</div>';
     }).join('');
     return secHtml('Физикальный осмотр',
       'Аускультацию сюда добавлять не нужно — она собирается в следующей ' +
-      'секции. «Осмотр зева» проигрывает общее видео.',
+      'секции. Созданный материал показывается при выполнении этого осмотра. Для зева он заменяет общее видео.',
       rows + addBtn('exams', 'приём осмотра'));
   }
 
@@ -540,6 +543,7 @@
       renderDiagnosis() +
       renderRules() +
       renderDebrief();
+    window.dispatchEvent(new Event('constructor-media-change'));
     flash = '';
   }
 
@@ -865,6 +869,7 @@
     if (cmd === 'unpub') { doUnpublish(t.getAttribute('data-id')); return; }
 
     var act = t.getAttribute('data-act');
+    if (act === 'delmedia') { var exam = draft.exams[+t.getAttribute('data-i')]; if (exam) { exam.media = null; render(); } return; }
     if (act === 'add') { addRow(t.getAttribute('data-sec')); return; }
     if (act === 'del') { delRow(t.getAttribute('data-sec'), +t.getAttribute('data-i')); return; }
     if (act === 'delimg') {
@@ -882,5 +887,28 @@
     CC.onChange(function () { render(); });
   }
 
+  window.ConstructorMedia = {
+    exams: function () { return draft.exams.map(function (e) { return { id: e.id, label: e.label }; }); },
+    attach: function (targetId, label, media) {
+      var clean = CC.normalizeMedia(media);
+      if (!clean) return { ok: false, error: 'У материала нет корректного изображения.' };
+      var exam = draft.exams.filter(function (e) { return e.id === targetId; })[0];
+      if (targetId && !exam) return { ok: false, error: 'Осмотр удалён. Выберите другой.' };
+      if (!targetId) {
+        label = String(label || '').trim();
+        if (!label) return { ok: false, error: 'Укажите название нового действия осмотра.' };
+        exam = { id: nextId('e.custom', draft.exams), kind: 'plain', label: label,
+          title: label, result: 'Осмотрите материал и опишите находку.', why: '',
+          weight: 1, findAbnormal: false, img: '', need: null };
+        draft.exams.push(exam);
+      }
+      exam.media = clean;
+      // Generated media replaces an older attachment to avoid contradictory findings.
+      exam.img = '';
+      flash = 'Материал прикреплён. Уточните результат осмотра и сохраните случай.';
+      render();
+      return { ok: true, id: exam.id };
+    }
+  };
   render();
 })();

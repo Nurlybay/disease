@@ -415,7 +415,7 @@
         '</div>' +
         (e.result ? '<div class="m-item-res">' + esc(e.result) + '</div>' : '') +
         (e.why ? '<div class="m-item-why">' + esc(e.why) + '</div>' : '') +
-        thumb(e.img) +
+        thumb(e.img) + (e.media && window.CustomCases ? CustomCases.mediaHtml(e.media) : '') +
       '</div>';
     });
     if (ex) h += sec('Физикальный осмотр', ex);

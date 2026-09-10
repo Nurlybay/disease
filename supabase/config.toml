@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.learning-content]
 verify_jwt = false
+
+[functions.teacher-media]
+verify_jwt = false
