@@ -5,7 +5,7 @@ const reply = (status: number, data: unknown) => Response.json(data,{status,head
 const ROUTER='https://openrouter.ai/api/v1';
 const IMAGE_MODEL='openai/gpt-image-2.5-sunburst', VIDEO_MODEL='minimax/hailuo-3-max';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-type Job = {id:string;owner_id:string;kind:string;status:string;description:string;motion:string;image_url?:string;video_url?:string;provider_task_id?:string;created_at:string;updated_at:string;error?:string};
+type Job = {context?:{purpose?:string;detail_image?:string;references?:string[]};usage?:{cost?:number};id:string;owner_id:string;kind:string;status:string;description:string;motion:string;image_url?:string;video_url?:string;provider_task_id?:string;created_at:string;updated_at:string;error?:string};
 class Fault extends Error { constructor(public code:string,public status=400){super(code);} }
 const base = () => env('SUPABASE_URL');
 const serviceHeaders = () => ({apikey:env('SUPABASE_SERVICE_ROLE_KEY'),Authorization:'Bearer '+env('SUPABASE_SERVICE_ROLE_KEY'),'Content-Type':'application/json'});
@@ -20,7 +20,7 @@ async function owned(id:unknown, owner:string):Promise<Job>{
  const rows=await db('teacher_media_jobs?id=eq.'+id+'&owner_id=eq.'+owner);
  if(!rows.length)throw new Fault('not_found',404);return rows[0];
 }
-function present(job:Job){return {id:job.id,kind:job.kind,status:job.status,description:job.description,motion:job.motion,image_url:job.image_url,video_url:job.video_url,created_at:job.created_at,error:job.error};}
+function present(job:Job){return {id:job.id,kind:job.kind,status:job.status,description:job.description,motion:job.motion,image_url:job.image_url,video_url:job.video_url,created_at:job.created_at,error:job.error,purpose:job.context?.purpose||'finding',detail_image:job.context?.detail_image,cost:typeof job.usage?.cost==='number'?job.usage.cost:null};}
 async function user(req:Request){
  const authorization=req.headers.get('authorization')||'';
  if(!/^Bearer [^\s]+$/.test(authorization))throw new Fault('signin_required',401);
@@ -65,7 +65,8 @@ async function start(job:Job){
   if(job.kind==='image'){
    const r=await provider(ROUTER+'/images',env('OPENROUTER_API_KEY'),{
     model:IMAGE_MODEL,n:1,aspect_ratio:'16:9',quality:'medium',output_format:'png',
-    prompt:'Create one realistic clinical education illustration of a fictional adult. Close-up examination view, neutral clinical lighting, accurate anatomy, plain background, no text or labels. Show only the requested finding; do not add other pathology, instruments or diagnostic conclusions. This is synthetic educational material. Requested finding: '+job.description
+    input_references:(job.context?.references||[]).map(url=>({type:'image_url',image_url:{url}})),
+    prompt:job.context?.purpose==='patient' ? 'Create a photorealistic fictional adult patient seated in a neutral medical office, waist-up, both hands visible, natural lighting, consistent face and clothing, no text. Character description: '+job.description : job.context?.purpose==='scene' ? 'Create a clinical teaching scene. Reference 1 is the exact fictional patient: preserve identity, age, skin tone and clothing. If reference 2 is supplied, it is the clinical finding to reproduce on this patient, not a second person. Show the patient demonstrating their complaint. Anatomically accurate, no text, no extra pathology. Scene: '+job.description : 'Create one realistic clinical education illustration of a fictional adult. Close-up examination view, neutral clinical lighting, accurate anatomy, plain background, no text or labels. Show only the requested finding; do not add other pathology, instruments or diagnostic conclusions. This is synthetic educational material. Requested finding: '+job.description
    },120000);
    const encoded=r.data?.[0]?.b64_json;
    if(typeof encoded!=='string'||encoded.length>28*1024*1024)throw new Fault('invalid_image');
@@ -119,13 +120,24 @@ export async function handle(req:Request){
   if(!['image','video'].includes(body.action))throw new Fault('invalid_action');
   if(!UUID.test(body.id||''))throw new Fault('invalid_job');
   if(!configured()[body.action as 'image'|'video'])throw new Fault('not_configured',503);
-  let desc='',motion='',parent=null;
-  if(body.action==='image')desc=description(body.description,1500);
+  let desc='',motion='',parent=null,context:NonNullable<Job['context']>={purpose:'finding'};
+  if(body.action==='image'){
+   desc=description(body.description,1500);
+   if(!['finding','patient','scene'].includes(body.purpose||'finding'))throw new Fault('invalid_action');
+   context.purpose=body.purpose||'finding';
+   if(context.purpose==='scene'){
+    if(body.reviewed!==true)throw new Fault('review_required');
+    const patient=await owned(body.patient_id,owner);
+    if(patient.status!=='ready'||!patient.image_url)throw new Fault('image_required');
+    context.references=[patient.image_url];
+    if(body.finding_id){const finding=await owned(body.finding_id,owner);if(finding.status!=='ready'||!finding.image_url)throw new Fault('image_required');context.references.push(finding.image_url);context.detail_image=finding.image_url;}
+   }
+  }
   else{
    if(body.reviewed!==true)throw new Fault('review_required');
    const source=await owned(body.parent_id,owner);
    if(source.status!=='ready'||!source.image_url)throw new Fault('image_required');
-   desc=source.description;parent=source.id;motion=description(body.motion,800);
+   desc=source.description;parent=source.id;motion=description(body.motion,800);context=source.context||{purpose:'finding'};
   }
   const limit=(name:string,fallback:number)=>Math.max(1,Math.min(1000,Number(env(name))||fallback));
   const result=await db('rpc/reserve_teacher_media_job','POST',{
@@ -133,6 +145,7 @@ export async function handle(req:Request){
    p_user_limit:limit('MEDIA_USER_DAILY_LIMIT',20),p_global_limit:limit('MEDIA_GLOBAL_DAILY_LIMIT',100)
   });
   if(result.created){
+   await update(result.job,{context});
    // Supabase keeps this promise alive after the short HTTP response.
    EdgeRuntime.waitUntil(start(result.job));
   }

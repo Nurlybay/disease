@@ -543,7 +543,7 @@
     if (repeat && kind !== 'exam') {
       /* Повтор ничего не добавляет к оценке, но пациент отвечает снова. */
       logRow({ kind: kind, cat: item.cat, id: null, act: actionLabel,
-               res: 'Уже выполнено ранее — повторно.', resCls: '', repeat: true });
+               res: item.text || 'Уже выполнено ранее — повторно.', media: item.media, resCls: '', repeat: true });
       if (!opts.silent && item.text) say(item.audio, item.text, null, kind === 'question' || kind === 'passport');
       return;
     }
@@ -560,6 +560,7 @@
       if (!opts.silent) say(item.audio, item.text, null, kind === 'question' || kind === 'passport');
 
     } else if (kind === 'question') {
+      if (item.media && window.CustomCases) row.media = CustomCases.normalizeMedia(item.media);
       row.res = item.text;
       row.resCls = item.important ? 'is-key' : '';
       addNote(independent ? item.text : item.tag, item.important ? 'abn' : '');

@@ -276,7 +276,7 @@
           inpPath('patient.reason', draft.patient.reason, 'приступы удушья') + '</label>' +
         '<label>Идентификатор (присваивается при сохранении)<br>' +
           '<input type="text" class="cn-in" value="' + esc(draft.id || slug) + '" disabled></label>' +
-      '</div>');
+      '</div>' + (draft.patient.appearance ? '<p>Сохранённая внешность пациента</p>' + CC.mediaHtml(draft.patient.appearance) + '<button type="button" class="btn btn-ghost" data-act="clearpatient">Убрать внешность</button>' : '<p class="cn-hint">Создайте или выберите пациента в медиастудии выше.</p>') + '<p>' + (CC.hasAnimation(draft) ? 'Есть анимация' : 'Без анимации') + '</p>');
   }
 
   function renderGreeting() {
@@ -349,6 +349,7 @@
         '</div>' +
         '<div class="cn-row-main">' +
           areaRow('questions', i, 'text', q.text, 'Ответ пациента дословно') +
+          (q.media ? CC.mediaHtml(q.media) + '<button type="button" class="btn btn-ghost" data-act="delquestionmedia" data-i="'+i+'">Убрать сцену</button>' : '') +
         '</div>' +
         '<div class="cn-row-sub">' +
           inpRow('questions', i, 'tag', q.tag, 'Короткая пометка (идёт в факты справа)') +
@@ -869,6 +870,8 @@
     if (cmd === 'unpub') { doUnpublish(t.getAttribute('data-id')); return; }
 
     var act = t.getAttribute('data-act');
+    if(act==='clearpatient'){draft.patient.appearance=null;render();return;}
+    if(act==='delquestionmedia'){draft.questions[+t.getAttribute('data-i')].media=null;render();return;}
     if (act === 'delmedia') { var exam = draft.exams[+t.getAttribute('data-i')]; if (exam) { exam.media = null; render(); } return; }
     if (act === 'add') { addRow(t.getAttribute('data-sec')); return; }
     if (act === 'del') { delRow(t.getAttribute('data-sec'), +t.getAttribute('data-i')); return; }
@@ -888,10 +891,18 @@
   }
 
   window.ConstructorMedia = {
+    setPatient: function(media){draft.patient.appearance=CC.normalizeMedia(media);render();},
+    targets: function(){return draft.questions.map(function(q){return {id:'question:'+q.id,label:'Вопрос: '+(q.label||'без названия')};}).concat(draft.exams.map(function(e){return {id:e.id,label:'Осмотр: '+(e.label||'без названия')};}));},
     exams: function () { return draft.exams.map(function (e) { return { id: e.id, label: e.label }; }); },
     attach: function (targetId, label, media) {
       var clean = CC.normalizeMedia(media);
       if (!clean) return { ok: false, error: 'У материала нет корректного изображения.' };
+      if(targetId==='new-question'||targetId.indexOf('question:')===0){
+        var q=targetId==='new-question'?null:draft.questions.filter(function(x){return x.id===targetId.slice(9);})[0];
+        if(!q && targetId!=='new-question')return {ok:false,error:'Вопрос удалён.'};
+        if(!q){label=String(label||'').trim();if(!label)return {ok:false,error:'Укажите вопрос.'};q={id:nextId('q.custom',draft.questions),label:label,text:'',weight:1,important:false,need:null,no:[]};draft.questions.push(q);}
+        q.media=clean;render();return {ok:true,id:'question:'+q.id};
+      }
       var exam = draft.exams.filter(function (e) { return e.id === targetId; })[0];
       if (targetId && !exam) return { ok: false, error: 'Осмотр удалён. Выберите другой.' };
       if (!targetId) {

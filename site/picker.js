@@ -112,6 +112,7 @@
           '<span class="picker-body">' +
           '<span class="picker-disease">' + esc(m.disease) + '</span>' +
           '<span class="picker-label">' + esc(m.label) + '</span>' +
+          '<span class="picker-custom">' + (m.hasAnimation ? 'Есть анимация' : 'Без анимации') + '</span>' +
           (m.custom
             ? (m.shared
               ? '<span class="picker-shared">случай преподавателя</span>'

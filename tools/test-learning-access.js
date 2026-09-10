@@ -1,6 +1,6 @@
 const assert=require('assert'),fs=require('fs'),vm=require('vm'),esbuild=require('./auth-build/node_modules/esbuild');
 let handler,user=null,authCalls=0;
-const source=fs.readFileSync('supabase/functions/learning-content/index.ts','utf8').replace("import CONTENT from './content.json' with { type: 'json' };",'const CONTENT='+JSON.stringify(JSON.parse(fs.readFileSync('supabase/functions/learning-content/content.json')))+';');
+const source=fs.readFileSync('supabase/functions/learning-content/index.ts','utf8').replace("import CONTENT from './content.json' with { type: 'json' };",()=> 'const CONTENT='+JSON.stringify(JSON.parse(fs.readFileSync('supabase/functions/learning-content/content.json')))+';');
 vm.runInNewContext(esbuild.transformSync(source,{loader:'ts',format:'cjs'}).code,{Deno:{serve:f=>handler=f,env:{get:()=> 'test'}},Response,URL,AbortSignal,fetch:async()=>{authCalls++;return Response.json(user||{},{status:user?200:401})}});
 function req(asset='access',section='student',token='test'){return new Request('https://test/?'+new URLSearchParams({asset,section}),{headers:token?{authorization:'Bearer '+token}:{}})}
 (async()=>{

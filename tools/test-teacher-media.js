@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),crypto=require('node:crypto');
 const esbuild=require('./auth-build/node_modules/esbuild');
 const owner='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222';
-const jobs=new Map(),tasks=[];let handler,paidImages=0,paidVideos=0,downloadFailures=0,quota=false,timeout=false,providerState='completed';
+const jobs=new Map(),tasks=[];let handler,paidImages=0,paidVideos=0,downloadFailures=0,quota=false,timeout=false,providerState='completed',lastImageRequest;
 let user={id:owner,is_anonymous:false,email_confirmed_at:'2026-09-10',app_metadata:{role:'teacher'}};
 const keys={SUPABASE_URL:'https://project.supabase.co',SUPABASE_ANON_KEY:'anon',SUPABASE_SERVICE_ROLE_KEY:'service',OPENROUTER_API_KEY:'router-test'};
 const json=x=>Response.json(x);
@@ -25,7 +25,7 @@ async function fakeFetch(url,init={}){
  }
  if(u.pathname==='/api/v1/images'){
   assert.equal(u.hostname,'openrouter.ai');assert.equal(init.headers.Authorization,'Bearer router-test');
-  paidImages++;assert.equal(body.model,'openai/gpt-image-2.5-sunburst');assert.equal(body.n,1);assert.equal(body.quality,'medium');
+  lastImageRequest=body;paidImages++;assert.equal(body.model,'openai/gpt-image-2.5-sunburst');assert.equal(body.n,1);assert.equal(body.quality,'medium');
   if(timeout)throw new Error('network timeout');
   return json({data:[{b64_json:Buffer.from([137,80,78,71,13,10,26,10]).toString('base64')}],usage:{output_tokens:123}});
  }
@@ -63,6 +63,15 @@ async function finish(){while(tasks.length)await tasks.shift();}
  quota=true;assert.equal((await call({...image,id:crypto.randomUUID()})).status,429);quota=false;
  timeout=true;const uncertain=crypto.randomUUID();await call({...image,id:uncertain});await finish();assert.equal(jobs.get(uncertain).status,'uncertain');const before=paidImages;await call({...image,id:uncertain});await finish();assert.equal(paidImages,before);timeout=false;
  const failed=crypto.randomUUID();await call({action:'video',id:failed,parent_id:id,reviewed:true,motion:'Поворот кисти'});await finish();providerState='failed';assert.equal((await call({action:'status',id:failed})).data.job.status,'failed');
+ providerState='completed';
+ const portrait=crypto.randomUUID();await call({...image,id:portrait,purpose:'patient',description:'Вымышленный пациент в кабинете'});await finish();assert.equal(jobs.get(portrait).context.purpose,'patient');assert(lastImageRequest.prompt.includes('both hands visible'));
+ const scene=crypto.randomUUID(),sceneRequest={...image,id:scene,purpose:'scene',patient_id:portrait,finding_id:id,reviewed:true};
+ user.id=other;assert.equal((await call(sceneRequest)).status,404);user.id=owner;
+ assert.equal((await call({...sceneRequest,reviewed:false})).data.error,'review_required');
+ await call(sceneRequest);await finish();assert.equal(lastImageRequest.input_references.length,2);assert.equal(jobs.get(scene).context.detail_image,jobs.get(id).image_url);
+ const sceneVideo=crypto.randomUUID();await call({action:'video',id:sceneVideo,parent_id:scene,reviewed:true,motion:'Пациент показывает руку'});await finish();
+ const sceneResult=(await call({action:'status',id:sceneVideo})).data.job;assert.equal(sceneResult.cost,0.48);assert.equal(sceneResult.detail_image,jobs.get(id).image_url);assert.equal(sceneResult.purpose,'scene');
+ const noDetail=crypto.randomUUID();await call({...sceneRequest,id:noDetail,finding_id:null});await finish();assert.equal(lastImageRequest.input_references.length,1);
  const ccContext={window:{},URL,localStorage:{setItem(){},getItem(){return null},removeItem(){}},console};vm.createContext(ccContext);vm.runInContext(fs.readFileSync('site/custom-cases.js','utf8'),ccContext);const CC=ccContext.window.CustomCases;
  const media={image:jobs.get(id).image_url,video:jobs.get(vid).video_url,synthetic:true,jobId:vid};
  const draft={id:'custom-skin',disease:'Учебный случай',title:'Осмотр кожи',patient:{name:'Тест'},auscultation:{enabled:false},exams:[{id:'e.skin',kind:'throat',label:'Осмотреть кожу',media}]};
@@ -70,6 +79,10 @@ async function finish(){while(tasks.length)await tasks.shift();}
  assert.equal(CC.normalizeMedia({image:'javascript:alert(1)',video:media.video}),null);
  assert.equal(CC.normalizeMedia({image:'https://user:pass@host/a.png'}),null);
  assert.equal(CC.normalizeMedia({image:media.image,video:'data:text/html,x'}).video,'');
+ const sceneMedia={...media,detail:jobs.get(id).image_url};
+ draft.patient.appearance={image:jobs.get(portrait).image_url};draft.questions=[{id:'q.complaint',label:'Что беспокоит?',text:'Болит рука',media:sceneMedia}];draft.exams=[];
+ const round=CC.importText(CC.exportText(draft)).draft,runtime=CC.inflate(round);assert.equal(runtime.questions[0].media.detail,sceneMedia.detail);assert.equal(runtime.patient.portrait,draft.patient.appearance.image);assert.equal(runtime.patient.idleVideo,'');assert.equal(runtime.patient.throatVideo,'');assert.equal(CC.hasAnimation(round),true);
+ round.questions=[];assert.equal(CC.hasAnimation(round),false);round.questions=[{media:{image:media.image}}];assert.equal(CC.hasAnimation(round),false);
  const html=CC.mediaHtml(media);assert(html.includes('controls muted playsinline'));assert(!html.includes('autoplay'));assert(html.includes('Синтетический'));assert(html.includes('Открыть изображение'));
  // Exercise the real exam branch: custom throat media must not play the generic throat.
  const app=fs.readFileSync('site/app.js','utf8'),start=app.indexOf('  function performExam('),end=app.indexOf('\n  function ',start+10);

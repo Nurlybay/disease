@@ -193,7 +193,7 @@
       b.type = 'button';
       b.className = 'char-tab' + (m.custom ? ' is-custom' : '') +
                     (i === activeChar ? ' is-on' : '');
-      b.innerHTML = '<span class="ct-label">' + esc(m.label) + '</span>' +
+      b.innerHTML = '<span class="ct-label">' + esc(m.label) + '</span>' + badge(m.hasAnimation ? 'Есть анимация' : 'Без анимации','is-dim') +
                     '<span class="ct-dis">' + esc(m.disease) +
                     (m.custom ? ' · свой случай' : '') + '</span>';
       b.addEventListener('click', function () {
@@ -371,7 +371,7 @@
           audioBtn(q.audio) +
         '</div>' +
         '<div class="m-q-tag">' + esc(q.tag) + '</div>' +
-        '<div class="m-q-text">«' + esc(q.text) + '»</div>' +
+        '<div class="m-q-text">«' + esc(q.text) + '»</div>' + (q.media && window.CustomCases ? CustomCases.mediaHtml(q.media) : '') +
         (q.why ? '<div class="m-q-why">' + esc(q.why) + '</div>' : '') +
       '</div>';
     });

@@ -267,19 +267,47 @@
     }
     var image = url(raw.image), video = url(raw.video);
     if (!image) return null;
-    return { image: image, video: video, synthetic: true,
+    return { image: image, video: video, detail: url(raw.detail), synthetic: true,
       jobId: /^[0-9a-f-]{36}$/i.test(raw.jobId || '') ? raw.jobId : '' };
+  };
+
+  CC.hasAnimation = function (d) {
+    return !!(d.patient && d.patient.appearance && d.patient.appearance.video) || !!(d.patient && !d.patient.appearance && d.patient.gender !== 'female') ||
+      ['questions','exams'].some(function (key) { return (d[key] || []).some(function (x) { return !!(x.media && x.media.video); }); });
+  };
+  CC.openScene = function (raw) {
+    var m = CC.normalizeMedia(raw); if (!m) return;
+    var old = document.getElementById('caseScene'); if (old) old.close();
+    var dialog = document.createElement('dialog'); dialog.id='caseScene';
+    dialog.style.cssText='width:min(960px,94vw);max-height:94vh;border:1px solid #53616b;border-radius:18px;background:#111b24;color:white;padding:20px';
+    var close=document.createElement('button');close.textContent='Вернуться к пациенту';close.className='btn btn-ghost';close.onclick=function(){dialog.close();};
+    var title=document.createElement('p');title.textContent='Синтетическая учебная сцена';
+    var frame=document.createElement('div');frame.style.cssText='display:grid;place-items:center;min-height:160px';
+    var video, image=document.createElement('img'); image.src=m.detail||m.image;image.alt='Крупный план находки';image.style.cssText='max-width:100%;max-height:70vh;object-fit:contain';
+    var detail=document.createElement('button');detail.className='btn btn-ghost';detail.textContent='Рассмотреть крупный план';detail.hidden=!m.detail;
+    function showDetail(){if(video)video.pause();frame.replaceChildren(image);detail.hidden=true;}
+    detail.onclick=showDetail;
+    if(m.video){video=document.createElement('video');video.src=m.video;video.poster=m.image;video.controls=true;video.muted=true;video.playsInline=true;video.style.cssText='width:100%;max-height:70vh';video.onended=function(){if(m.detail)showDetail();};video.onerror=showDetail;frame.appendChild(video);}
+    else frame.appendChild(image);
+    dialog.append(close,title,frame,detail);document.body.appendChild(dialog);
+    dialog.addEventListener('close',function(){if(video){video.pause();video.removeAttribute('src');video.load();}dialog.remove();});
+    dialog.showModal();if(video)video.play().catch(function(){});
   };
 
   CC.mediaHtml = function (raw) {
     var m = CC.normalizeMedia(raw);
     if (!m) return '';
     function esc(s) { return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
-    return '<figure class="exam-generated-media">' + (m.video ?
+    return '<figure class="exam-generated-media"><button type="button" class="btn btn-ghost" data-open-scene="' + esc(encodeURIComponent(JSON.stringify(m))) + '">Открыть сцену крупно</button>' + (m.video ?
       '<video controls muted playsinline loop preload="none" style="width:100%;max-width:480px;max-height:360px" src="' + esc(m.video) + '" poster="' + esc(m.image) + '" aria-label="Анимация осмотра">Видео недоступно. Откройте изображение ниже.</video>' :
       '<img loading="lazy" style="width:100%;max-width:480px;max-height:360px;object-fit:contain" src="' + esc(m.image) + '" alt="Иллюстрация осмотра">') +
       '<figcaption>Синтетический учебный материал · <a target="_blank" rel="noopener" href="' + esc(m.image) + '">Открыть изображение</a></figcaption></figure>';
   };
+
+  if(typeof document !== 'undefined')document.addEventListener('click',function(event){
+    var button=event.target.closest && event.target.closest('[data-open-scene]');
+    if(button){try{CC.openScene(JSON.parse(decodeURIComponent(button.getAttribute('data-open-scene'))));}catch(e){}}
+  });
 
   CC.normalize = function (raw) {
     raw = raw && typeof raw === 'object' ? raw : {};
@@ -293,6 +321,7 @@
     d.patient = {
       name: str(p.name), short: str(p.short), reason: str(p.reason),
       gender: p.gender === 'female' ? 'female' : 'male',
+      appearance: CC.normalizeMedia(p.appearance),
       greetingText: str(p.greetingText || p.greeting && p.greeting.text)
     };
 
@@ -319,7 +348,7 @@
     d.questions = normList(raw.questions, function (x, i) {
       return {
         id: str(x.id, 'q.custom' + i),
-        label: str(x.label), text: str(x.text), tag: str(x.tag),
+        label: str(x.label), text: str(x.text), tag: str(x.tag), media: CC.normalizeMedia(x.media),
         weight: num(x.weight, 1), important: !!x.important, why: str(x.why),
         need: normNeed(x.need, x.label),
         no: isArr(x.no) ? x.no : []
@@ -409,9 +438,9 @@
         name: d.patient.name || (d.patient.gender === 'female' ? 'Пациентка' : 'Пациент'),
         short: d.patient.short || d.patient.name || (d.patient.gender === 'female' ? 'Пациентка' : 'Пациент'),
         reason: d.patient.reason || '',
-        portrait: d.patient.gender === 'female' ? 'media/patients/asthma-eszhanova.png' : null,
-        idleVideo: d.patient.gender === 'female' ? '' : 'media/patient-idle.mp4',
-        throatVideo: d.patient.gender === 'female' ? '' : 'media/patient-throat.mp4',
+        portrait: d.patient.appearance ? d.patient.appearance.image : d.patient.gender === 'female' ? 'media/patients/asthma-eszhanova.png' : null,
+        idleVideo: d.patient.appearance ? d.patient.appearance.video : d.patient.gender === 'female' ? '' : 'media/patient-idle.mp4',
+        throatVideo: d.patient.appearance || d.patient.gender === 'female' ? '' : 'media/patient-throat.mp4',
         throatPoster: 'media/throat-poster.jpg',
         greeting: {
           audio: null,
@@ -461,7 +490,7 @@
         id: x.id, cat: 'ask', w: 1, label: x.label,
         audio: null, text: x.text, tag: x.tag || x.label,
         weight: x.weight, important: x.important, why: x.why,
-        need: x.need, no: x.no
+        need: x.need, no: x.no, media: x.media
       });
     });
 
@@ -668,7 +697,7 @@
       seen[file] = 1;
       out.push({ file: file,
                  disease: d.disease || (d.shared ? 'Случай преподавателя' : 'Свой случай'),
-                 label: d.title || d.id, custom: true, shared: !!d.shared });
+                 label: d.title || d.id, custom: true, shared: !!d.shared, hasAnimation: CC.hasAnimation(d) });
     });
     return out;
   };
