@@ -53,6 +53,7 @@
      токене. */
   function groupClosed(group, toks) {
     for (var i = 0; i < group.length; i++) {
+      if (group[i].indexOf(' ') >= 0 && (' '+toks.join(' ')+' ').indexOf(' '+normalize(group[i])+' ') >= 0) return true;
       for (var j = 0; j < toks.length; j++) {
         if (rootHitsToken(group[i], toks[j])) return true;
       }

@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Преподавателю — виртуальный приём</title>
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="practice.css">
+<link rel="stylesheet" href="practice.css?v=teacher-simple-v2">
 <link rel="stylesheet" href="media-studio.css?v=complaint-autoplay-v4">
-<script src="locales/en.js?v=access-v1"></script>
-<script src="locales/kk.js?v=access-v1"></script>
+<script src="locales/en.js?v=teacher-simple-v2"></script>
+<script src="locales/kk.js?v=teacher-simple-v2"></script>
 <script src="locales/voices.js?v=lang-en-v1"></script>
-<script src="i18n.js?v=lang-en-v1"></script>
+<script src="i18n.js?v=incremental-v1"></script>
 <style>.language-picker{display:flex;align-items:center;gap:8px;margin:12px;flex-shrink:0;font-size:14px}.language-picker select{font:inherit;padding:8px;border-radius:8px;background:#18242f;color:#fff;border:1px solid #667986}</style>
 <style>.access-pending body{visibility:hidden}.demo-banner{display:flex;gap:20px;justify-content:center;align-items:center;padding:14px;background:#153e47;color:#fff}.demo-banner a{color:#73dddc}</style></head>
 <body class="teacher">
@@ -41,8 +41,13 @@
 
   <!-- ============ МЕТОДИЧКА ============ -->
   <section id="tab-method">
-    <nav class="char-tabs" id="charTabs" aria-label="Персонажи"></nav>
-    <div id="methodBody"></div>
+    <div class="teacher-guide"><h1>Подготовка к занятию</h1><p>Выберите случай, изучите ответы и находки, затем откройте тренажёр для занятия.</p></div>
+    <details class="case-picker" id="casePicker">
+      <summary><span><span class="picker-caption">Выбранный случай</span><strong id="selectedCaseLabel"></strong></span><span class="picker-change">Изменить случай</span></summary>
+      <label class="teacher-search">Найти случай<input id="caseSearch" type="search" placeholder="Имя пациента или заболевание" autocomplete="off"></label>
+      <nav class="char-tabs" id="charTabs" aria-label="Персонажи"></nav>
+    </details>
+    <div id="methodBody" aria-live="polite"></div>
 
     <!-- Схема грудной клетки — копия SVG из priem.html (правится вместе с ней).
          Точки не здесь: они строятся из данных случая при отрисовке методички. -->
@@ -167,8 +172,9 @@
 <!-- teacher.js сам подключает все файлы персонажей из манифеста:
      новый случай появляется в методичке автоматически. -->
 <script data-training-src="characters/manifest.js?v=complaint-autoplay-v4"></script>
+<script data-training-src="teacher-loader.js?v=1"></script>
 <script data-training-src="teacher.js"></script>
-<script data-training-src="constructor.js"></script>
-<script data-training-src="media-studio.js"></script>
+
+
 <script src="sync.js?v=access-v1"></script><script src="vendor/learning-access.js?v=teacher-media-v1"></script></body>
 </html>

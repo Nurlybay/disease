@@ -9,7 +9,7 @@ var box={window:{},speechInput:null,patientSounds:null,aiBusy:false,state:{cat:'
   logRow:function(row){calls.push(['log',row.kind]);},labelOf:function(id){return id;}};
 vm.createContext(box);
 function load(p){vm.runInContext(fs.readFileSync(path.join(root,p),'utf8'),box);}
-load('site/nlu.js');load('site/characters/pericarditis-alimov.js');
+load('site/passport-questions.js');box.PassportQuestions=box.window.PassportQuestions;load('site/nlu.js');load('site/characters/pericarditis-alimov.js');
 box.CASE=box.window.CASES[0];box.NLU=box.window.NLU;box.BYID={};
 box.INTENTS=[].concat(box.CASE.passport,box.CASE.questions,box.CASE.vitals,box.CASE.exams,box.CASE.orders,box.CASE.treatment,box.CASE.diagnosis.options);
 box.INTENTS.forEach(function(it){box.BYID[it.id]=it;});
@@ -27,3 +27,7 @@ assert.equal(send('колхицин','treat')[0],'action');
 box.aiBusy=true;assert.equal(send('хуже лежа','ask'),undefined);box.aiBusy=false;
 box.state.finished=true;assert.equal(send('хуже лежа','ask'),undefined);
 console.log('OK automatic fever/known/unknown dialogue routing; exams, investigations and treatment stay scripted; busy/finished guards.');
+
+box.state.finished=false;
+assert.deepEqual(send("фио","ask"),["action","p.name"]);
+assert.deepEqual(send("возраст","ask"),["action","p.age"]);

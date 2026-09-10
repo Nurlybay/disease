@@ -44,7 +44,7 @@ function req(data=body,token='guest-jwt'){return new Request('https://example.te
   assert(!('feverDuration' in card));
   assert(card.statements.length>0);
   assert(card.statements.every(f=>typeof f.topic==='string'&&f.topic&&typeof f.text==='string'&&f.text));
-  assert(!system.includes('dx.target'));assert(!system.includes('weight'));
+  assert(!system.includes('dx.target'));assert(card.statements.every(s=>!Object.prototype.hasOwnProperty.call(s,'weight')));
   assert.equal(payload.messages[payload.messages.length-1].content,message);
  }
  const longHistory=Array.from({length:20},(_,i)=>({role:i%2?'assistant':'user',content:'я'.repeat(1000)}));
@@ -73,3 +73,8 @@ assert.equal(ctx.patientText('[{"topic":"Кашель и мокрота","text":
 assert.equal(ctx.patientText('```json\n{"reply":"Три минуты."}\n```'),'Три минуты.');
 assert.equal(ctx.patientText('[{"topic":"Кашель","text":'),'');
 assert.equal(ctx.patientText('{"diagnosis":"hidden"}'),'');
+const raw=JSON.stringify({reply:'Светлая мокрота.',covered:[{id:'q.sputum',asked:'что откашливаете',evidence:'Светлая мокрота.'},{id:'e.heart',asked:'что откашливаете',evidence:'Светлая мокрота.'},{id:'q.smoking',asked:'курите',evidence:'Не курю.'}]});
+const metadata=ctx.responseCoverage(raw,'Светлая мокрота.','что откашливаете',{statements:[{id:'q.sputum'},{id:'q.smoking'}]});
+assert.equal(metadata.length,1);assert.equal(metadata[0].id,'q.sputum');
+assert.equal(ctx.patientText(raw),'Светлая мокрота.');
+assert.equal(ctx.responseCoverage('Ответ','Ответ','вопрос',{statements:[]}),null);

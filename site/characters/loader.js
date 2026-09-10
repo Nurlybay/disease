@@ -46,7 +46,7 @@
     function load(src, onDone) {
       if(window.LearningAccess){window.LearningAccess.loadScript(src).then(function(){if(onDone)onDone();}).catch(function(){document.title='Ошибка загрузки';});return;}
       var s = document.createElement('script');
-      s.src = src + '?v=passport-v1';
+      s.src = src + (src.indexOf('?') < 0 ? '?v=clinical-review-v2' : '');
       s.onload = onDone;
       s.onerror = function () {
         document.title = 'Ошибка загрузки: ' + src;
@@ -54,7 +54,7 @@
       document.head.appendChild(s);
     }
 
-    function loadApp() { load('app.js'); }
+    function loadApp() { load('app.js?v=clinical-review-v2'); }
 
     /* Скрипты страницы стоят в конце <body>, поэтому к моменту динамической
        загрузки DOM уже разобран и init() внутри app.js может стартовать сразу. */

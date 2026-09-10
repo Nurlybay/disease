@@ -67,3 +67,64 @@
 .voice-question label { font-size: 12px; color: var(--muted, #a8b4c5); }
 #talkBtn[aria-pressed="true"] { border-color: #6edcc4; color: #6edcc4; }
 #talkStatus { font-size: 13px; }
+
+/* Laboratory report remains readable on a phone and in independent mode. */
+.lab-sheet { margin-top: .75rem; }
+.lab-caption { font-weight: 600; margin: 0 0 .6rem; }
+.lab-scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--line, #34414d); border-radius: 8px; }
+.lab-table { border-collapse: collapse; width: 100%; font-size: .88rem; text-align: left; }
+.lab-table th, .lab-table td { padding: .5rem .7rem; border-bottom: 1px solid var(--line, #34414d); }
+.lab-table thead { background: #202d39; }
+.lab-table tbody th { font-weight: 400; min-width: 11rem; }
+.lab-table td { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lab-note { color: #9eb0be; font-size: .8rem; margin-top: .5rem; }
+.log-body { min-width: 0; }
+@media (max-height: 850px) { .console { position: static; } }
+.teacher-intro { color: var(--text-dim, #a9b8c7); line-height: 1.6; margin: 14px 0; max-width: 900px; }
+.teacher-loading { padding: 24px; border: 1px solid var(--line, #34414d); border-radius: 12px; background: var(--panel, #19232e); }
+.teacher-loading p { margin: 0 0 12px; }
+.teacher-waiting > :not(.teacher-loading) { display: none; }
+.teacher-search { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin: 0 0 14px; }
+.teacher-search input { font: inherit; min-width: 220px; max-width: 100%; padding: 10px 12px; border: 1px solid #526578; border-radius: 8px; color: inherit; background: #18242f; }
+
+/* Teacher workspace: a single reading column and progressive disclosure. */
+.teacher .teacher-main,.teacher .ttabs{max-width:1120px;margin-left:auto;margin-right:auto}
+.teacher .teacher-main{font-size:17px;line-height:1.65}
+.teacher .ttabs{gap:8px;flex-wrap:wrap;padding-top:20px;padding-bottom:20px}
+.teacher .ttab{font-size:16px;min-height:48px;border-radius:8px}
+.teacher-guide h1{font-size:26px;margin:0 0 8px}
+.teacher-guide p{color:#bcc9d5;margin:0 0 24px;max-width:780px}
+.case-picker{border:1px solid #607487;border-radius:10px;margin-bottom:28px;background:#1b2530}
+.case-picker>summary{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 22px;cursor:pointer;list-style:none}
+.case-picker>summary::-webkit-details-marker{display:none}
+.picker-caption{display:block;font-size:14px;color:#bcc9d5}
+#selectedCaseLabel{display:block;font-size:18px}
+.picker-change{flex-shrink:0;color:#83ddef;text-decoration:underline;font-size:16px}
+.case-picker .teacher-search{padding:8px 22px}
+.case-picker .char-tabs{display:grid;grid-template-columns:1fr 1fr;max-height:360px;overflow:auto;padding:0 22px 22px;gap:8px}
+.case-picker .char-tab{text-align:left;width:100%;font-size:16px;min-height:64px}
+.case-picker .ct-dis{font-size:15px;color:#bcc9d5}
+.teacher .m-head{display:block;padding-bottom:20px}
+.teacher .m-head h2{font-size:25px;line-height:1.35}
+.teacher .m-dis{font-size:17px;color:#bcc9d5}
+.teacher .m-run{display:block;margin-top:18px}
+.teacher .m-run .btn{font-size:17px;min-height:48px;padding:10px 18px}
+.action-hint{font-size:15px;color:#bcc9d5;margin:6px 0 16px}
+.teacher-examples{font-size:16px;max-width:740px}
+.teacher-examples summary{cursor:pointer;color:#bdd3e2;min-height:44px;padding:8px 0}
+.teacher-examples .btn{margin:6px 10px 0 0}
+.manual-hint{color:#bcc9d5;font-size:16px;margin:8px 0 18px}
+.teacher .teacher-fold{display:block;border:1px solid #425468;border-radius:10px;background:#18222c;margin:0 0 12px;overflow:hidden}
+.teacher-fold>summary{cursor:pointer;font-size:19px;font-weight:600;padding:18px 22px;min-height:60px}
+.teacher-fold[open]>summary{border-bottom:1px solid #425468}
+.teacher-fold-body{padding:20px;display:grid;gap:14px}
+.teacher .m-trap{border:0;border-left:3px solid #91a9b9;background:#202d37;padding:16px;margin:0}
+.teacher .m-trap h3{color:#d8e3ec;font-size:16px}
+.teacher .m-trap p,.teacher .m-greet-text{font-size:17px;line-height:1.65}
+.teacher .m-greet{margin:0}
+.teacher summary:focus-visible,.teacher button:focus-visible,.teacher a:focus-visible{outline:3px solid #80d7ed;outline-offset:4px}
+@media(max-width:650px){.case-picker>summary{align-items:flex-start;flex-direction:column;gap:6px}.case-picker .char-tabs{grid-template-columns:1fr}.teacher-fold-body{padding:12px}.teacher .ttab{flex:1 1 45%}.teacher .topbar{position:static}}
+.teacher .teacher-fold-body :is(.mp-field,.mp-val,.mp-text,.mp-why,.m-q-label,.m-q-text,.m-q-why,.mv-field,.mv-val,.mv-note,.mv-tech,.m-item-label,.m-item-res,.m-item-why,.m-rule-text,.m-rule-why,.m-next,.m-keys){font-size:17px;line-height:1.6}
+.teacher .teacher-fold-body :is(.m-q-tag,.m-sec-note,.m-algo-note){font-size:15px;color:#bcc9d5}
+.teacher .m-audio{font-size:15px;min-height:44px;padding:8px 14px}
+.teacher .m-badge{font-size:12px;letter-spacing:0;text-transform:none}

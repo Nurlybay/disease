@@ -48,7 +48,8 @@
         { label: 'Живот', run: 'пальпировать живот' },
         { label: 'Лимфоузлы', run: 'проверить лимфоузлы' },
         { label: 'Отёки', run: 'проверить отёки ног' },
-        { label: 'Кожа', run: 'осмотреть кожу' }
+        { label: 'Кожа', run: 'осмотреть кожу' },
+        { label: 'Общее состояние', run: 'оценить общее состояние' }
       ] },
     { id: 'order',   label: 'Назначить', ph: 'Какое исследование назначить?',
       sub: [
@@ -250,14 +251,19 @@
       caseId: CASE.id,
       language: function () { return window.I18n ? I18n.language() : 'ru'; },
       busy: function (on) { aiBusy = on; $('aiCancel').hidden = !on; },
-      reply: function (question, answer, audio) {
+      reply: function (question, answer, audio, covered) {
         pendingAi = null; aiUsed = true;
         if ($('actInput').value.trim() === question) $('actInput').value = '';
         $('aiStatus').textContent = 'Ответ получен.';
-        logRow({kind:'patient',cat:'ask',act:question,res:answer,resCls:''});
-        if (window.PassportQuestions) PassportQuestions.ids(question,answer,CASE.passport).forEach(function(id){
-          if (BYID[id] && BYID[id].__kind === 'passport' && !state.done[id]) perform(id,{silent:true,raw:question});
+        var completed = window.QuestionCoverage ? QuestionCoverage.ids(question,answer,covered,CASE,NLU) : [];
+        completed = completed.filter(function(id){return BYID[id] && !state.done[id];});
+        completed.forEach(function(id){
+          state.done[id]=true;
+          var item=BYID[id];
+          addNote(item.__kind==='passport' ? item.field+': '+item.value : item.label, '');
         });
+        renderPassport(); renderChip();
+        logRow({kind:'question',cat:'ask',id:completed[0]||null,covered:completed,ai:true,act:question,res:answer,resCls:''});
         say(audio || null, answer, null, true);
       },
       error: function (code) {
@@ -457,6 +463,10 @@
       askClarify(raw, choices.map(function (e) { return { id: e.id, cat: 'exam', label: e.label }; }));
       return;
     }
+    if ((!state.cat || state.cat === 'ask') && window.PassportQuestions && PassportQuestions.direct) {
+      var identity = PassportQuestions.direct(raw);
+      if (identity && BYID[identity]) { $('actInput').value = ''; perform(identity, {raw:raw}); return; }
+    }
     var demonstration=window.CustomCases&&CustomCases.demonstrationMediaFor(CASE,raw);
     if(demonstration){$('actInput').value='';logRow({kind:'exam',cat:'exam',act:raw,res:'Пациент показывает область жалобы.',media:demonstration});return;}
     var r = NLU.match(raw, INTENTS, { cat: state.cat, label: labelOf });
@@ -583,10 +593,12 @@
 
     } else if (kind === 'order') {
       row.res = item.result;
+      row.lab = item.lab;
+      row.labExtra = item.labExtra;
       row.hint = item.hint;
       row.resCls = item.role === 'waste' ? 'is-warn' : 'is-ok';
       if (item.img) row.img = item.img;
-      addNote(item.label + ': ' + item.result, item.role === 'waste' ? 'abn' : 'ok');
+      addNote(item.lab ? item.label : item.label + ': ' + item.result, item.role === 'waste' ? 'abn' : 'ok');
 
     } else if (kind === 'treat') {
       row.res = item.hint;
@@ -703,7 +715,10 @@
     if (row.corrected) {
       h += '<div class="log-fix">понято как «' + esc(row.corrected) + '»</div>';
     }
-    if (row.res) {
+    if (row.lab && window.LabResults) {
+      h += LabResults.render(row.lab);
+      if (row.labExtra) h += '<div class="log-res">' + esc(row.labExtra) + '</div>';
+    } else if (row.res) {
       h += '<div class="log-res ' + (row.resCls || '') + '">' + esc(row.res) + '</div>';
     }
     if (row.hint) {
@@ -722,7 +737,7 @@
     li.innerHTML = h;
     ul.appendChild(li);
     if(row.media&&row.media.video&&!row.silent&&window.CustomCases)CustomCases.openScene(row.media);
-    ul.scrollTop = ul.scrollHeight;
+    ul.scrollTop = row.lab ? li.offsetTop - ul.offsetTop : ul.scrollHeight;
     updateCounters();
   }
 
@@ -1283,7 +1298,7 @@
       h += '</ul></div>';
     }
 
-    if (aiUsed) h += '<div class="block"><h3>ИИ-расспрос</h3><p>В этом приёме использовался ИИ. Его ответы не отмечают пункты чек-листа: итоговый процент не отражает полноту такого расспроса. Текст ИИ-диалога остаётся в протоколе этой страницы и не входит в код результата для преподавателя.</p></div>';
+    if (aiUsed) h += '<div class="block"><h3>ИИ-расспрос</h3><p>В этом приёме использовался ИИ. Распознанные темы с полученным ответом отмечены в чек-листе и сохранены в коде результата вместе с репликами. Автоматическое сопоставление ИИ может ошибаться; преподаватель может сверить его с протоколом.</p></div>';
     h += '<div class="block"><h3>Продолжить практику</h3><p><a href="media-lab.html" target="_blank" rel="noopener">Разобрать реальные ЭКГ и звуки сердца</a></p><p class="block-note">Отдельные учебные записи, не исследования этого пациента.</p></div>';
     $('debrief').innerHTML = h;
   }

@@ -1,0 +1,16 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const b={window:{},btoa:s=>Buffer.from(s,'binary').toString('base64'),atob:s=>Buffer.from(s,'base64').toString('binary')};
+for(const f of ['nlu-en.js','nlu-kk.js','nlu.js','passport-questions.js','question-coverage.js','score.js','characters/copd-tulegenov.js'])vm.runInNewContext(fs.readFileSync('site/'+f,'utf8'),b);
+const c=b.window.CASES[0],ids=(q,a,m)=>Array.from(b.window.QuestionCoverage.ids(q,a,m,c,b.window.NLU));
+assert(ids('что откашливаете','Светлая мокрота.').includes('q.cough'));
+assert.deepEqual(ids('что откашливаете','Не могу точно сказать.'),[]);
+assert.deepEqual(ids('что откашливаете','Светлая мокрота.',[]),[],'Explicitly uncredited semantic response must not be overridden');
+const q='Представьтесь и расскажите, что выходит при кашле',a='Тулегенов Аскар. Светлая мокрота.';
+const metadata=[{id:'p.name',asked:'Представьтесь',evidence:'Тулегенов Аскар'},{id:'q.cough',asked:'что выходит при кашле',evidence:'Светлая мокрота.'},{id:'e.heart',asked:'Представьтесь',evidence:'Тулегенов Аскар'}];
+assert.deepEqual(ids(q,a,metadata),['p.name','q.cough']);
+assert.deepEqual(ids(q,a,[{id:'q.smoking',asked:'курите',evidence:'Светлая мокрота.'}]),[]);
+assert.deepEqual(ids(q,a,[{id:'q.smoking',asked:'Представьтесь',evidence:'Не курю'}]),[]);
+const done={'p.name':true,'q.cough':true},session={done,heard:{},log:[{id:'p.name',covered:['p.name','q.cough'],ai:true,cat:'ask',kind:'question',act:q,res:a,ts:30}]};
+const S=b.window.Score,code=S.encodeResult(c,session),decoded=S.decodeResult(code,[c]);
+assert(!decoded.error);assert(decoded.session.done['q.cough']);assert.equal(decoded.session.log[0].act,q);assert.equal(decoded.session.log[0].res,a);assert.equal(S.compute(c,session).total,S.compute(c,decoded.session).total);assert(S.timeline(session.log).did('q.cough'));
+console.log('OK alternative and compound questions, evidence validation, no credit on refusal, all matched IDs and actual dialogue survive score export.');

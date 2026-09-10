@@ -46,12 +46,12 @@
       send: function (message) {
         if (active) return false;
         var op = {}; active = op; options.busy(true);
-        function done(error, answer, audio) {
+        function done(error, answer, audio, covered) {
           if (active !== op) return;
           active = null; options.busy(false);
           if (error) { options.error(error); return; }
           history.push({ role: 'user', content: message }, { role: 'assistant', content: answer.slice(0,1000) }); history=history.slice(-20);
-          options.reply(message, answer, audio);
+          options.reply(message, answer, audio, covered);
         }
         guest(op, function (error, token) {
           if (error) { done(error); return; }
@@ -63,7 +63,7 @@
             }
             if (typeof data.reply !== 'string' || !data.reply.trim() || data.reply.length > 4000 || data.caseId !== options.caseId) { done('invalid_response'); return; }
             var audio = data.audioType === 'audio/mpeg' && typeof data.audio === 'string' && data.audio.length < 2000000 && /^[A-Za-z0-9+/]+={0,2}$/.test(data.audio) ? 'data:audio/mpeg;base64,' + data.audio : null;
-            done(null, data.reply, audio);
+            done(null, data.reply, audio, data.covered);
           });
         });
         return true;

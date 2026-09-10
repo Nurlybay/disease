@@ -34,9 +34,20 @@
      Хронология для правил на порядок действий
      ========================================================= */
 
+  function creditedRows(log) {
+    var rows=[];
+    (log||[]).forEach(function(r){
+      var ids=Array.isArray(r.covered)?r.covered.slice():[];
+      if(r.id&&ids.indexOf(r.id)<0)ids.unshift(r.id);
+      ids.filter(function(id,i){return typeof id==='string'&&ids.indexOf(id)===i;}).forEach(function(id){
+        rows.push({id:id,ts:r.ts,cat:r.cat,kind:r.kind,ai:r.ai,act:r.act,res:r.res});
+      });
+    });
+    return rows;
+  }
+
   Score.timeline = function (log) {
-    var acts = [], i;
-    for (i = 0; i < (log || []).length; i++) if (log[i].id) acts.push(log[i]);
+    var acts = creditedRows(log), i;
 
     var idx = {};
     for (i = 0; i < acts.length; i++) {
@@ -116,6 +127,7 @@
     function roleScore(list, badRole, penalty) {
       var tot = 0, got = 0, bad = 0;
       list.forEach(function (x) {
+        if (x.role === 'available') return;
         if (x.role === badRole) {
           if (done[x.id]) bad++;
           return;
@@ -355,8 +367,7 @@
       dx: session.dx || null,
       u: session.unknowns || [],
       k: session.clarifies || 0,
-      a: log.filter(function (r) { return r.id; })
-            .map(function (r) { return [r.id, Math.round(r.ts)]; }),
+      a: creditedRows(log).map(function(r){return r.ai ? [r.id,Math.round(r.ts),String(r.act||'').slice(0,1000),String(r.res||'').slice(0,4000)] : [r.id,Math.round(r.ts)];}),
       h: session.heard || {}
     };
     return CODE_PREFIX + btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
@@ -408,7 +419,8 @@
       if (!meta && id === '__dx') meta = { cat: 'dx', kind: 'dx' };
       if (!meta && id.indexOf('ausc:') === 0) meta = { cat: 'exam', kind: 'exam' };
       log.push({ id: id, ts: row[1],
-                 cat: meta ? meta.cat : null, kind: meta ? meta.kind : null });
+                 cat: meta ? meta.cat : null, kind: meta ? meta.kind : null,
+                 ai: typeof row[2]==='string', act: typeof row[2]==='string'?row[2].slice(0,1000):undefined, res:typeof row[3]==='string'?row[3].slice(0,4000):undefined });
       if (id === '__dx') { done['__dx'] = true; return; }
       if (id.indexOf('ausc:') === 0) return;
       if (meta) done[id] = true;

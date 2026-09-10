@@ -57,25 +57,50 @@
      Загрузка всех персонажей из манифеста
      ========================================================= */
 
-  /* Динамические <script> исполняются не по порядку вставки, поэтому
-     считаем завершённые и рендерим, когда готовы все. Ошибка загрузки
-     тоже засчитывается: методичка покажет, какой файл не поднялся.
-     Кастомные записи файлов не имеют — они уже в CASES после
-     refreshCustoms(), и загружать их не нужно. */
-  function loadAll(onDone) {
-    var files = MANIFEST.filter(function (m) { return !m.custom; });
-    var left = files.length;
-    if (!left) { onDone(); return; }
-    files.forEach(function (m) {
-      if(window.LearningAccess){window.LearningAccess.loadScript('characters/'+m.file).then(function(){if(!--left)onDone();}).catch(function(){if(!--left)onDone();});return;}
-      var s = document.createElement('script');
-      s.src = 'characters/' + m.file + '?v=lang-v1';
-      s.onload = s.onerror = function () {
-        left--;
-        if (!left) onDone();
-      };
-      document.head.appendChild(s);
+  function loadTeacherScript(src) {
+    if(window.LearningAccess)return window.LearningAccess.loadScript(src);
+    return new Promise(function(resolve,reject){
+      var script=document.createElement('script');script.src=src;
+      script.onload=resolve;script.onerror=function(){script.remove();reject(new Error('load_failed'));};
+      document.head.appendChild(script);
     });
+  }
+  var caseLoader=TeacherLoader.create(function(m){return loadTeacherScript('characters/'+m.file);},function(m){return !!caseByManifest(m);});
+  var journalReady=false, journalLoading=null, constructorLoading=null, constructorReady=false, criteriaReady=false;
+  var constructorScripts={};
+  function loading(box,message,retry){
+    box.classList.add('teacher-waiting');
+    var old=box.querySelector('.teacher-loading');if(old)old.remove();
+    var status=document.createElement('div');status.className='teacher-loading';status.setAttribute('role','status');
+    var text=document.createElement('p');text.textContent=message;status.appendChild(text);
+    if(retry){var button=document.createElement('button');button.className='btn btn-ghost btn-sm';button.textContent='Повторить загрузку';button.onclick=retry;status.appendChild(button);}
+    box.prepend(status);
+  }
+  function ready(box){box.classList.remove('teacher-waiting');var status=box.querySelector('.teacher-loading');if(status)status.remove();}
+  function showCase(){
+    var m=MANIFEST[activeChar],box=$('methodBody');
+    if(!m){box.textContent='Учебные случаи не найдены.';return;}
+    if(caseByManifest(m)){ready(box);renderMethod();return;}
+    box.innerHTML='';loading(box,'Загружаем выбранный случай…');
+    caseLoader.one(m).then(function(){if(MANIFEST[activeChar]===m){ready(box);renderMethod();}}).catch(function(){
+      if(MANIFEST[activeChar]===m)loading(box,'Не удалось загрузить случай. Проверьте соединение и повторите.',showCase);
+    });
+  }
+  function showJournal(){
+    if(journalReady||journalLoading)return;
+    loading($('tab-journal'),'Подготавливаем журнал и критерии всех случаев…');
+    journalLoading=caseLoader.all(MANIFEST).then(function(){
+      ready($('tab-journal'));initJournal();journalReady=true;
+    }).catch(function(){loading($('tab-journal'),'Не удалось подготовить журнал. Сохранённые результаты не изменены.',showJournal);}).then(function(){journalLoading=null;});
+  }
+  function showConstructor(){
+    if(constructorReady||constructorLoading)return;
+    loading($('tab-constructor'),'Загружаем конструктор…');
+    constructorLoading=['constructor.js','media-studio.js'].reduce(function(chain,src){
+      return chain.then(function(){if(constructorScripts[src])return;return loadTeacherScript(src).then(function(){constructorScripts[src]=true;});});
+    },Promise.resolve()).then(function(){constructorReady=true;ready($('tab-constructor'));}).catch(function(){
+      loading($('tab-constructor'),'Не удалось загрузить конструктор. Можно повторить попытку.',showConstructor);
+    }).then(function(){constructorLoading=null;});
   }
 
   /* =========================================================
@@ -177,6 +202,11 @@
           var sec = $('tab-' + t);
           if (sec) sec.hidden = (t !== b.getAttribute('data-tab'));
         });
+        stopAudio();
+        var tab=b.getAttribute('data-tab');
+        if(tab==='journal')showJournal();
+        if(tab==='constructor')showConstructor();
+        if(tab==='criteria'&&!criteriaReady){renderCriteria();criteriaReady=true;}
       });
     });
   }
@@ -188,7 +218,11 @@
   function renderCharTabs() {
     var box = $('charTabs');
     box.innerHTML = '';
+    if($('selectedCaseLabel')&&MANIFEST[activeChar])$('selectedCaseLabel').textContent=MANIFEST[activeChar].disease+' · '+MANIFEST[activeChar].label;
+    var search=$('caseSearch'),query=search?search.value.toLowerCase().trim():'';
     MANIFEST.forEach(function (m, i) {
+      var searchable=m.label+' '+m.disease;if(window.I18n)searchable+=' '+I18n.t(m.label)+' '+I18n.t(m.disease);
+      if(query&&searchable.toLowerCase().indexOf(query)<0)return;
       var b = document.createElement('button');
       b.type = 'button';
       b.className = 'char-tab' + (m.custom ? ' is-custom' : '') +
@@ -197,14 +231,16 @@
                     '<span class="ct-dis">' + esc(m.disease) +
                     (m.custom ? ' · свой случай' : '') + '</span>';
       b.addEventListener('click', function () {
+        if($('casePicker'))$('casePicker').open=false;
         if (i === activeChar) return;
         stopAudio();
         activeChar = i;
         renderCharTabs();
-        renderMethod();
+        showCase();
       });
       box.appendChild(b);
     });
+    if(!box.children.length){var empty=document.createElement('p');empty.textContent='Ничего не найдено. Измените поиск.';box.appendChild(empty);}
   }
 
   /* =========================================================
@@ -214,7 +250,8 @@
   var ORDER_GROUPS = [
     { role: 'need',   title: 'Обязательно',       cls: 'is-ok' },
     { role: 'useful', title: 'Полезно',           cls: 'is-mid' },
-    { role: 'waste',  title: 'Назначено зря',     cls: 'is-warn' }
+    { role: 'waste',  title: 'Назначено зря',     cls: 'is-warn' },
+    { role: 'available', title: 'Дополнительные исследования', cls: 'is-dim' }
   ];
 
   var TREAT_GROUPS = [
@@ -234,7 +271,7 @@
   }
 
   function sec(title, inner) {
-    return '<section class="m-sec"><h3>' + title + '</h3>' + inner + '</section>';
+    return '<details class="m-sec teacher-fold"><summary>' + title + '</summary><div class="teacher-fold-body">' + inner + '</div></details>';
   }
 
   function runLink(text, href, cls) {
@@ -316,31 +353,33 @@
       '<div class="m-head-txt">' +
         '<h2>' + esc(C.title) + '</h2>' + (C.complaintMedia && window.CustomCases ? '<p>Анимация при общем вопросе о жалобах</p>'+CustomCases.mediaHtml(C.complaintMedia) : '') +
         '<p class="m-dis">' + esc(C.disease) + ' · ' + esc(m.label) + '</p>' +
-        '<p class="m-stats">' + C.questions.length + ' вопросов · ' + C.exams.length +
-          ' приёмов осмотра · ' + C.orders.length + ' обследований · ' +
-          C.treatment.length + ' назначений лечения · ' + (C.algorithm || []).length +
-          ' правил порядка</p>' +
       '</div>' +
       '<div class="m-run">' +
         runLink('Запустить случай', 'priem.html?char=' + C.id, 'btn-primary') +
+        '<p class="action-hint">Откроется приём выбранного пациента.</p>' +
+        '<details class="teacher-examples"><summary>Посмотреть пример для подготовки</summary><p>Идеальный приём показывает последовательность действий, а разбор объясняет оценку.</p>' +
         runLink('Идеальный приём', 'priem.html?char=' + C.id + '&demo=1') +
-        runLink('Разбор идеального приёма', 'priem.html?char=' + C.id + '&demo=1&finish=1') +
+        runLink('Разбор идеального приёма', 'priem.html?char=' + C.id + '&demo=1&finish=1') + '</details>' +
       '</div>' +
     '</div>';
 
     /* У кастомного случая блоки разбора могут быть не заполнены —
        пустые не показываем вовсе. */
     var deb = C.debrief || {};
+    h += '<p class="manual-hint">Нажмите на название раздела, чтобы увидеть подробности. Можно открыть несколько разделов для сравнения.</p>';
+    var overview='';
     if (deb.trap) {
-      h += '<div class="m-trap"><h3>Ловушка случая</h3><p>' + esc(deb.trap) + '</p></div>';
+      overview += '<div class="m-trap"><h3>Ловушка случая</h3><p>' + esc(deb.trap) + '</p></div>';
     }
 
     /* Вступительная жалоба — тоже ответ, начинается последовательность. */
-    h += '<div class="m-greet">' +
+    overview += '<div class="m-greet">' +
       '<div class="m-greet-head"><span class="m-greet-label">Вступительная жалоба</span>' +
         audioBtn(C.patient.greeting.audio) + '</div>' +
       '<p class="m-greet-text">«' + esc(C.patient.greeting.text) + '»</p>' +
     '</div>';
+
+    h += '<details class="m-sec teacher-fold" open><summary>С чего начать занятие</summary><div class="teacher-fold-body">'+overview+'</div></details>';
 
     /* Паспортная часть. */
     var pass = '';
@@ -1088,21 +1127,16 @@
      без сети — мгновенный старт, как раньше. */
   function start() {
     refreshCustoms();
-    loadAll(function () {
-      if (!MANIFEST.length) {
-        $('methodBody').innerHTML = '<div class="m-sec"><p class="m-load-err">' +
-          'Манифест персонажей пуст: characters/manifest.js не подгрузился.</p></div>';
-      }
-      renderCharTabs();
-      renderMethod();
-      renderCriteria();
-      initJournal();
-      bindTabs();
-      bindMethod();
+    renderCharTabs();bindTabs();bindMethod();showCase();
+    if($('caseSearch'))$('caseSearch').addEventListener('input',renderCharTabs);
+    window.addEventListener('languagechange',renderCharTabs);
+    // Shared drafts must not delay the built-in manual. Refresh them in the background.
+    if(window.Sync)Sync.init(function(){
+      refreshCustoms();renderCharTabs();showCase();
+      if(journalReady)renderJournal();
     });
   }
-
-  if (window.Sync) { Sync.init(start); } else { start(); }
+  start();
 
   /* Сохранение/удаление случая в конструкторе сразу отражается в
      методичке и журнале: кастомы переинфлейтируются, вкладки персонажей
@@ -1111,8 +1145,8 @@
     window.CustomCases.onChange(function () {
       refreshCustoms();
       renderCharTabs();
-      renderMethod();
-      renderJournal();
+      showCase();
+      if(journalReady)renderJournal();
     });
   }
 

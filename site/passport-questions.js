@@ -1,7 +1,12 @@
 /* Explicit identity questions only: symptom duration and test orders are not passport fields. */
 (function(root){
  'use strict';
- root.PassportQuestions={ids:function(question,answer,passport){
+ root.PassportQuestions={direct:function(q){
+  q=String(q).toLowerCase().trim().replace(/[?!.,]+$/g,'').trim();
+  if (/^(фио|имя|фамилия|имя и фамилия|аты-жөні|аты жөні|атыңыз|есіміңіз|full name|name)$/.test(q))return 'p.name';
+  if (/^(возраст|жасы|жасыңыз|age)$/.test(q))return 'p.age';
+  return null;
+ },ids:function(question,answer,passport){
   if(!answer)return [];
   var refused=/не (знаю|помню|скажу)|не хочу|don't (know|remember)|do not (know|remember)|білмеймін|есімде жоқ/i.test(answer);
   var q=String(question).toLowerCase().replace(/ё/g,'е'),ids=[];

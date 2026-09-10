@@ -14,10 +14,12 @@
     if(lang==='ru'||typeof text!=='string')return text;
     if(cache.has(text))return cache.get(text);
     var clean=text.replace(/\s+/g,' ').trim();
-    if(dictionary[clean])return text.replace(text.trim(),dictionary[clean]);
+    if(dictionary[clean]){var exact=text.replace(text.trim(),dictionary[clean]);remember(text,exact);return exact;}
+    if(!/[а-яё]/i.test(text))return text;
     // Dynamic labels join complete catalog fragments with names, numbers or punctuation.
     var pieces=[{text:text,done:false}];
     keys.forEach(function(key){
+      if(text.indexOf(key)<0)return;
       pieces=pieces.reduce(function(out,p){
         if(p.done||p.text.indexOf(key)<0){out.push(p);return out;}
         var start=0,index,matched=false,letter=/[a-zа-яёәғқңөұүһі]/i;
@@ -30,35 +32,60 @@
         if(p.text||!matched)out.push(p);return out;
       },[]);
     });
-    var result=pieces.map(function(p){return p.text;}).join('');cache.set(text,result);return result;
+    var result=pieces.map(function(p){return p.text;}).join('');remember(text,result);return result;
   }
+  function remember(source,result){if(cache.size>=5000)cache.delete(cache.keys().next().value);cache.set(source,result);}
   function ignored(el){return !el||el.closest('script,style,textarea,[data-no-translate],code,pre');}
+  function textNode(node){
+    if(ignored(node.parentElement))return;
+    var old=originals.get(node),text=node.nodeValue;
+    if(old&&text===old.rendered&&old.language===lang)return;
+    if(!old||text!==old.rendered)old={source:text};
+    old.rendered=translate(old.source);old.language=lang;
+    if(text!==old.rendered)node.nodeValue=old.rendered;originals.set(node,old);
+  }
+  function element(el){
+    if(!el||el.closest('script,style,[data-no-translate],code,pre'))return;
+    var saved=attributes.get(el)||{};
+    ['placeholder','title','aria-label','alt'].forEach(function(a){
+      if(!el.hasAttribute(a))return;var val=el.getAttribute(a),old=saved[a];
+      if(old&&val===old.rendered&&old.language===lang)return;
+      if(!old||val!==old.rendered)old={source:val};old.rendered=translate(old.source);old.language=lang;
+      if(val!==old.rendered)el.setAttribute(a,old.rendered);saved[a]=old;
+    });attributes.set(el,saved);
+    if(el.tagName==='A'&&el.hasAttribute('href')){
+      try{var url=new URL(el.getAttribute('href'),location.href);if(url.origin===location.origin&&(/\.html$/.test(url.pathname)||url.pathname.endsWith('/'))){url.searchParams.set('lang',lang);if(el.href!==url.href)el.href=url.href;}}catch(e){}
+    }
+  }
+  function subtree(rootNode){
+    if(rootNode.nodeType===3){textNode(rootNode);return;}
+    if(rootNode.nodeType!==1)return;
+    element(rootNode);
+    if(ignored(rootNode))return;
+    var walk=document.createTreeWalker(rootNode,NodeFilter.SHOW_TEXT),node;
+    while((node=walk.nextNode()))textNode(node);
+    rootNode.querySelectorAll('[placeholder],[title],[aria-label],[alt],a[href]').forEach(element);
+  }
+  function observe(){if(observer)observer.observe(document.body,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt','href']});}
+  function changed(records){
+    var roots=[];
+    records.forEach(function(r){
+      if(r.type==='childList')Array.prototype.forEach.call(r.addedNodes,function(n){roots.push(n);});
+      else roots.push(r.target);
+    });
+    roots=roots.filter(function(n,i){return n.isConnected&&roots.indexOf(n)===i&&!roots.some(function(other,j){return i!==j&&other!==n&&other.nodeType===1&&other.contains(n);});});
+    if(!roots.length)return;
+    observer.disconnect();
+    try{roots.forEach(subtree);}finally{observe();}
+  }
   function render(){
     if(!document.body)return;
     if(observer)observer.disconnect();
-    var walk=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),node;
-    while((node=walk.nextNode())){
-      if(ignored(node.parentElement))continue;
-      var old=originals.get(node),text=node.nodeValue;
-      if(!old||text!==old.rendered)old={source:text};
-      old.rendered=translate(old.source);if(text!==old.rendered)node.nodeValue=old.rendered;originals.set(node,old);
-    }
-    document.querySelectorAll('[placeholder],[title],[aria-label],[alt]').forEach(function(el){
-      if(el.closest('script,style,[data-no-translate],code,pre'))return;
-      var saved=attributes.get(el)||{};
-      ['placeholder','title','aria-label','alt'].forEach(function(a){
-        if(!el.hasAttribute(a))return;var val=el.getAttribute(a),old=saved[a];
-        if(!old||val!==old.rendered)old={source:val};old.rendered=translate(old.source);
-        if(val!==old.rendered)el.setAttribute(a,old.rendered);saved[a]=old;
-      });attributes.set(el,saved);
-    });
-    document.querySelectorAll('a[href]').forEach(function(a){
-      try{var url=new URL(a.getAttribute('href'),location.href);if(url.origin===location.origin&&(/\.html$/.test(url.pathname)||url.pathname.endsWith('/'))){url.searchParams.set('lang',lang);a.href=url.href;}}catch(e){}
-    });
-    document.documentElement.lang=lang;
-    document.title=translate(originalTitle);
-    var picker=document.getElementById('appLanguage');if(picker)picker.value=lang;
-    if(observer)observer.observe(document.body,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['placeholder','title','aria-label','alt']});
+    try{
+      subtree(document.body);
+      document.documentElement.lang=lang;document.title=translate(originalTitle);
+      var picker=document.getElementById('appLanguage');if(picker)picker.value=lang;
+    }finally{observe();}
   }
   function setLanguage(value){
     if(!['ru','kk','en'].includes(value))return;
@@ -74,6 +101,6 @@
     picker.innerHTML='<span>Тіл / Язык / Language</span> <select id="appLanguage" aria-label="Тіл / Язык / Language"><option value="ru">Русский</option><option value="kk">Қазақша</option><option value="en">English</option></select>';
     var header=document.querySelector('header')||document.body;header.appendChild(picker);
     document.getElementById('appLanguage').addEventListener('change',function(){setLanguage(this.value);});
-    observer=new MutationObserver(render);render();
+    observer=new MutationObserver(changed);render();
   });
 })(window);
