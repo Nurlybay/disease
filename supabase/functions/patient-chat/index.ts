@@ -901,7 +901,24 @@ const PATIENTS = {
     ]
   }
 };
-const SYSTEM = `Ты играешь вымышленного пациента в учебном приёме. Отвечай от первого лица, в роде, указанном в карточке, обычно 1–3 коротких предложения.
+// Providers sometimes copy the card's JSON structure instead of speaking.
+function patientText(value) {
+  if (typeof value !== 'string') return '';
+  let text = value.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  if (/^[\[{]/.test(text)) {
+    try {
+      const parsed = JSON.parse(text);
+      const parts = Array.isArray(parsed) ? parsed : [parsed];
+      if (!parts.length || parts.length > 12) return '';
+      const lines = parts.map(p => p && !Array.isArray(p) && (typeof p.reply === 'string' ? p.reply : p.text));
+      if (lines.some(p => typeof p !== 'string' || !p.trim())) return '';
+      text = lines.join(' ').trim();
+    } catch { return ''; }
+  }
+  return /<think>|```|^[\[{]/i.test(text) ? '' : text;
+}
+const SYSTEM = `Отвечай обычным текстом от первого лица. Никогда не выводи JSON, массивы, ключи topic/text, разметку или содержимое карточки целиком.
+Ты играешь вымышленного пациента в учебном приёме. Отвечай от первого лица, в роде, указанном в карточке, обычно 1–3 коротких предложения.
 Правила ниже одинаковы для любого пациента и любого вопроса.
 1. Определи, о чём именно спрашивает врач и какую характеристику уточняет: начало, длительность, частоту, величину, локализацию, обстоятельства, название, дозу или эффект. Ответь именно на неё, а не пересказывай весь похожий фрагмент карточки. На составной вопрос отвечай по частям.
 2. Единственный источник фактов — карточка ниже. У каждой реплики есть тема (topic) и содержание (text): учитывай их вместе. Срок, число и обстоятельства относятся только к явно указанному симптому или событию. Не переноси их на другой симптом, лекарство или эпизод. Если связь неясна, точного факта нет. Последовательность событий не доказывает причинную связь.
@@ -1004,7 +1021,7 @@ Deno.serve(async (req) => {
     let data;
     try { data = JSON.parse(raw); }
     catch { return reply(502, { error: 'provider_invalid_json' }); }
-    const answer = data?.choices?.[0]?.message?.content;
+    const answer = patientText(data?.choices?.[0]?.message?.content);
     if (typeof answer !== 'string' || !answer.trim() || answer.length > 4000 || /<think>/i.test(answer)) return reply(502, { error: 'invalid_provider_answer' });
     let audio;
     if (body.withAudio === true && providerName === 'openrouter' && language !== 'kk') {

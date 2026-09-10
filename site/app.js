@@ -255,7 +255,7 @@
         if ($('actInput').value.trim() === question) $('actInput').value = '';
         $('aiStatus').textContent = 'Ответ получен.';
         logRow({kind:'patient',cat:'ask',act:question,res:answer,resCls:''});
-        if (window.PassportQuestions) PassportQuestions.ids(question,answer).forEach(function(id){
+        if (window.PassportQuestions) PassportQuestions.ids(question,answer,CASE.passport).forEach(function(id){
           if (BYID[id] && BYID[id].__kind === 'passport' && !state.done[id]) perform(id,{silent:true,raw:question});
         });
         say(audio || null, answer, null, true);
@@ -267,7 +267,8 @@
           guest_signup_rate_limit: 'Слишком много новых подключений. Попробуйте позже.',
           guest_expired: 'Сессия завершилась. Повторите вопрос для нового подключения.',
           guest_rate_limit: 'Вопросы отправляются слишком часто. Подождите минуту.',
-          guest_daily_limit: 'Достигнут ваш лимит ответов на сегодня.',
+          guest_daily_limit: 'Достигнут дневной лимит демонстрации: 30 запросов. Войдите в подтверждённый аккаунт для 200 запросов в день.',
+          member_daily_limit: 'Достигнут дневной лимит аккаунта: 200 запросов. Он обновится в 05:00 по времени Алматы.',
           global_daily_limit: 'Общий лимит ответов на сегодня исчерпан.',
           total_limit: 'Лимит тестирования исчерпан. Нужна настройка преподавателем.',
           chat_disabled: 'Свободный диалог временно отключён преподавателем.',

@@ -68,3 +68,8 @@ function req(data=body,token='guest-jwt'){return new Request('https://example.te
  provider=async()=>{throw new Error('DNS private');};const e=await(await handler(req())).json();assert.equal(e.reason,'dns');assert(!JSON.stringify(e).includes('private'));
  console.log('OK authenticated users, fail-closed durable quota, 12 server case support, limits and sanitized errors. Mock API.');
 })().catch(e=>{console.error(e);process.exit(1);});
+
+assert.equal(ctx.patientText('[{"topic":"Кашель и мокрота","text":"Светлая мокрота."}]'),'Светлая мокрота.');
+assert.equal(ctx.patientText('```json\n{"reply":"Три минуты."}\n```'),'Три минуты.');
+assert.equal(ctx.patientText('[{"topic":"Кашель","text":'),'');
+assert.equal(ctx.patientText('{"diagnosis":"hidden"}'),'');

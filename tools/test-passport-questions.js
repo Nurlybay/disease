@@ -7,3 +7,11 @@ assert.deepEqual(ids('Сколько лет кашляете? Как назыв�
 assert.deepEqual(ids('Назначить аллерготест'),[]);
 assert.deepEqual(Array.from(box.window.PassportQuestions.ids('Сколько вам лет?','Не скажу.')),[]);
 console.log('OK compound passport questions RU/KK/EN; symptom duration, tests and refused answers excluded.');
+
+assert.deepEqual(ids('Как ваше имя?'),['p.name']);
+assert.deepEqual(ids('Возраст?'),['p.age']);
+const passport=[{id:'p.name',value:'Тулегенов Аскар'},{id:'p.age',value:'63 года'}];
+assert.deepEqual(Array.from(box.window.PassportQuestions.ids('Представьтесь, сколько вам лет?', 'Тулегенов Аскар. Возраст точно не помню.', passport)),['p.name']);
+assert.deepEqual(Array.from(box.window.PassportQuestions.ids('Давайте знакомиться', 'Тулегенов Аскар, 63 года.', passport)),['p.name','p.age']);
+
+assert.deepEqual(ids('Ваше имя фамилия и возраст'),['p.name','p.age']);
