@@ -5,176 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Преподавателю — виртуальный приём</title>
 <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="practice.css?v=teacher-simple-v2">
+<link rel="stylesheet" href="practice.css?v=wizard-v1">
 <link rel="stylesheet" href="media-studio.css?v=complaint-autoplay-v4">
-<script src="locales/en.js?v=teacher-simple-v2"></script>
-<script src="locales/kk.js?v=teacher-simple-v2"></script>
+<script src="locales/en.js?v=wizard-v1"></script>
+<script src="locales/kk.js?v=wizard-v1"></script>
 <script src="locales/voices.js?v=lang-en-v1"></script>
 <script src="i18n.js?v=incremental-v1"></script>
 <style>.language-picker{display:flex;align-items:center;gap:8px;margin:12px;flex-shrink:0;font-size:14px}.language-picker select{font:inherit;padding:8px;border-radius:8px;background:#18242f;color:#fff;border:1px solid #667986}</style>
-<style>.access-pending body{visibility:hidden}.demo-banner{display:flex;gap:20px;justify-content:center;align-items:center;padding:14px;background:#153e47;color:#fff}.demo-banner a{color:#73dddc}</style></head>
+<style>.access-pending body{visibility:hidden}.demo-banner{display:flex;gap:20px;justify-content:center;align-items:center;padding:14px;background:#153e47;color:#fff}.demo-banner a{color:#73dddc}</style><link rel="stylesheet" href="teacher-wizard.css?v=1"></head>
 <body class="teacher">
-
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-mark" aria-hidden="true"></span>
-    <div>
-      <div class="brand-name">Раздел преподавателя</div>
-      <div class="brand-sub">Методичка по случаям, критерии оценки и журнал результатов</div>
-    </div>
-  </div>
-
-  <div class="topbar-right">
-    <a class="btn btn-ghost btn-sm" href="index.html">К витрине</a>
-    <a class="btn btn-ghost btn-sm" href="priem.html">Открыть тренажёр</a>
-  </div>
-</header>
-
-<nav class="ttabs" id="ttabs" aria-label="Разделы">
-  <button class="ttab is-on" data-tab="method" type="button">Методичка по случаям</button>
-  <button class="ttab" data-tab="journal" type="button">Журнал результатов</button>
-  <button class="ttab" data-tab="criteria" type="button">Критерии оценки</button>
-  <button class="ttab" data-tab="constructor" type="button">Конструктор случаев</button>
-</nav>
-
-<main class="teacher-main">
-
-  <!-- ============ МЕТОДИЧКА ============ -->
-  <section id="tab-method">
-    <div class="teacher-guide"><h1>Подготовка к занятию</h1><p>Выберите случай, изучите ответы и находки, затем откройте тренажёр для занятия.</p></div>
-    <details class="case-picker" id="casePicker">
-      <summary><span><span class="picker-caption">Выбранный случай</span><strong id="selectedCaseLabel"></strong></span><span class="picker-change">Изменить случай</span></summary>
-      <label class="teacher-search">Найти случай<input id="caseSearch" type="search" placeholder="Имя пациента или заболевание" autocomplete="off"></label>
-      <nav class="char-tabs" id="charTabs" aria-label="Персонажи"></nav>
-    </details>
-    <div id="methodBody" aria-live="polite"></div>
-
-    <!-- Схема грудной клетки — копия SVG из priem.html (правится вместе с ней).
-         Точки не здесь: они строятся из данных случая при отрисовке методички. -->
-    <template id="chestTpl">
-      <svg class="chest" viewBox="0 0 300 380" role="group" aria-label="Схема грудной клетки, вид со спины">
-        <defs>
-          <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"  stop-color="#3a4658"/>
-            <stop offset="100%" stop-color="#2a3342"/>
-          </linearGradient>
-        </defs>
-        <!-- руки, опущены вдоль тела; рисуются под торсом -->
-        <g fill="#2b3441" stroke="#44526580" stroke-width="1.2">
-          <ellipse cx="58"  cy="164" rx="16" ry="52" transform="rotate(7 58 164)"/>
-          <ellipse cx="242" cy="164" rx="16" ry="52" transform="rotate(-7 242 164)"/>
-        </g>
-        <!-- голова и шея -->
-        <path d="M135 46 h30 v24 h-30 z" fill="#333e4d"/>
-        <circle cx="150" cy="32" r="25" fill="url(#skin)" stroke="#4d5b70" stroke-width="1.5"/>
-        <!-- торс, вид со спины: плечи шире, талия уже -->
-        <path d="M150 62
-                 C136 62 128 66 118 73
-                 C104 82 84 90 74 102
-                 C66 112 66 126 70 142
-                 C76 170 82 202 86 240
-                 C89 272 90 306 92 330
-                 L208 330
-                 C210 306 211 272 214 240
-                 C218 202 224 170 230 142
-                 C234 126 234 112 226 102
-                 C216 90 196 82 182 73
-                 C172 66 164 62 150 62 Z"
-              fill="url(#skin)" stroke="#4d5b70" stroke-width="1.6"/>
-        <!-- линия плеч -->
-        <path d="M84 96 q66 16 132 0" fill="none" stroke="#5a6a80" stroke-width="1.2" opacity=".5"/>
-        <!-- проекция лёгочных полей -->
-        <g fill="rgba(120,170,200,.14)" stroke="rgba(150,195,220,.36)" stroke-width="1.2">
-          <path d="M142 102 C124 102 110 112 104 132
-                   C98 154 98 202 102 238
-                   C105 266 116 284 130 286
-                   C139 287 142 280 142 262 Z"/>
-          <path d="M158 102 C176 102 190 112 196 132
-                   C202 154 202 202 198 238
-                   C195 266 184 284 170 286
-                   C161 287 158 280 158 262 Z"/>
-        </g>
-        <!-- позвоночник -->
-        <path d="M150 72 L150 326" stroke="#5a6a80" stroke-width="2" stroke-dasharray="5 6" opacity=".85"/>
-        <!-- лопатки -->
-        <g fill="none" stroke="#65768e" stroke-width="1.3" opacity=".5">
-          <path d="M101 114 L136 124 L114 164 Z"/>
-          <path d="M199 114 L164 124 L186 164 Z"/>
-        </g>
-        <!-- рёберные ориентиры -->
-        <g stroke="#5a6a80" stroke-width="1" opacity=".28" fill="none">
-          <path d="M104 176 q46 12 92 0"/>
-          <path d="M100 226 q50 12 100 0"/>
-          <path d="M104 276 q46 10 92 0"/>
-        </g>
-        <text x="150" y="352" class="chest-caption" text-anchor="middle">вид со спины</text>
-        <text x="112" y="90" class="chest-side" text-anchor="middle">R</text>
-        <text x="188" y="90" class="chest-side" text-anchor="middle">L</text>
-        <g class="chest-points"></g>
-      </svg>
-    </template>
-  </section>
-
-  <!-- ============ ЖУРНАЛ РЕЗУЛЬТАТОВ ============ -->
-  <section id="tab-journal" hidden>
-    <div class="card j-add">
-      <h3>Добавить результаты</h3>
-      <p class="j-note">Студент завершает приём, нажимает «Отправить результат
-         преподавателю» и пересылает код или файл любым способом. Балла в коде
-         нет — оценка пересчитывается здесь из протокола приёма.</p>
-      <textarea id="jInput" rows="4" spellcheck="false"
-                placeholder="Вставьте коды результатов — по одному в строке (VP1.…)"></textarea>
-      <div class="j-add-row">
-        <label class="btn btn-ghost j-file-btn">Загрузить файлы
-          <input type="file" id="jFiles" multiple accept=".txt,text/plain">
-        </label>
-        <button class="btn btn-primary" id="jAdd" type="button">Добавить</button>
-        <span class="j-storage" id="jStorageNote"></span>
-      </div>
-      <div class="j-errors" id="jErrors" hidden></div>
-    </div>
-
-    <div class="j-summary" id="jSummary" hidden></div>
-
-    <div class="card j-table-card">
-      <div class="j-table-head">
-        <h3 id="jTableTitle">Результаты</h3>
-        <div class="j-actions">
-          <button class="btn btn-ghost btn-sm" id="jCsv" type="button">Скачать CSV</button>
-          <button class="btn btn-ghost btn-sm" id="jClear" type="button">Очистить журнал</button>
-        </div>
-      </div>
-      <div id="jTable"><p class="j-empty">Журнал пуст. Вставьте код результата выше.</p></div>
-    </div>
-  </section>
-
-  <!-- ============ КРИТЕРИИ ОЦЕНКИ ============ -->
-  <section id="tab-criteria" hidden>
-    <div id="criteriaBody"></div>
-  </section>
-
-  <!-- ============ КОНСТРУКТОР СЛУЧАЕВ ============ -->
-  <section id="tab-constructor" hidden>
-    <div id="mediaStudio"></div>
-    <div id="constructorRoot"></div>
-  </section>
-<p><a href="media/patient-sounds/README.md" target="_blank" rel="noopener">Источники звуков</a></p>
+<header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"></span><div><div class="brand-name">Раздел преподавателя</div><div class="brand-sub">Создание учебных случаев</div></div></div><a class="btn btn-ghost" href="index.html">На главную</a></header>
+<main class="teacher-wizard-main"><div id="caseWizard"></div>
+<div id="wizardMedia" hidden><button id="wMediaBack" type="button" class="btn btn-ghost">Вернуться к сценарию</button><div id="mediaStudio"></div></div>
+<details id="wizardAdvanced" hidden><summary>Дополнительные настройки случая</summary><p>Здесь можно добавить пункты, изменить оценивание, экспортировать случай или опубликовать его для группы.</p><div id="constructorRoot"></div></details>
 </main>
-
-<script data-training-src="score.js"></script>
-<!-- custom-cases.js до teacher.js: методичка и журнал берут кастомные
-     случаи из его хранилища. constructor.js стартует сам по #constructorRoot. -->
 <script data-training-src="custom-cases.js?v=complaint-autoplay-v4"></script>
-<!-- Синхронизация общих случаев (облако): методичка стартует после её
-     готовности; конструктору она даёт кнопки публикации. Без настроек
-     и без сети молча неактивна. -->
-
-<!-- teacher.js сам подключает все файлы персонажей из манифеста:
-     новый случай появляется в методичке автоматически. -->
-<script data-training-src="characters/manifest.js?v=complaint-autoplay-v4"></script>
-<script data-training-src="teacher-loader.js?v=1"></script>
-<script data-training-src="teacher.js"></script>
-
-
-<script src="sync.js?v=access-v1"></script><script src="vendor/learning-access.js?v=teacher-media-v1"></script></body>
-</html>
+<script data-training-src="constructor.js?v=wizard-v1"></script>
+<script data-training-src="media-studio.js"></script>
+<script data-training-src="teacher-wizard.js?v=1"></script>
+<script src="sync.js?v=access-v1"></script><script src="vendor/learning-access.js?v=wizard-v1"></script>
+</body></html>

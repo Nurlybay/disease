@@ -892,6 +892,7 @@
   }
 
   root.addEventListener('change',function(e){if(e.target.id!=='cnPatientTemplate')return;var p=CC.PATIENTS.filter(function(x){return x.id===e.target.value;})[0];draft.patient.templateId=p?p.id:'';draft.patient.appearance=p?CC.normalizeMedia(p):null;if(p)draft.patient.gender=p.gender;draft.complaintMedia=null;render();});
+  window.CaseEditor={get:function(){return CC.normalize(draft);},set:function(value){draft=CC.normalize(value);errors=null;render();}};
   window.ConstructorMedia = {
     choosePatient: function(id){var p=CC.PATIENTS.filter(function(x){return x.id===id;})[0];if(draft.patient.templateId===id)return;draft.patient.templateId=p?p.id:'';draft.patient.appearance=p?CC.normalizeMedia(p):null;if(p)draft.patient.gender=p.gender;draft.complaintMedia=null;render();},
     patient: function(){return draft.patient.templateId||'';},

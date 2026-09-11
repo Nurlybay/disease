@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.teacher-media]
 verify_jwt = false
+
+[functions.teacher-case]
+verify_jwt = false

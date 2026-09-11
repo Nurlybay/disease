@@ -10,7 +10,7 @@ function req(asset='access',section='student',token='test'){return new Request('
  user={id:'guest',is_anonymous:true};assert.equal((await handler(req('characters/copd-tulegenov.js'))).status,403);
  user={id:'student',is_anonymous:false};assert.equal((await handler(req())).status,403);
  user.email_confirmed_at='2026-09-09';assert.equal((await handler(req())).status,200);
- user.user_metadata={role:'teacher'};assert.equal((await handler(req('teacher.js'))).status,403);assert.equal((await handler(req('media-studio.js'))).status,403);assert.equal((await handler(req('access','teacher'))).status,403);
+ user.user_metadata={role:'teacher'};assert.equal((await handler(req('teacher.js'))).status,403);assert.equal((await handler(req('teacher-wizard.js'))).status,403);assert.equal((await handler(req('media-studio.js'))).status,403);assert.equal((await handler(req('access','teacher'))).status,403);
  user.app_metadata={role:'teacher'};const r=await handler(req('teacher.js'));assert.equal(r.status,200);assert.equal(r.headers.get('cache-control'),'no-store');
  assert.equal((await handler(req('../app.js'))).status,404);
  const manifest=fs.readFileSync('site/characters/manifest.js','utf8');const assets=JSON.parse(fs.readFileSync('supabase/functions/learning-content/content.json'));

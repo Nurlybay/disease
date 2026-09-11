@@ -1,0 +1,26 @@
+const fs=require('fs'),path=require('path'),assert=require('assert');const{chromium}=require('playwright');const root=path.resolve(__dirname,'..');
+(async()=>{const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH});try{
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const html=fs.readFileSync(root+'/site/teacher.html','utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'').replace('class="access-pending"','');
+ await page.route('https://wizard.test/**',async r=>{const f=new URL(r.request().url()).pathname;if(f==='/')return r.fulfill({contentType:'text/html',body:html});const p=path.join(root,'site',f);if(fs.existsSync(p))return r.fulfill({path:p});return r.fulfill({status:404,body:''});});await page.goto('https://wizard.test/');
+ await page.evaluate(()=>{window.calls=0;window.LearningAccess={caseRequest:async b=>{calls++;window.lastBody=b;const row={label:'Тест',answer:'Ответ',why:'Пояснение',result:'Результат',value:'12',unit:'ед',abnormal:false,aliases:['тест','test']};return{draft:{title:'Учебный случай',name:'Учебный Пациент',age:'58 лет',greeting:'Меня беспокоит кашель.',allergies:'Не отмечает',occupation:'Учитель',imageIdea:'Спокойный пациент на приёме',motionIdea:'Небольшое движение',questions:Array(6).fill(row),exams:Array(3).fill(row),vitals:Array(3).fill(row),orders:Array(2).fill(row),treatment:[row],diagnoses:Array(2).fill(row),teachingPoints:['Проверить сценарий']}};}};});
+ for(const f of ['custom-cases.js','constructor.js','teacher-wizard.js'])await page.addScriptTag({path:root+'/site/'+f});
+ assert.equal(await page.locator('#ttabs').count(),0);assert(await page.locator('#wStep0').isVisible());
+ await page.locator('#wNext').click();assert.equal(await page.evaluate(()=>calls),0);
+ await page.locator('#wDisease').fill('Учебный диагноз');await page.locator('#wDescription').fill('Вымышленный пациент для обучения.');await page.locator('#wNext').click();
+ await page.locator('#wGenerate').click();assert.equal(await page.evaluate(()=>calls),0);
+ await page.locator('[data-patient]').first().click();await page.locator('#wGenerate').click();await page.locator('#wStep2').waitFor({state:'visible'});
+ assert.equal(await page.evaluate(()=>calls),1);assert.equal(await page.evaluate(()=>CustomCases.validate(CaseEditor.get()).length),0);
+ await page.locator('#wRun').click();assert(page.url().endsWith('/'),'Review gate before launch');
+ await page.locator('[data-edit="title"]').fill('Изменённый случай');await page.locator('#wSave').click();
+ assert.equal(await page.evaluate(()=>CustomCases.list()[0].title),'Изменённый случай');
+ await page.locator('#wNew').click();await page.locator('.wizard-saved summary').click();await page.locator('#wSaved').selectOption({index:1});await page.locator('#wOpen').click();assert.equal(await page.locator('[data-edit="title"]').inputValue(),'Изменённый случай');
+ await page.locator('#wNew').click();await page.screenshot({path:'/tmp/teacher-wizard.png'});
+ for(const f of ['locales/en.js','locales/kk.js','i18n.js'])await page.addScriptTag({path:root+'/site/'+f});
+ await page.evaluate(()=>document.dispatchEvent(new Event('DOMContentLoaded')));
+ await page.evaluate(()=>I18n.setLanguage('en'));assert.equal(await page.locator('#wNext').textContent(),'Next: choose a patient');
+ await page.evaluate(()=>I18n.setLanguage('kk'));assert.equal(await page.locator('#wNext').textContent(),'Келесі: пациентті таңдау');
+ await page.evaluate(()=>I18n.setLanguage('ru'));
+ await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));assert.deepEqual(errors,[]);
+ console.log('OK guided steps, validation, patient selection, one generation, normalized draft, review gate, edit/save/reopen, mobile layout. Mock AI only.');
+}finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1);});
