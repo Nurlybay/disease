@@ -1,0 +1,87 @@
+{
+  "size": 34104,
+  "width": 2347,
+  "height": 646,
+  "url": "https://upload.wikimedia.org/wikipedia/commons/9/99/Normal_Sinus_Rhythm_%286_seconds%29.svg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Normal_Sinus_Rhythm_(6_seconds).svg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=157193086",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2024-12-28 03:06:00",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Normal Sinus Rhythm (6 seconds)",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "CC-Zero|Self-published work|Valid SVG created with Inkscape|Translation possible - SVG|SVG ECG graphs",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "A 6 second ECG strip depicting normal sinus rhythm (NSR).",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2024-12-28",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Rocuronium_Bromide&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Rocuronium Bromide (page does not exist)\">Rocuronium Bromide</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Zero, Public Domain Dedication",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "false",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/01.svg",
+  "sha256": "096ad08c70439e98f04ef489227fe884184342967f812d22f268c73ddfad272a",
+  "sourceTitle": "Normal Sinus Rhythm (6 seconds).svg",
+  "checked": "2026-10-07"
+}

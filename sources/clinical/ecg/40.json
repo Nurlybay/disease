@@ -1,0 +1,108 @@
+{
+  "size": 351006,
+  "width": 1664,
+  "height": 896,
+  "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/ECG_001.jpg/1280px-ECG_001.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "thumbwidth": 1280,
+  "thumbheight": 689,
+  "responsiveUrls": {
+    "2": "https://upload.wikimedia.org/wikipedia/commons/a/a0/ECG_001.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+  },
+  "thumbattribs": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/ECG_001.jpg/1280px-ECG_001.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "decoding": "async",
+    "loading": "lazy",
+    "width": 1280,
+    "height": 689,
+    "srcset": "https://upload.wikimedia.org/wikipedia/commons/a/a0/ECG_001.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+  },
+  "url": "https://upload.wikimedia.org/wikipedia/commons/a/a0/ECG_001.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:ECG_001.jpg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=978832",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2006-07-23 16:39:18",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "ECG 001",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Medical tests|License migration completed|GFDL-en|ECG of myocardial infarction",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "<p><b>Acute Myocardial Infarction</b>\n</p>\n12 Lead Electrocardiogram (ECG) with ST segment elevation in Leads II, III and aVF for an inferior Acute Myocardial Infarction (AMI).",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2005-04-12",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<a class=\"external free\" data-mw-original-href=\"http://en.wikipedia.org/wiki/Image:ECG_001.jpg\" href=\"https://en.wikipedia.org/wiki/Image:ECG_001.jpg\">http://en.wikipedia.org/wiki/Image:ECG_001.jpg</a>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a class=\"external free\" data-mw-original-href=\"http://en.wikipedia.org/wiki/User:Glenlarson\" href=\"https://en.wikipedia.org/wiki/User:Glenlarson\">http://en.wikipedia.org/wiki/User:Glenlarson</a>",
+      "source": "commons-desc-page"
+    },
+    "Permission": {
+      "value": "GFDL",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseShortName": {
+      "value": "CC BY-SA 3.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution-Share Alike 3.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "http://creativecommons.org/licenses/by-sa/3.0/",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-sa-3.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/40.jpg",
+  "downloadedUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a0/ECG_001.jpg/1280px-ECG_001.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "sha256": "2cdb570f143a21f9019f1f191b581e4e351c143b1e7154c7bd44aa0803fa005c",
+  "sourceTitle": "ECG 001.jpg",
+  "checked": "2026-10-07",
+  "changes": "Уменьшенная копия Wikimedia, ширина до 1280 px; содержание не изменено."
+}

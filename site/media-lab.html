@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru" class="access-pending">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Практикум — ЭКГ и звуки сердца</title><link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="practice.css"><script src="locales/en.js?v=access-v1"></script>
+<link rel="stylesheet" href="practice.css?v=ecg34-v1"><script src="locales/en.js?v=access-v1"></script>
 <script src="locales/kk.js?v=access-v1"></script>
 <script src="locales/voices.js?v=lang-en-v1"></script>
 <script src="i18n.js?v=incremental-v1"></script>
@@ -11,8 +11,15 @@
 <main class="media-lab">
   <header class="lab-header"><a href="index.html">← К выбору пациента</a><span>Клинический практикум</span></header>
   <h1>Сначала наблюдение.<br>Потом объяснение.</h1>
-  <p class="lab-lead">Реальные записи из открытых источников. Опишите, что видите или слышите, затем сопоставьте свой ответ с разбором.</p>
-  <nav id="mediaNav" class="media-nav" aria-label="Учебные записи"></nav>
+  <p class="lab-lead">34 темы ЭКГ: записи из открытых источников и отдельно обозначенные учебные схемы. Выберите тему, опишите находки и откройте разбор.</p>
+  <section class="ecg-catalog" aria-label="Выбор учебного материала">
+    <div class="ecg-filters"><label>1. Раздел<select id="mediaGroup"><option value="all">Все темы ЭКГ</option><option value="rhythm">Ритмы и экстрасистолы</option><option value="conduction">Блокады и проведение</option><option value="ischemia">Ишемия и инфаркт</option><option value="chambers">Увеличение камер сердца</option><option value="other">ТЭЛА</option><option value="extras">Дополнительно: перикардит и звуки сердца</option></select></label>
+    <label>Поиск темы<input id="mediaSearch" type="search" placeholder="Например, Mobitz или нижний инфаркт" autocomplete="off"></label></div>
+    <label class="ecg-topic-label">2. Учебный материал<select id="mediaTopic" aria-describedby="mediaCount"></select></label>
+    <div class="ecg-catalog-actions"><p id="mediaCount" role="status"></p><button id="mediaPrev" class="btn btn-ghost btn-sm" type="button">← Предыдущий</button><button id="mediaNext" class="btn btn-ghost btn-sm" type="button">Следующий →</button></div>
+    <p class="lab-small">Это изучение по темам: название и авторские пометки могут подсказывать диагноз. Номера сохранены из учебного списка.</p>
+  </section>
+  <nav id="mediaNav" class="media-nav" aria-label="Учебные записи" hidden></nav>
   <article class="lab-card" id="labCard">
     <div class="lab-card-head"><h2 id="mediaTitle"></h2><span id="mediaKind"></span></div>
     <p id="mediaPrompt"></p>

@@ -1,0 +1,87 @@
+{
+  "size": 124980,
+  "width": 710,
+  "height": 751,
+  "url": "https://upload.wikimedia.org/wikipedia/commons/e/eb/Supraventricular_trigeminy%2C_ECG.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Supraventricular_trigeminy,_ECG.jpg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=152765538",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2024-09-17 14:03:17",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Supraventricular trigeminy, ECG",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Self-published work|ECG of trigeminy",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "Supraventricular trigeminy, ECG, V2. 72-year-old man with diabetes and hypertension.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2024-09-17",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/wiki/User:Jmarchn\" title=\"User:Jmarchn\">Jmarchn</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY 4.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution 4.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by/4.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-4.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/11.jpg",
+  "sha256": "f373ccb33f0a4b9ad816c23cd2e97156d8548eb5c99a322de7ad48f29ba6ecbd",
+  "sourceTitle": "Supraventricular trigeminy, ECG.jpg",
+  "checked": "2026-10-07"
+}

@@ -1,0 +1,104 @@
+{
+  "size": 2199431,
+  "width": 1911,
+  "height": 1122,
+  "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/12_Lead_EKG_ST_Elevation_tracing_only.jpg/1280px-12_Lead_EKG_ST_Elevation_tracing_only.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "thumbwidth": 1280,
+  "thumbheight": 752,
+  "responsiveUrls": {
+    "2": "https://upload.wikimedia.org/wikipedia/commons/8/8d/12_Lead_EKG_ST_Elevation_tracing_only.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+  },
+  "thumbattribs": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/12_Lead_EKG_ST_Elevation_tracing_only.jpg/1280px-12_Lead_EKG_ST_Elevation_tracing_only.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "decoding": "async",
+    "loading": "lazy",
+    "width": 1280,
+    "height": 752,
+    "srcset": "https://upload.wikimedia.org/wikipedia/commons/8/8d/12_Lead_EKG_ST_Elevation_tracing_only.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+  },
+  "url": "https://upload.wikimedia.org/wikipedia/commons/8/8d/12_Lead_EKG_ST_Elevation_tracing_only.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:12_Lead_EKG_ST_Elevation_tracing_only.jpg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=4081097",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2008-05-20 13:58:25",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "12 Lead EKG ST Elevation tracing only",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Self-published work|PD-self|ECG of myocardial infarction",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "12 Lead ECG EKG showing ST Elevation (STEMI), Tachycardia, Anterior Fascicular Block, Anterior Infarct, Heart Attack.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "5/20/08",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/w/index.php?title=User:Displaced&amp;action=edit&amp;redlink=1\" class=\"new\" title=\"User:Displaced (page does not exist)\">Displaced</a>",
+      "source": "commons-desc-page"
+    },
+    "Permission": {
+      "value": "Public",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseShortName": {
+      "value": "Public domain",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Public domain",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "false",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Copyrighted": {
+      "value": "False",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "pd",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/37.jpg",
+  "downloadedUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/12_Lead_EKG_ST_Elevation_tracing_only.jpg/1280px-12_Lead_EKG_ST_Elevation_tracing_only.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "sha256": "d3b356f8c87b40fd9adcdd694aec48aebc07b838b23630b7965e4dff1e9bb954",
+  "sourceTitle": "12 Lead EKG ST Elevation tracing only.jpg",
+  "checked": "2026-10-07",
+  "changes": "Уменьшенная копия Wikimedia, ширина до 1280 px; содержание не изменено."
+}

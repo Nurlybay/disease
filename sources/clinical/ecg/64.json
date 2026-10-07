@@ -1,0 +1,103 @@
+{
+  "size": 107756,
+  "width": 922,
+  "height": 670,
+  "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/Pulmonary_embolism_ECG.jpg/330px-Pulmonary_embolism_ECG.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "thumbwidth": 330,
+  "thumbheight": 240,
+  "responsiveUrls": {
+    "2": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Pulmonary_embolism_ECG.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+  },
+  "thumbattribs": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/Pulmonary_embolism_ECG.jpg/330px-Pulmonary_embolism_ECG.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "decoding": "async",
+    "loading": "lazy",
+    "width": 330,
+    "height": 240,
+    "srcset": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Pulmonary_embolism_ECG.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+  },
+  "url": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Pulmonary_embolism_ECG.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Pulmonary_embolism_ECG.jpg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=5594509",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2008-12-29 16:12:20",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Pulmonary embolism ECG",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "ECG of pulmonary embolism|ECG of right bundle branch block",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "Electrocardiogram of a patient with pulmonary embolism showing sinus tachycardia of approximately 150 beats per minute and right bundle branch block.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "Published: 24 August 2007",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<a rel=\"nofollow\" class=\"external text\" href=\"http://www.cardiovascularultrasound.com/content/5/1/26\">Pulmonary embolism and patent foramen ovale thrombosis: the key role of TEE</a>. Cardiovascular Ultrasound 2007, 5:26. doi:10.1186/1476-7120-5-26",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "Walter Serra, Giuseppe De Iaco, Claudio Reverberi and Tiziano Gherli",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY 2.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution 2.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by/2.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-2.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/64.jpg",
+  "downloadedUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1e/Pulmonary_embolism_ECG.jpg/500px-Pulmonary_embolism_ECG.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "sha256": "508d1ea2299034053b818586649ec5707d9e6cf8258601b3e27d23c45d7e065a",
+  "sourceTitle": "Pulmonary embolism ECG.jpg",
+  "checked": "2026-10-07",
+  "changes": "Уменьшенная копия Wikimedia, ширина до 500 px; содержание не изменено."
+}

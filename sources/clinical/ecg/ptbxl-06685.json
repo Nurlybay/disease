@@ -1,0 +1,21 @@
+{
+  "topic": 51,
+  "record": "06685",
+  "scp_codes": {
+    "LAO/LAE": 100.0,
+    "SR": 0.0
+  },
+  "report": "sinusrhythmus vorhofsueberlastung links linkstyp pathologisch",
+  "source": "https://physionet.org/content/ptb-xl/1.0.3/",
+  "license": "CC BY 4.0",
+  "files": {
+    "hea": {
+      "url": "https://physionet.org/files/ptb-xl/1.0.3/records100/06000/06685_lr.hea",
+      "sha256": "b6e261c7971dd2018caf02e400d82957ab2e65a0e2bcbb62e36f2c6fd3a27384"
+    },
+    "dat": {
+      "url": "https://physionet.org/files/ptb-xl/1.0.3/records100/06000/06685_lr.dat",
+      "sha256": "9fcd0dbad7e9fd110e05b0ba28ad50e938595a8ca7663bf08127df233c410fa2"
+    }
+  }
+}

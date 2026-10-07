@@ -1,0 +1,103 @@
+{
+  "size": 724112,
+  "width": 1972,
+  "height": 1654,
+  "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a1/Right_Bundle_branch_block.jpg/1280px-Right_Bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "thumbwidth": 1280,
+  "thumbheight": 1074,
+  "responsiveUrls": {
+    "2": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Right_Bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+  },
+  "thumbattribs": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a1/Right_Bundle_branch_block.jpg/1280px-Right_Bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "decoding": "async",
+    "loading": "lazy",
+    "width": 1280,
+    "height": 1074,
+    "srcset": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Right_Bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+  },
+  "url": "https://upload.wikimedia.org/wikipedia/commons/a/a1/Right_Bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Right_Bundle_branch_block.jpg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=132136816",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2023-05-20 11:56:03",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Right Bundle branch block",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "ECG|Self-published work|ECG of right bundle branch block",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "Right Bundle branch block - Can See the RSR' Pattern in V1 and V2",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2023-05-20",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/wiki/User:Sameem_Arif\" title=\"User:Sameem Arif\">Sameem Arif</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY-SA 4.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution-Share Alike 4.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by-sa/4.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-sa-4.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/30.jpg",
+  "downloadedUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a1/Right_Bundle_branch_block.jpg/1280px-Right_Bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "sha256": "b07ab253264c7dc08876465bc2fc1ea113db182ca77b649697d81db29498a302",
+  "sourceTitle": "Right Bundle branch block.jpg",
+  "checked": "2026-10-07",
+  "changes": "Уменьшенная копия Wikimedia, ширина до 1280 px; содержание не изменено."
+}

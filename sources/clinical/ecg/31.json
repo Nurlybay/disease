@@ -1,0 +1,103 @@
+{
+  "size": 713090,
+  "width": 1999,
+  "height": 1624,
+  "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/Left_bundle_branch_block.jpg/1280px-Left_bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "thumbwidth": 1280,
+  "thumbheight": 1040,
+  "responsiveUrls": {
+    "2": "https://upload.wikimedia.org/wikipedia/commons/5/56/Left_bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+  },
+  "thumbattribs": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/Left_bundle_branch_block.jpg/1280px-Left_bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "decoding": "async",
+    "loading": "lazy",
+    "width": 1280,
+    "height": 1040,
+    "srcset": "https://upload.wikimedia.org/wikipedia/commons/5/56/Left_bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+  },
+  "url": "https://upload.wikimedia.org/wikipedia/commons/5/56/Left_bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Left_bundle_branch_block.jpg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=132136820",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2023-05-20 11:56:13",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Left bundle branch block",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Left bundle branch block|Self-published work",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "Left bundle branch block - Can see wide notched QRS complex in Lead V5 and V6 with deep S waves in V1 and V2",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2023-05-20",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/wiki/User:Sameem_Arif\" title=\"User:Sameem Arif\">Sameem Arif</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY-SA 4.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution-Share Alike 4.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by-sa/4.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-sa-4.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/31.jpg",
+  "downloadedUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/56/Left_bundle_branch_block.jpg/1280px-Left_bundle_branch_block.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "sha256": "b663270ea457eaa1d34aaec076e4f1e9e287bf9f4892b546fd477370728bb3c5",
+  "sourceTitle": "Left bundle branch block.jpg",
+  "checked": "2026-10-07",
+  "changes": "Уменьшенная копия Wikimedia, ширина до 1280 px; содержание не изменено."
+}

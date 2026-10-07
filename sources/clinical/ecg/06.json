@@ -1,0 +1,87 @@
+{
+  "size": 70275,
+  "width": 765,
+  "height": 519,
+  "url": "https://upload.wikimedia.org/wikipedia/commons/1/13/Type_II_S-A_block.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Type_II_S-A_block.png",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=19751005",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2012-06-04 01:26:50",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Type II S-A block",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Self-published work|AVB II-Mobitz (II)",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "Sinus rhythm (rate = 65/min) with Type II S-A (exit) block; (see laddergram).  Note that the long cycles (191) are nearly identical to twice the short cycles (190).",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2012-06-03",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/wiki/User:Jer5150\" title=\"User:Jer5150\">Jer5150</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY-SA 3.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution-Share Alike 3.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by-sa/3.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-sa-3.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/06.png",
+  "sha256": "1885200861e93cb68914869b160c81665f1d6a6b72dd0cbf360adac84c1c9863",
+  "sourceTitle": "Type II S-A block.png",
+  "checked": "2026-10-07"
+}

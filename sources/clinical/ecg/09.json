@@ -1,0 +1,87 @@
+{
+  "size": 56474,
+  "width": 382,
+  "height": 372,
+  "url": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Ekg_es_vescouplet_bionerd.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Ekg_es_vescouplet_bionerd.jpg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=2947180",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2007-10-20 15:54:09",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Ekg es vescouplet bionerd",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "GFDL|License migration redundant|Self-published work|Ventricular",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "A ventricular couplet on an ECG strip.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2006-09-28",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/wiki/User:Bionerd\" title=\"User:Bionerd\">Bionerd</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY 3.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution 3.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by/3.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-3.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/09.jpg",
+  "sha256": "58b01aacc1a864a5da141a635fabafcb13057f49142c2a76f846a847d819b6cd",
+  "sourceTitle": "Ekg es vescouplet bionerd.jpg",
+  "checked": "2026-10-07"
+}

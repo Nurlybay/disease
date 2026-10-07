@@ -1,0 +1,103 @@
+{
+  "size": 4629023,
+  "width": 1711,
+  "height": 1689,
+  "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Flipped_Posterior_STEMI_ECG.png/1280px-Flipped_Posterior_STEMI_ECG.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "thumbwidth": 1280,
+  "thumbheight": 1264,
+  "responsiveUrls": {
+    "2": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Flipped_Posterior_STEMI_ECG.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+  },
+  "thumbattribs": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Flipped_Posterior_STEMI_ECG.png/1280px-Flipped_Posterior_STEMI_ECG.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "decoding": "async",
+    "loading": "lazy",
+    "width": 1280,
+    "height": 1264,
+    "srcset": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Flipped_Posterior_STEMI_ECG.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+  },
+  "url": "https://upload.wikimedia.org/wikipedia/commons/1/1f/Flipped_Posterior_STEMI_ECG.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Flipped_Posterior_STEMI_ECG.png",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=56773122",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2017-03-03 12:24:20",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Flipped Posterior STEMI ECG",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Myocardial infarction|ECG|ECG history",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "Posterior Infarct shown as anterior ST depression. The ECG has been printed onto transparent paper, flipped and re-scanned, demonstrating the mirrored image of Posterior ST elevation.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2017-02-14",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<a rel=\"nofollow\" class=\"external free\" href=\"https://i1.wp.com/lifeinthefastlane.com/wp-content/uploads/2011/09/Posterior-MI.jpg\">https://i1.wp.com/lifeinthefastlane.com/wp-content/uploads/2011/09/Posterior-MI.jpg</a>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a rel=\"nofollow\" class=\"external free\" href=\"https://i1.wp.com/lifeinthefastlane.com/wp-content/uploads/2011/09/Posterior-MI.jpg\">https://i1.wp.com/lifeinthefastlane.com/wp-content/uploads/2011/09/Posterior-MI.jpg</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY-SA 4.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution-Share Alike 4.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by-sa/4.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-sa-4.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/42.png",
+  "downloadedUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1f/Flipped_Posterior_STEMI_ECG.png/1280px-Flipped_Posterior_STEMI_ECG.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "sha256": "8b1504ac68a39e17a3915accfe531f98bc9ef5464adea4f2a29d4e908e744aed",
+  "sourceTitle": "Flipped Posterior STEMI ECG.png",
+  "checked": "2026-10-07",
+  "changes": "Уменьшенная копия Wikimedia, ширина до 1280 px; содержание не изменено."
+}

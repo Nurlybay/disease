@@ -1,0 +1,99 @@
+{
+  "size": 75067,
+  "width": 765,
+  "height": 510,
+  "thumburl": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Type_I_A-V_block_5-to-4_Wenckebach_periods.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+  "thumbwidth": 1280,
+  "thumbheight": 853,
+  "thumbattribs": {
+    "src": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Type_I_A-V_block_5-to-4_Wenckebach_periods.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+    "decoding": "async",
+    "loading": "lazy",
+    "width": 1280,
+    "height": 853
+  },
+  "url": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Type_I_A-V_block_5-to-4_Wenckebach_periods.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:Type_I_A-V_block_5-to-4_Wenckebach_periods.png",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=19688071",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2012-06-01 00:31:36",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "Type I A-V block 5-to-4 Wenckebach periods",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Karel Frederik Wenckebach|Self-published work|ECG graphs|AVB II-Wenckebach/Mobitz (I)",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "Sinus rhythm with acute inferior infarction complicated by Type II A-V block manifest in the form of 5:4 Wenckebach periods; R-P/P-R reciprocity.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2012-05-31",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/wiki/User:Jer5150\" title=\"User:Jer5150\">Jer5150</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY-SA 3.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution-Share Alike 3.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by-sa/3.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-sa-3.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/25.png",
+  "downloadedUrl": "https://upload.wikimedia.org/wikipedia/commons/b/b4/Type_I_A-V_block_5-to-4_Wenckebach_periods.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled",
+  "sha256": "5457cbb0fed979a58a991abae8f88a6bf06e2a5a7ab76b5164d1c4f8b3b853f0",
+  "sourceTitle": "Type I A-V block 5-to-4 Wenckebach periods.png",
+  "checked": "2026-10-07",
+  "changes": "Уменьшенная копия Wikimedia, ширина до 1280 px; содержание не изменено."
+}

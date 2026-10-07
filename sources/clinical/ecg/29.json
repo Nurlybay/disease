@@ -1,0 +1,103 @@
+{
+  "size": 147541,
+  "width": 482,
+  "height": 219,
+  "thumburl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/3rd_degree_heart_block.PNG/330px-3rd_degree_heart_block.PNG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "thumbwidth": 330,
+  "thumbheight": 150,
+  "responsiveUrls": {
+    "2": "https://upload.wikimedia.org/wikipedia/commons/1/16/3rd_degree_heart_block.PNG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled"
+  },
+  "thumbattribs": {
+    "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/3rd_degree_heart_block.PNG/330px-3rd_degree_heart_block.PNG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "decoding": "async",
+    "loading": "lazy",
+    "width": 330,
+    "height": 150,
+    "srcset": "https://upload.wikimedia.org/wikipedia/commons/1/16/3rd_degree_heart_block.PNG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled 2x"
+  },
+  "url": "https://upload.wikimedia.org/wikipedia/commons/1/16/3rd_degree_heart_block.PNG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:3rd_degree_heart_block.PNG",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=5857232",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2009-02-03 18:23:10",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "3rd degree heart block",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "ECG of third-degree atrioventricular block",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "Two EKG strips obtained in the same patient simultaneously (each represents a different vector of the heart’s electrical conduction), demonstrating complete AV block (also called 3rd degree heart block). The solid arrows point to P waves, representing atrial electrical conduction originating from the sinus node. The dashed arrows denote electrical conduction in the ventricles (QRS complexes). Note that the P waves are not related to the QRS complexes, demonstrating that the atria are electrically disconnected from the ventricles. The QRS complexes represent an escape rhythm arising from the ventricle.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "Last edited: Aug 1, 2008 10:50 AM.",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<a rel=\"nofollow\" class=\"external free\" href=\"http://knol.google.com/k/-/-/lAmNkcMc/I3szpw/3rd.degree.heart.block.good.small.PNG\">http://knol.google.com/k/-/-/lAmNkcMc/I3szpw/3rd.degree.heart.block.good.small.PNG</a> , embedded from <a rel=\"nofollow\" class=\"external free\" href=\"http://knol.google.com/k/gregory-marcus-md-mas-facc/pacemakers/lAmNkcMc/EOUWRA\">http://knol.google.com/k/gregory-marcus-md-mas-facc/pacemakers/lAmNkcMc/EOUWRA</a>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "Gregory Marcus, MD, MAS, FACC",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY 3.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution 3.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by/3.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-3.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/29.png",
+  "downloadedUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/3rd_degree_heart_block.PNG/330px-3rd_degree_heart_block.PNG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+  "sha256": "07f56c572481d6126217f9f0227b6fe3f423dccb4987e004c73660323c78d405",
+  "sourceTitle": "3rd degree heart block.PNG",
+  "checked": "2026-10-07",
+  "changes": "Уменьшенная копия Wikimedia, ширина до 330 px; содержание не изменено."
+}

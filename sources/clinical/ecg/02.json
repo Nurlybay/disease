@@ -1,0 +1,87 @@
+{
+  "size": 304056,
+  "width": 1282,
+  "height": 592,
+  "url": "https://upload.wikimedia.org/wikipedia/commons/d/df/ECG_Sinus_Tachycardia_132_bpm.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:ECG_Sinus_Tachycardia_132_bpm.jpg",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=96083200",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2020-11-13 16:23:45",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "ECG Sinus Tachycardia 132 bpm",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Self-published work|ECG of sinus tachycardia",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "ECG of a 33-year-old showing sinus tachycardia at 132 bpm. ECG is otherwise normal.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "2020-11-13",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "<span class=\"int-own-work\" lang=\"en\">Own work</span>",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "<a href=\"//commons.wikimedia.org/wiki/User:Ewingdo\" title=\"User:Ewingdo\">Ewingdo</a>",
+      "source": "commons-desc-page"
+    },
+    "LicenseShortName": {
+      "value": "CC BY-SA 4.0",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Creative Commons Attribution-Share Alike 4.0",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "true",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseUrl": {
+      "value": "https://creativecommons.org/licenses/by-sa/4.0",
+      "source": "commons-desc-page"
+    },
+    "Copyrighted": {
+      "value": "True",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "cc-by-sa-4.0",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/02.jpg",
+  "sha256": "727ff5d88904feca47f53867bb2410767c208a88c40cdeb9345a06e01de52950",
+  "sourceTitle": "ECG Sinus Tachycardia 132 bpm.jpg",
+  "checked": "2026-10-07"
+}

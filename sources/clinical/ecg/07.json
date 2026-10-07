@@ -1,0 +1,88 @@
+{
+  "size": 20350,
+  "width": 1000,
+  "height": 153,
+  "url": "https://upload.wikimedia.org/wikipedia/commons/b/ba/PAC.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original",
+  "descriptionurl": "https://commons.wikimedia.org/wiki/File:PAC.png",
+  "descriptionshorturl": "https://commons.wikimedia.org/w/index.php?curid=1265477",
+  "extmetadata": {
+    "DateTime": {
+      "value": "2020-12-28 07:29:20",
+      "source": "mediawiki-metadata",
+      "hidden": ""
+    },
+    "ObjectName": {
+      "value": "PAC",
+      "source": "mediawiki-metadata"
+    },
+    "CommonsMetadataExtension": {
+      "value": 1.2,
+      "source": "extension",
+      "hidden": ""
+    },
+    "Categories": {
+      "value": "Self-published work|PD-self|Unknown date|ECG of premature atrial contraction",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "Assessments": {
+      "value": "",
+      "source": "commons-categories",
+      "hidden": ""
+    },
+    "ImageDescription": {
+      "value": "A drawn image of premature atrial contraction on II-lead ECG. Drawn with Inkscape 0.44 for Windows.",
+      "source": "commons-desc-page"
+    },
+    "DateTimeOriginal": {
+      "value": "Unknown date",
+      "source": "commons-desc-page"
+    },
+    "Credit": {
+      "value": "My Own Work",
+      "source": "commons-desc-page"
+    },
+    "Artist": {
+      "value": "Chikumaya",
+      "source": "commons-desc-page"
+    },
+    "Permission": {
+      "value": "Public domain",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "LicenseShortName": {
+      "value": "Public domain",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "UsageTerms": {
+      "value": "Public domain",
+      "source": "commons-desc-page"
+    },
+    "AttributionRequired": {
+      "value": "false",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Copyrighted": {
+      "value": "False",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "Restrictions": {
+      "value": "",
+      "source": "commons-desc-page",
+      "hidden": ""
+    },
+    "License": {
+      "value": "pd",
+      "source": "commons-templates",
+      "hidden": ""
+    }
+  },
+  "file": "media/clinical/ecg/07.png",
+  "sha256": "3c4b109371746b07e4f8150e4b14a5f87ae242e3afbcbaa6548014dcce3b6fc4",
+  "sourceTitle": "PAC.png",
+  "checked": "2026-10-07"
+}

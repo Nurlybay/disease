@@ -128,3 +128,16 @@
 .teacher .teacher-fold-body :is(.m-q-tag,.m-sec-note,.m-algo-note){font-size:15px;color:#bcc9d5}
 .teacher .m-audio{font-size:15px;min-height:44px;padding:8px 14px}
 .teacher .m-badge{font-size:12px;letter-spacing:0;text-transform:none}
+
+/* ECG catalog: only the selected asset is loaded. */
+.ecg-catalog { margin:24px 0; padding:22px; border:1px solid #435363; border-radius:16px; background:#18242e; }
+.ecg-filters { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+.ecg-catalog label { display:flex; flex-direction:column; gap:9px; font-weight:600; min-width:0; }
+.ecg-catalog select,.ecg-catalog input { box-sizing:border-box; width:100%; min-width:0; padding:12px; border:1px solid #708291; border-radius:9px; background:#101b24; color:#edf4f8; font:inherit; min-height:48px; }
+.ecg-catalog-actions { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; }
+.ecg-catalog-actions p { flex:1; color:#bdcbd6; margin:0; }
+.ecg-catalog button:disabled { opacity:.45; cursor:default; }
+.media-nav[hidden] { display:none; }
+.media-credit { overflow-wrap:anywhere; }
+.lab-card-head { flex-wrap:wrap; }
+@media(max-width:640px){.ecg-filters{grid-template-columns:1fr}.ecg-catalog{padding:16px}.ecg-catalog-actions p{flex-basis:100%}.lab-card-head h2{font-size:22px}}
